@@ -54,6 +54,7 @@ Enter version number: `260405`
 nano /mnt/ssd_data/podman/rpi-upload-srv/rpi-upload-srv.ini
 ```
 
+I have enabled SELinux, so I need to:
 ```bash
 podman unshare chown -R 3012:3012 /mnt/ssd_data/podman/rpi-upload-srv
 sudo setfacl -R -m u:"$USER":rwx /mnt/ssd_data/podman/rpi-upload-srv
