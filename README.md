@@ -124,7 +124,7 @@ In the future it may be rewritten based on https://github.com/raspberrypi/linux/
 sudo loginctl enable-linger "$USER"
 ```
 ```bash
-mkdir -p time-lapse && curl -sL https://github.com/d4c00/rpi-starlapse/tarball/master | tar -xz -C time-lapse --strip-components=2 "*/time-lapse/"
+mkdir -p time-lapse && curl -sL https://github.com/d4c00/rpi-starlapse/tarball/main | tar -xz -C time-lapse --strip-components=2 "*/time-lapse/"
 ```
 
 ```bash
