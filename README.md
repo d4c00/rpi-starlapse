@@ -28,10 +28,10 @@ For example, `/mnt/ssd_data/podman/rpi-upload-srv` is the directory where I plan
 
 ```bash
 mkdir -p rpi-upload-srv && curl -sL https://api.github.com/repos/d4c00/rpi-starlapse/tarball/main | tar -xz -C rpi-upload-srv --strip-components=2 "*/rpi-upload-srv"
-```
-
-```bash
 cd ~/rpi-upload-srv
+```
+Remember to change the example Volume= mappings in the three .container files inside rpi-upload-srv/quadlet to your actual paths.
+```bash
 cp quadlet/* ~/.config/containers/systemd
 ```
 ```bash
