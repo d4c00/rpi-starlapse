@@ -10,6 +10,8 @@ That said, I’ve already prepared the groundwork for supporting even more senso
 
 Pure mono workflow — only monochrome (black-and-white) sensors are considered.
 
+I also wrote a separate auto-exposure algorithm that bypasses the ISP and supports long exposure. It only pulls up the gain when pulling the shutter time to the upper limit still results in underexposure.
+
 The Raspberry Pi that actually captures and sends the photos acts as the **Client-side (sender)**. Any other Linux device can be used as the **Server-side (receiver)**.
 
 On the sender side, v4l2 commands are used to grab the .raw files, which are then securely transmitted to the receiver’s server via HTTPS encryption and token authentication.
