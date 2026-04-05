@@ -33,7 +33,7 @@ DARK_TRIGGER_FILE = "/dev/shm/time-lapse/calibration"
 # Dark Frames
 DARK_FRAME_COUNT = 15
 # Bias Frames
-CAPTURE_BIAS_FRAMES = True
+CAPTURE_BIAS_FRAMES = False
 BIAS_FRAME_COUNT = 100
 BIAS_INTERVAL = 2.0
 
