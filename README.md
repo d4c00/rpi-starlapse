@@ -67,7 +67,7 @@ systemctl --user daemon-reload
 
 The server has three modes, Start them respectively with:  
 
-1. Receiver mode
+1. Receiver mode (Auto-start at boot via systemd)
 ```bash
 systemctl --user restart rpi-upload-srv-1
 ```
@@ -149,7 +149,7 @@ Change `UPLOAD_SRV_BASE` to your upload server address.
 sudo apt update
 sudo apt install python3-numpy python3-opencv -y
 ```
-
+Auto-start at boot via systemd
 ```bash
 systemctl --user daemon-reload
 systemctl --user enable time-lapse
