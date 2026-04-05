@@ -183,6 +183,19 @@ After dark frames are done, the camera will automatically turn off and the camer
 
 Back home, I power the Pi back on, connect it to the internal network that can reach the upload server, and it will automatically start uploading all the captured .raw files. The Server-side will then generate the video and convert files to TIF. Finally I use Siril to stack them and try to create beautiful final photos.
 
+## Frequently Asked Questions
+
+**Q** Why is my sensor listed in the supported sensors, but it still fails to match and be used?  
+**A** If you are using a third-party sensor, you need to manually specify it in `/boot/firmware/config.txt`.  
+You can check what `.ko` files are available in `/usr/lib/modules/$(uname -r)/kernel/drivers/media/i2c`. If your sensor is not there, you will need to find a community open-source driver, write one yourself, or try something like `sudo rpi-update pulls/7239` (this is 6by9’s v4l2 driver PR for IMX662; at the time of writing this document, the PR was still in Draft status).
+
+**Q** Why does it print “Camera verified READY.” in the console but then stop and not continue taking photos?  
+**A** Please check whether `CAMERA_ENABLED` in `snippets/config.py` is set to `True`.  
+If it is already `True` but still doesn’t work, it is likely that the camera connector is loose. Try re-inserting the FPC cable firmly and reinforcing it with tape or similar methods.
+
+**Q** Why does the log keep printing “[CLEANUP] All zeros: {path}. Deleting.”? What’s going on?  
+**A** This is still most likely caused by a loose cable or incorrect crystal oscillator frequency setting.
+
 ## License
 Copyright (c) 2026 length <me@length.cc> (https://github.com/d4c00)  
 Licensed under the MIT License.
