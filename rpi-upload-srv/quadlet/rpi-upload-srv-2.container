@@ -1,0 +1,11 @@
+# Copyright (c) 2026 length <me@length.cc> (https://github.com/d4c00)
+# Licensed under the MIT License.
+[Container]
+ContainerName=rpi-upload-srv-2
+Environment=MODE=2
+Group=3012
+Image=length/rpi-upload-srv:260405
+User=3012
+Volume=/mnt/ssd_data/podman/rpi-upload-srv/conf:/home/length/conf:z
+Volume=/mnt/ssd_data/podman/rpi-upload-srv/output:/home/length/output:z
+Volume=/mnt/ssd_data/podman/rpi-upload-srv/uploads:/home/length/uploads:ro,z
