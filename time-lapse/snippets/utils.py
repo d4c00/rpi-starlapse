@@ -266,7 +266,7 @@ def advance_frame(sh_frame_id, sh_last_ae_id):
 def get_optimal_queue_size() -> int:
     frame_size = sensor.EXACT_RAW_SIZE
     usage = shutil.disk_usage("/dev/shm")
-    num_frames = int((usage.free * 0.9) // frame_size)
+    num_frames = int((usage.free * 0.5) // frame_size)
     if num_frames < 1:
         raise MemoryError(f"SHM Space Exhausted! Free: {usage.free//1024}KB")
     print(f"[SHM-DYNAMIC] Queue size set to {num_frames} based on physical memory.")
