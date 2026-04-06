@@ -186,6 +186,9 @@ After dark frames are done, the camera will automatically turn off and the camer
 
 Back home, I power the Pi back on, connect it to the internal network that can reach the upload server, and it will automatically start uploading all the captured .raw files. The Server-side will then generate the video and convert files to TIF. Finally I use Siril to stack them and try to create beautiful final photos.
 
+By the way, there was also a time when I went to collect [it] after shooting, only to find that as soon as I started shooting the starry sky, it was covered by thick clouds. Then I directly **took** several hundred frames of ten-plus-second long-exposure clouds **from the shot ones** as flats and put them into the flats folder.
+At the same time, I triggered the calibration frame shooting; after covering the lens cap to shoot darks, I put the shot darks into the biases folder.
+
 ## Frequently Asked Questions
 
 **Q** Why is my sensor listed in the supported sensors, but it still fails to match and be used?  
