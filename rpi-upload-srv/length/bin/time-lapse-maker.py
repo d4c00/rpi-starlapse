@@ -100,7 +100,7 @@ def get_master_frame(device_id, folder_name):
 
     for f in files:
         data = load_any_file(f)
-        if data is not None and data.shape == (RAW_HEIGHT, RAW_WIDTH):
+        if data is not None and data.shape == (CONF['HEIGHT'], CONF['WIDTH']):
             master_sum += data
             valid_count += 1
 
