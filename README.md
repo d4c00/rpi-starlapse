@@ -47,7 +47,7 @@ rm length/vcr_osd_mono.zip
 ```bash
 bash build.sh
 ```
-Enter version number: `260405`
+Enter version number: `260407`
 
 **Please do not use the default `device_token`. You must modify it.**  
 ```bash
