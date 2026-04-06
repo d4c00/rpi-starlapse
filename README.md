@@ -37,6 +37,7 @@ cd ~/rpi-upload-srv
 Remember to change the Volume= mapping in the three .container files inside rpi-upload-srv/quadlet/ to your actual path.
 ```bash
 cp quadlet/* ~/.config/containers/systemd
+systemctl --user daemon-reload
 ```
 ```bash
 curl -L -o length/vcr_osd_mono.zip "https://dl.dafont.com/dl/?f=vcr_osd_mono" && \
@@ -49,20 +50,12 @@ bash build.sh
 ```
 Enter version number: `260407`
 
-**Please do not use the default `device_token`. You must modify it.**  
-```bash
-nano /mnt/ssd_data/podman/rpi-upload-srv/rpi-upload-srv.ini
-```
-
 I have enabled SELinux, so I need to:
 ```bash
+mkdir -p /mnt/ssd_data/podman/rpi-upload-srv/{conf,fonts,output,uploads}
 podman unshare chown -R 3012:3012 /mnt/ssd_data/podman/rpi-upload-srv
 sudo setfacl -R -m u:"$USER":rwx /mnt/ssd_data/podman/rpi-upload-srv
 sudo setfacl -R -d -m u:"$USER":rwx /mnt/ssd_data/podman/rpi-upload-srv
-```
-
-```bash
-systemctl --user daemon-reload
 ```
 
 The server has three modes, Start them respectively with:  
@@ -80,6 +73,11 @@ systemctl --user restart rpi-upload-srv-2
 3. Generate time-lapse video (with flat-field calibration support)
 ```bash
 systemctl --user restart rpi-upload-srv-3
+```
+
+**Please do not use the default `device_token`. You must modify it.**  
+```bash
+nano /mnt/ssd_data/podman/rpi-upload-srv/rpi-upload-srv.ini
 ```
 
 Nginx configuration example:
