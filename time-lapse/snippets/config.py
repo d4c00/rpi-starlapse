@@ -31,7 +31,7 @@ AE_MARGIN = 1.5
 # Calibration Trigger
 DARK_TRIGGER_FILE = "/dev/shm/time-lapse/calibration"
 # Dark Frames
-DARK_FRAME_COUNT = 15
+DARK_FRAME_COUNT = 30
 # Bias Frames
 CAPTURE_BIAS_FRAMES = False
 BIAS_FRAME_COUNT = 100
