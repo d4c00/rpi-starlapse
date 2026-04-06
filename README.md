@@ -77,7 +77,7 @@ systemctl --user restart rpi-upload-srv-3
 
 **Please do not use the default `device_token`. You must modify it.**  
 ```bash
-nano /mnt/ssd_data/podman/rpi-upload-srv/rpi-upload-srv.ini
+nano /mnt/ssd_data/podman/rpi-upload-srv/conf/rpi-upload-srv.ini
 ```
 
 Nginx configuration example:
