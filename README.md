@@ -177,13 +177,41 @@ sudo journalctl _SYSTEMD_USER_UNIT=time-lapse.service -f
 
 Although there is no dedicated flat-field shooting option, the logic is exactly the same as bright-field shooting, so you don’t need special code to shoot flats either.  
 For example, you can set `CAPTURE_BIAS_FRAMES` to `true`, shoot your flat fields first, then start shooting calibration frames. This way you get both flat/dark frames and bias frames. Flats are usually shot together with bias frames and used as a bundle.
+<br>
+<br>
+<br>
+For a single sender, the receiver will create a directory named after the device number, such as "01". In the example I'm using, the path `/mnt/ssd_data/podman/rpi-upload-srv/uploads/01` can support four folders, like this:
 
-If the exposure time is very long, you may need dark flats. In that case you can use Siril to create a master flat yourself, then put the pre-processed flat into the receiver’s `uploads/flats` folder.  
-If the exposure time is short, you usually only need flats + bias frames.
+```
+rpi-upload-srv
+├── conf
+│   ├── convert-tif.ini
+│   ├── rpi-upload-srv.ini
+│   └── time-lapse-maker.ini
+├── fonts
+├── output
+└── uploads
+    └── 01
+        ├── biases  <<
+        ├── darks   <<
+        ├── flats   <<
+        └── lights  <<
+```
 
+The `lights` folder contains the light frames (the actual images). The `darks`, `flats`, and `biases` are calibration frames. Only **mode 3** of rpi-upload-srv will use the calibration frames (alternatively, you can run `rpi-upload-srv-2` to convert them to TIF and then manually import them into Siril for stacking).
+
+Only the `lights` folder is mandatory. The other three folders are optional — the video can still be generated even if they are missing.
+
+If the exposure time for your flat frames is very short, you usually only need flats + bias frames.  
+If the exposure time for your flat frames is very long, you may need dark flats. In that case, you can put the captured dark flats into the `biases` folder and use them as bias frames.
+
+Running `rpi-upload-srv-3` will calibrate each light frame image, overlay the photo information in the top-left corner, and then stitch everything together into a final video.
+<br>
+<br>
+<br>
 In actual shooting, to save on mobile data costs, I usually disconnect from the receiver server when outdoors. After powering on, I connect to my phone hotspot just long enough for time synchronization, confirm that the camera is shooting normally and saving files without errors, then leave the device for a few hours.
 
-When shooting is finished, I go back near the device, turn on the hotspot again so the Pi can connect, SSH in and run:  
+When shooting is finished, I go back near the device, turn on the hotspot again so the Pi can connect, SSH in and run.
 ```bash
 touch /dev/shm/time-lapse/calibration
 ```
