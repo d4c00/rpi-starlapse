@@ -84,7 +84,7 @@ systemctl --user restart rpi-upload-srv-3
 ```bash
 sudo nano /mnt/ssd_data/podman/rpi-upload-srv/conf/rpi-upload-srv.ini
 ```
-
+**If this is to be run on the public internet, please use Nginx or another reverse proxy to add a layer of TLS encryption whenever possible.**<br>
 Nginx configuration example:
 ```nginx
 server {
