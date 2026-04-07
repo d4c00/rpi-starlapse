@@ -11,6 +11,7 @@ class AdaptiveExposureEngine:
     def __init__(self):
         self.target = AE_TARGET_LUMA
         self.ev = None
+        self.ev_vel = 0.0
         self.weight_map = None
         self.min_energy = 1e-4
 
@@ -71,11 +72,14 @@ class AdaptiveExposureEngine:
             step -= 1.0 * math.exp(-5.0 * ((1.0 - raw_mean) / (1.0 - self.target + 1e-9)))
             step *= (math.tanh(abs(err_ev) / 0.025) ** 2)
 
-            next_ev_raw = self.ev + step
             dynamic_q = self.base_q + self.q_scale * (math.tanh(abs(err_ev) * 4.0) ** 4)
+            ev_predict = self.ev + self.ev_vel
             p_predict = self.kf_p + dynamic_q
             k_gain = p_predict / (p_predict + self.kf_r)
-            self.ev = self.ev + k_gain * (next_ev_raw - self.ev)
+            next_ev_raw = self.ev + step
+            residual = next_ev_raw - ev_predict
+            self.ev = ev_predict + k_gain * residual
+            self.ev_vel = self.ev_vel * 0.8 + (k_gain * 0.3) * residual 
             self.kf_p = (1.0 - k_gain) * p_predict
 
             limit_virt_gain_max = self._phys_to_virt_gain(max_reg_gain)
