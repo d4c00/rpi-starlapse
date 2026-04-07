@@ -123,11 +123,13 @@ I wrote it based on the v4l2 driver from https://github.com/will127534/imx662-v4
 
 In the future it may be rewritten based on https://github.com/raspberrypi/linux/pull/7239 or the merged official v4l2 driver.
 
+Next, we will begin the installation.
 ```bash
 sudo loginctl enable-linger "$USER"
 ```
+
 ```bash
-mkdir -p time-lapse && curl -sL https://github.com/d4c00/rpi-starlapse/tarball/main | tar -xz -C time-lapse --strip-components=2 "*/time-lapse/"
+mkdir -p time-lapse && curl -sL https://github.com/d4c00/rpi-starlapse/tarball/main | tar -xz -C time-lapse --strip-components=2 --wildcards "*/time-lapse/"
 ```
 
 ```bash
