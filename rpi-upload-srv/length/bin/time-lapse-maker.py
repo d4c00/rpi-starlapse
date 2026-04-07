@@ -98,7 +98,7 @@ def get_master_frame(device_id, folder_name):
     master_sum = np.zeros((CONF['HEIGHT'], CONF['WIDTH']), dtype=np.float64)
     valid_count = 0
 
-    for f in files:
+    for f in tqdm(files, desc=f"  [{device_id}] Building Master {folder_name}", leave=False):
         data = load_any_file(f)
         if data is not None and data.shape == (CONF['HEIGHT'], CONF['WIDTH']):
             master_sum += data
