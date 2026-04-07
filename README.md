@@ -1,7 +1,9 @@
 ## Preface
 
 Raspberry Pi starry sky time-lapse photography, but it might not be limited to just the Raspberry Pi, and it might not even be limited to starry skies.
-
+<br>
+<br>
+<br>
 What I’m currently using is the **Raspberry Pi Zero 2W + IMX662 module with 74.25 MHz crystal oscillator + 800 nm long-pass filter + 8 mm f/1.2 M12 lens**. This exact setup runs perfectly. Other development boards and sensors can very likely be made to work too after some minor modifications.
 
 That said, I’ve already prepared the groundwork for supporting even more sensors. You can add additional support directly in `time-lapse/snippets/sensors`. I really hope users with different hardware will also jump in and help me try writing the code.
@@ -9,23 +11,26 @@ That said, I’ve already prepared the groundwork for supporting even more senso
 ## Explanation
 
 Pure mono workflow — only monochrome (black-and-white) sensors are considered.
-
+<br>
+<br>
 I also wrote a separate auto-exposure algorithm that bypasses the ISP and supports long exposure. It only pulls up the gain when pulling the shutter time to the upper limit still results in underexposure.
-
-One receiver can simultaneously receive and process photos from multiple senders, categorized by device number.
-
-The Raspberry Pi that actually captures and sends the photos acts as the **Client-side (sender)**. Any other Linux device can be used as the **Server-side (receiver)**.
-
+<br>
+<br>
+One receiver can simultaneously receive and process photos from multiple senders, categorized by device number.<br>
+The Raspberry Pi that actually captures and sends the photos acts as the **Client-side (sender)**. Any other Linux device can be used as the **Server-side (receiver)**.<br>
+Although it might work with any Linux device that can connect to a camera, I separated it into sender and receiver mainly because my Raspberry Pi Zero2w has poor performance.
+<br>
+<br>
 On the sender side, v4l2 commands are used to grab the .raw files, which are then securely transmitted to the receiver’s server via HTTPS encryption and token authentication.
-
 If the receiver server has unstable network or is completely unreachable, the system intelligently handles retransmissions and temporarily stores the files on disk. You can also choose to skip the receiver entirely and simply copy the files out from the SD card manually using SFTP or a card reader.
-
+<br>
+<br>
+<br>
 For more details, please check the code yourself.
 
-## Usage
-
+# Usage
+---
 ### Server-side
-
 Please ensure that Podman is installed in your current environment.
 
 For example, `/mnt/ssd_data/podman/rpi-upload-srv` is the directory where I plan to store the files.
@@ -115,7 +120,7 @@ server {
     }
 }
 ```
-
+---
 ### Client-side
 
 The current IMX662 configuration file is `time-lapse/snippets/sensors/imx662.py`.  
@@ -167,7 +172,7 @@ To monitor logs:
 ```bash
 sudo journalctl _SYSTEMD_USER_UNIT=time-lapse.service -f
 ```
-
+---
 ## My Usage
 
 Although there is no dedicated flat-field shooting option, the logic is exactly the same as bright-field shooting, so you don’t need special code to shoot flats either.  
