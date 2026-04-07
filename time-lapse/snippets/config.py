@@ -18,9 +18,9 @@ SUB_DIRS = {
 # Network
 DEVICE_ID = "01"
 DEVICE_TOKEN = "6XQzzwB0R8kwFQOp3Dg8YzK2sWisbtdQbFf8Qk4raDlFgaAKXpqTbs7EVhOodUOFQl0lQumiG4LzQoS7FW4rnzlKXp3IPwE2O7bpu7nvo3i3DKyjUrKrzOK3ahdRJQvb"
-UPLOAD_SRV_BASE = "https://rpi-upload-srv.yourdomain.com"
+UPLOAD_SRV_BASE = "https://rpi-upload-srv.example.com"
 SERVER_URL = f"{UPLOAD_SRV_BASE.rstrip('/')}/upload"
-TIME_SOURCE = "https://yourdomain.com/"
+TIME_SOURCE = "https://any.example.com/"
 
 # Capture
 CAMERA_ENABLED = True
