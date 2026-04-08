@@ -8,22 +8,12 @@ from snippets.config import SENSOR_INDEX
 class SensorContainer:
     def __init__(self, mod):
         self.raw_config = mod
-        self.SENSOR_NAME = mod.SENSOR_NAME
-        self.WIDTH, self.HEIGHT = mod.WIDTH, mod.HEIGHT
-        self.MEDIA_ENTITY_NAME = mod.MEDIA_ENTITY_NAME
-        self.MEDIA_CTL_FMT = mod.MEDIA_CTL_FMT
-        self.V4L2_PIXELFORMAT = mod.V4L2_PIXELFORMAT
+        for attr in dir(mod):
+            if not attr.startswith("__"):
+                setattr(self, attr, getattr(mod, attr))
 
         self.m_node, self.s_node, self.v_node = self._find_nodes()
         self.hw_inventory = self._scan_v4l2_controls()
-
-        for attr in ["MIN_GAIN", "MAX_GAIN", "MIN_EXPOSURE", "MAX_EXPOSURE", 
-                     "VIRT_GAIN_MIN", "VIRT_GAIN_MAX", "RAW_BPP", "EXP_OFFSET"]:
-            if hasattr(mod, attr):
-                setattr(self, attr, getattr(mod, attr))
-        
-        self.EXACT_RAW_SIZE = self.WIDTH * self.HEIGHT * self.RAW_BPP
-        self.extensions = getattr(mod, "EXTENSIONS", {})
 
     def get_runtime_ctrls(self, target_us, gain):
         return self.raw_config.get_runtime_ctrls(target_us, gain, self)
@@ -68,8 +58,7 @@ def _init_factory():
         mod = importlib.import_module(f"snippets.sensors.{module_name}")
         target_entity = getattr(mod, "MEDIA_ENTITY_NAME", None)
         if target_entity and any(target_entity in ent for ent in detected_entities):
-            if hasattr(mod, "get_runtime_ctrls"):
-                return SensorContainer(mod)
+            return SensorContainer(mod)
     raise RuntimeError("No matching sensor config found.")
 
 sensor = _init_factory()
