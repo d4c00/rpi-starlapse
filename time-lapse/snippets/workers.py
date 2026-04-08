@@ -91,7 +91,7 @@ def camera_worker(sh_frame_id, sh_last_ae_id, data_q, stop_ev, trigger_ev, sh_sn
 
             if CAPTURE_BIAS_FRAMES:
                 logger.info(f">>> [2/2] Capturing Biases (Count: {BIAS_FRAME_COUNT})")
-                bias_cfg = {"t_us": int(sensor.BIAS_EXPOSURE * 1e6), "g": sensor.BIAS_GAIN}
+                bias_cfg = {"t_us": int(sensor.MIN_EXPOSURE * 1e6), "g": sensor.MIN_GAIN}
                 for _ in range(BIAS_FRAME_COUNT):
                     if stop_ev.is_set(): break
                     now = time.time()
@@ -159,7 +159,8 @@ def ae_worker(stop_ev, sh_frame_id, sh_last_ae_id, sh_snap, sh_dev_id, data_q, r
                 limit_us = min((CAPTURE_INTERVAL - AE_MARGIN), sensor.MAX_EXPOSURE) * 1e6
 
                 new_s, new_g, m_val, new_ev = process_ae_logic(
-                    target_raw, W, H, p["t_us"], p["g"], limit_us, sensor.MAX_GAIN
+                    target_raw, W, H, p["t_us"], p["g"], limit_us, 
+                    sensor.MAX_GAIN, sensor.MIN_GAIN, sensor.VIRT_GAIN_MIN, sensor.VIRT_GAIN_MAX
                 )
 
                 p["y"] = m_val
