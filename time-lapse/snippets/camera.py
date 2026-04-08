@@ -14,7 +14,7 @@ class V4L2Camera:
         return sensor.WIDTH, sensor.HEIGHT
 
     def __init__(self):
-        if hasattr(sensor.raw_config, "get_init_cmds"):
+        if hasattr(sensor, "get_init_cmds"):
             for cmd in sensor.get_init_cmds():
                 self._run(cmd)
 

@@ -10,8 +10,6 @@ MEDIA_CTL_FMT = "SRGGB12_1X12"
 V4L2_PIXELFORMAT = "RG12"
 RAW_BPP = 2
 
-EXACT_RAW_SIZE = WIDTH * HEIGHT * RAW_BPP
-
 DRV_KEYS = {
     "exp": "exposure",
     "gain": "analogue_gain",
