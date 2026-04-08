@@ -1,5 +1,6 @@
 # Copyright (c) 2026 length <me@length.cc> (https://github.com/d4c00)
 # Licensed under the MIT License.
+# It based on the v4l2 driver from https://github.com/will127534/imx662-v4l2-driver . You can adjust it as needed.
 
 # --- Basic Identity ---
 SENSOR_NAME = "imx662"
