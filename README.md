@@ -39,8 +39,12 @@ Theoretically, by referring to the file `rpi-starlapse/time-lapse/snippets/senso
 I do not have additional hardware for testing, but I have done my best to ensure system generality. I would be very happy to receive feedback from users with different hardware.
 
 If you can write a sensor configuration file for hardware different from mine and run it successfully, I would be extremely grateful if you could create a PR to help me support more sensors.
+
+If you have any questions, you are more than welcome to contact me at any time.
 <br>
 <br>
+
+---
 
 ## Explanation
 
