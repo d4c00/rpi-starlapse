@@ -1,65 +1,55 @@
 # Copyright (c) 2026 length <me@length.cc> (https://github.com/d4c00)
 # Licensed under the MIT License.
 
-import os, importlib, re, subprocess, pkgutil, inspect
+import os
+import importlib
+import importlib.util
+import inspect
+import subprocess
+import re
 from functools import partial
-import snippets.sensors as sensors_pkg
+from snippets.config import SENSOR_INDEX
 
-class SensorContainer:
+class BaseSensor:
     def __init__(self, mod):
-        self.raw_config = mod
-
-        for attr_name in dir(mod):
-            if attr_name.startswith("__"): continue
-            attr_value = getattr(mod, attr_name)
-
-            if inspect.isfunction(attr_value):
-                sig = inspect.signature(attr_value)
+        self.mod = mod
+        for name in dir(mod):
+            if name.startswith("__"): continue
+            attr = getattr(mod, name)
+            if inspect.isfunction(attr):
+                sig = inspect.signature(attr)
                 if 'container' in sig.parameters:
-                    setattr(self, attr_name, partial(attr_value, container=self))
+                    setattr(self, name, partial(attr, container=self))
                 else:
-                    setattr(self, attr_name, attr_value)
+                    setattr(self, name, attr)
             else:
-                setattr(self, attr_name, attr_value)
+                setattr(self, name, attr)
 
-        self.m_node, self.s_node, self.v_node = self._find_nodes()
+        if hasattr(self, "WIDTH") and hasattr(self, "HEIGHT") and hasattr(self, "RAW_BPP"):
+            self.EXACT_RAW_SIZE = self.WIDTH * self.HEIGHT * self.RAW_BPP
 
-        self.hw_inventory = {}
-        if hasattr(self, "parse_hw_inventory"):
-            self.hw_inventory = self.parse_hw_inventory()
+        self.v_node, self.s_node = self.find_nodes()
+        self._refresh_hardware_limits()
 
-    def _find_nodes(self):
-        patterns = getattr(self.raw_config, "SEARCH_PATTERNS", {})
-        entity_name = getattr(self.raw_config, "MEDIA_ENTITY_NAME", "")
-        
-        for i in range(10):
-            path = f"/dev/media{i}"
-            if not os.path.exists(path): continue
-            out = subprocess.run(f"media-ctl -d {path} -p", shell=True, capture_output=True, text=True).stdout
-            
-            if entity_name.lower() in out.lower():
-                try:
-                    res = {}
-                    for key, pat in patterns.items():
-                        m = re.search(rf"{pat}.*?device node name\s+(/dev/[a-z0-9-]+)", out, re.S | re.I)
-                        res[key] = m.group(1) if m else None
-
-                    return path, res.get("s_node"), res.get("v_node")
-                except: continue
-        raise RuntimeError(f"Sensor '{getattr(self.raw_config, 'SENSOR_NAME', 'Unknown')}' not found.")
+    def _refresh_hardware_limits(self):
+        try:
+            out = subprocess.check_output(f"v4l2-ctl -d {self.s_node} --list-ctrls", shell=True, text=True)
+            self.MIN_EXPOSURE = int(re.search(r"exposure.*?min=(\d+)", out).group(1))
+            self.MAX_EXPOSURE = int(re.search(r"exposure.*?max=(\d+)", out).group(1))
+            self.MIN_GAIN = int(re.search(r"analogue_gain.*?min=(\d+)", out).group(1))
+            self.MAX_GAIN = int(re.search(r"analogue_gain.*?max=(\d+)", out).group(1))
+            self.VIRT_GAIN_MIN = 1.0
+            self.VIRT_GAIN_MAX = 16.0 
+        except:
+            pass
 
 def _init_factory():
-    entities = ""
-    for i in range(5):
-        p = f"/dev/media{i}"
-        if os.path.exists(p):
-            entities += subprocess.run(f"media-ctl -d {p} -p", shell=True, capture_output=True, text=True).stdout
-
-    for _, module_name, _ in pkgutil.iter_modules(sensors_pkg.__path__):
-        if module_name == "sensor": continue
-        mod = importlib.import_module(f"snippets.sensors.{module_name}")
-        if getattr(mod, "MEDIA_ENTITY_NAME", "N/A") in entities:
-            return SensorContainer(mod)
-    raise RuntimeError("No matching sensor config.")
+    pkg_path = os.path.dirname(__file__)
+    driver_files = sorted([f[:-3] for f in os.listdir(pkg_path) if f.endswith(".py") and f != "__init__.py"])
+    target_driver = driver_files[SENSOR_INDEX]
+    spec = importlib.util.spec_from_file_location(target_driver, os.path.join(pkg_path, f"{target_driver}.py"))
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return BaseSensor(mod)
 
 sensor = _init_factory()
