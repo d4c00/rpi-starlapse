@@ -27,19 +27,15 @@ class V4L2Camera:
         return subprocess.check_output(cmd, shell=True, text=True, stderr=subprocess.STDOUT)
 
     def capture_to_path(self, target_us, gain, out_path):
-        req_vmax = int((target_us / 1000.0 * sensor.pixel_rate) / (1000 * sensor.hmax))
-        
-        v_key = sensor.core['vblank']
-        e_key = sensor.core['exposure']
-        g_key = sensor.core['gain']
-        
-        vblank_val = int(np.clip(req_vmax - sensor.HEIGHT, sensor.hw_inventory[v_key]['min'], sensor.hw_inventory[v_key]['max']))
-        exposure_val = int(np.clip(req_vmax - sensor.EXP_OFFSET, sensor.hw_inventory[e_key]['min'], sensor.hw_inventory[e_key]['max']))
-        gain_val = int(np.clip(gain, sensor.MIN_GAIN, sensor.MAX_GAIN))
+        ctrls = sensor.get_runtime_ctrls(target_us, gain)
 
-        self._run(f"v4l2-ctl -d {sensor.s_node} --set-ctrl={v_key}={vblank_val}")
+        v_key = sensor.raw_config.CORE_MAPPING.get('vblank')
+        if v_key and v_key in ctrls:
+            self._run(f"v4l2-ctl -d {sensor.s_node} --set-ctrl={v_key}={ctrls.pop(v_key)}")
 
-        self._run(f"v4l2-ctl -d {sensor.s_node} --set-ctrl={e_key}={exposure_val},{g_key}={gain_val}")
+        if ctrls:
+            kv_pairs = ",".join([f"{k}={v}" for k, v in ctrls.items()])
+            self._run(f"v4l2-ctl -d {sensor.s_node} --set-ctrl={kv_pairs}")
 
         t0 = time.perf_counter()
         self._run(f"v4l2-ctl -d {sensor.v_node} --stream-mmap --stream-count=1 --stream-to={out_path}")
