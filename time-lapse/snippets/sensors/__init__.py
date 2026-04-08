@@ -92,7 +92,27 @@ class SensorContainer:
         self.BIAS_EXPOSURE = self.MIN_EXPOSURE
 
 def _init_factory():
-    mod = importlib.import_module("snippets.sensors.imx662")
-    return SensorContainer(mod)
+    detected_entities = []
+    for i in range(5):
+        path = f"/dev/media{i}"
+        if os.path.exists(path):
+            out = subprocess.run(f"media-ctl -d {path} -p", shell=True, capture_output=True, text=True).stdout
+            names = re.findall(r"Entity\s+\d+:\s+([a-zA-Z0-9\-_ ]+)\s+\(", out)
+            detected_entities.extend([n.strip() for n in names])
+
+    for loader, module_name, is_pkg in pkgutil.iter_modules(sensors_pkg.__path__):
+        full_mod_path = f"snippets.sensors.{module_name}"
+        mod = importlib.import_module(full_mod_path)
+
+        target_entity = getattr(mod, "MEDIA_ENTITY_NAME", None)
+        if target_entity and any(target_entity in ent for ent in detected_entities):
+
+            if "analogue_gain" in str(mod.CORE_MAPPING.values()):
+                pass 
+                
+            print(f"[*] Auto-detected sensor config: {module_name} (Matches: {target_entity})")
+            return SensorContainer(mod)
+
+    raise RuntimeError(f"Detected hardware entities {detected_entities}, but no matching config file found in snippets/sensors/")
 
 sensor = _init_factory()
