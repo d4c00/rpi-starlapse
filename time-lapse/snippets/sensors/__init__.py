@@ -1,7 +1,8 @@
 # Copyright (c) 2026 length <me@length.cc> (https://github.com/d4c00)
 # Licensed under the MIT License.
 
-import os, importlib, re, subprocess
+import os, importlib, re, subprocess, pkgutil
+import snippets.sensors as sensors_pkg
 from snippets.config import SENSOR_INDEX
 
 class SensorContainer:
@@ -16,80 +17,42 @@ class SensorContainer:
         self.m_node, self.s_node, self.v_node = self._find_nodes()
 
         self.hw_inventory = self._scan_v4l2_controls()
-        self.core = mod.CORE_MAPPING
 
-        self._compute_physics()
-
+        for attr in ["MIN_GAIN", "MAX_GAIN", "MIN_EXPOSURE", "MAX_EXPOSURE", 
+                     "VIRT_GAIN_MIN", "VIRT_GAIN_MAX", "RAW_BPP"]:
+            setattr(self, attr, getattr(mod, attr))
+        
+        self.EXACT_RAW_SIZE = self.WIDTH * self.HEIGHT * self.RAW_BPP
         self.extensions = getattr(mod, "EXTENSIONS", {})
 
-        gain_info = self.hw_inventory[self.core['gain']]
-        self.MIN_GAIN = gain_info['min']
-        self.MAX_GAIN = gain_info['max']
-        self.REG_GAIN_MIN = self.MIN_GAIN
-        self.REG_GAIN_MAX = self.MAX_GAIN
-
-        try:
-            self.VIRT_GAIN_MIN = mod.VIRT_GAIN_MIN
-            self.VIRT_GAIN_MAX = mod.VIRT_GAIN_MAX
-            self.EXP_OFFSET    = mod.EXP_OFFSET
-            self.RAW_BPP       = mod.RAW_BPP
-        except AttributeError as e:
-            raise AttributeError(f"Missing mandatory config in {self.SENSOR_NAME}.py: {e}")
-
-        self.EXACT_RAW_SIZE = self.WIDTH * self.HEIGHT * self.RAW_BPP
+    def get_runtime_ctrls(self, target_us, gain):
+        return self.raw_config.get_runtime_ctrls(target_us, gain, self)
 
     def _find_nodes(self):
         found_count = 0
         for i in range(10):
             path = f"/dev/media{i}"
-            if not os.path.exists(path): 
-                continue
-   
+            if not os.path.exists(path): continue
             out = subprocess.run(f"media-ctl -d {path} -p", shell=True, capture_output=True, text=True).stdout
-
             if self.SENSOR_NAME.lower() in out.lower():
                 if found_count == SENSOR_INDEX:
                     try:
                         sub = re.search(rf"{self.SENSOR_NAME}.*?device node name\s+(/dev/v4l-subdev\d+)", out, re.S).group(1)
                         vid = re.search(r"(?:unicam-image|video-sensor|vi-output).*?device node name\s+(/dev/video\d+)", out, re.S).group(1)
-                        print(f"[{self.SENSOR_NAME}] Picked sensor #{found_count} at {path}")
                         return path, sub, vid
-                    except AttributeError:
-                        continue
-                else:
-                    found_count += 1
-                    
-        raise RuntimeError(f"Sensor {self.SENSOR_NAME} (Index: {SENSOR_INDEX}) not found. Total found: {found_count}")
+                    except: continue
+                else: found_count += 1
+        raise RuntimeError(f"Sensor {self.SENSOR_NAME} not found.")
 
     def _scan_v4l2_controls(self):
         inventory = {}
         out = subprocess.check_output(f"v4l2-ctl -d {self.s_node} --list-ctrls", shell=True, text=True)
         int_p = re.compile(r"^\s*([a-zA-Z0-9_]+)\s+.*?min=(-?\d+)\s+max=(-?\d+).*\s+value=(-?\d+)")
-        base_p = re.compile(r"^\s*([a-zA-Z0-9_]+)\s+.*?default=(-?\d+)\s+value=(-?\d+)")
-        
         for line in out.splitlines():
             m = int_p.search(line)
             if m:
                 inventory[m.group(1)] = {'min': int(m.group(2)), 'max': int(m.group(3)), 'val': int(m.group(4))}
-                continue
-            m_b = base_p.search(line)
-            if m_b:
-                inventory[m_b.group(1)] = {'min': 0, 'max': 1, 'val': int(m_b.group(3))}
         return inventory
-
-    def _compute_physics(self):
-        res = subprocess.check_output(f"v4l2-ctl -d {self.s_node} --get-ctrl={self.core['pixel_rate']}", shell=True, text=True)
-        self.pixel_rate = int(res.split(':')[-1].strip())
-
-        hblank_val = self.hw_inventory[self.core['hblank']]['val']
-        self.hmax = self.WIDTH + hblank_val
-        self.line_time = self.hmax / self.pixel_rate
-
-        exp_range = self.hw_inventory[self.core['exposure']]
-        self.MIN_EXPOSURE = exp_range['min'] * self.line_time
-        self.MAX_EXPOSURE = exp_range['max'] * self.line_time
-
-        self.BIAS_EXPOSURE = self.MIN_EXPOSURE
 
 def _init_factory():
     detected_entities = []
@@ -101,18 +64,12 @@ def _init_factory():
             detected_entities.extend([n.strip() for n in names])
 
     for loader, module_name, is_pkg in pkgutil.iter_modules(sensors_pkg.__path__):
-        full_mod_path = f"snippets.sensors.{module_name}"
-        mod = importlib.import_module(full_mod_path)
-
+        if module_name == "sensor": continue
+        mod = importlib.import_module(f"snippets.sensors.{module_name}")
         target_entity = getattr(mod, "MEDIA_ENTITY_NAME", None)
         if target_entity and any(target_entity in ent for ent in detected_entities):
-
-            if "analogue_gain" in str(mod.CORE_MAPPING.values()):
-                pass 
-                
-            print(f"[*] Auto-detected sensor config: {module_name} (Matches: {target_entity})")
-            return SensorContainer(mod)
-
-    raise RuntimeError(f"Detected hardware entities {detected_entities}, but no matching config file found in snippets/sensors/")
+            if hasattr(mod, "get_runtime_ctrls"):
+                return SensorContainer(mod)
+    raise RuntimeError("No matching sensor config found.")
 
 sensor = _init_factory()
