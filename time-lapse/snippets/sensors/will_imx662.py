@@ -18,13 +18,18 @@ DRV_KEYS = {
     "prate": "pixel_rate"
 }
 
+MIN_EXPOSURE = 1e-6
+MAX_EXPOSURE = 1.0
+MIN_GAIN = 34
+MAX_GAIN = 240
+VIRT_GAIN_MIN = 1.0
+VIRT_GAIN_MAX = 16.0
+
 def parse_hw_inventory(container):
     inventory = {}
     try:
         out = subprocess.check_output(f"v4l2-ctl -d {container.s_node} --list-ctrls", shell=True, text=True)
-
-        pattern = re.compile(r"([a-z0-9_]+)\s+0x[0-9a-f]+\s+\([a-z]+\)\s+:\s+min=(-?\d+)\s+max=(-?\d+).*?value=(-?\d+)")
-        
+        pattern = re.compile(r"([a-z0-9_]+)\s+0x[0-9a-f]+\s+\([a-z0-9]+\)\s+:\s+min=(-?\d+)\s+max=(-?\d+).*?value=(-?\d+)")
         for line in out.splitlines():
             m = pattern.search(line)
             if m:
@@ -33,46 +38,40 @@ def parse_hw_inventory(container):
                     'max': int(m.group(3)),
                     'val': int(m.group(4))
                 }
-    except Exception as e:
-        print(f"[IMX662] Critical error parsing hw: {e}")
-        
+    except Exception:
+        pass
     return inventory
 
 def get_init_cmds(container):
-    cmds = [
+    return [
         f"media-ctl -d {container.m_node} -V \"'{container.MEDIA_ENTITY_NAME}':0 [fmt:{container.MEDIA_CTL_FMT}/{container.WIDTH}x{container.HEIGHT}]\"",
         f"v4l2-ctl -d {container.v_node} --set-fmt-video=width={container.WIDTH},height={container.HEIGHT},pixelformat={container.V4L2_PIXELFORMAT}",
         f"v4l2-ctl -d {container.s_node} --set-ctrl=hcg_enable=1"
     ]
-    return cmds
 
-def get_runtime_ctrls(target_us, gain, container):
+def get_runtime_cmds(target_us, gain, container):
     inv = container.hw_inventory
     pr = inv.get(DRV_KEYS['prate'], {'val': 72600000})['val']
     hb = inv.get(DRV_KEYS['hblk'], {'val': 0})['val']
     hmax = WIDTH + hb
     
     req_vmax = int((target_us / 1000.0 * pr) / (1000 * hmax))
-
-    ctrls = []
-
+    
     v_key = DRV_KEYS['vblk']
     v_val = int(np.clip(req_vmax - HEIGHT, inv[v_key]['min'], inv[v_key]['max']))
-    ctrls.append((v_key, v_val))
-
+    
     e_key = DRV_KEYS['exp']
     e_val = int(np.clip(req_vmax - 8, inv[e_key]['min'], inv[e_key]['max']))
-    ctrls.append((e_key, e_val))
-
+    
     g_key = DRV_KEYS['gain']
     g_val = int(np.clip(gain, inv[g_key]['min'], inv[g_key]['max']))
-    ctrls.append((g_key, g_val))
     
-    return ctrls
+    return [
+        f"v4l2-ctl -d {container.s_node} --set-ctrl={v_key}={v_val}",
+        f"v4l2-ctl -d {container.s_node} --set-ctrl={e_key}={e_val}",
+        f"v4l2-ctl -d {container.s_node} --set-ctrl={g_key}={g_val}"
+    ]
 
-MIN_EXPOSURE = 1e-6
-MAX_EXPOSURE = 1.0
-MIN_GAIN = 34
-MAX_GAIN = 240
-VIRT_GAIN_MIN = 1.0
-VIRT_GAIN_MAX = 16.0
+def get_capture_cmd(out_path):
+    from snippets.sensors import sensor
+    return f"v4l2-ctl -d {sensor.v_node} --stream-mmap --stream-count=1 --stream-to={out_path}"
