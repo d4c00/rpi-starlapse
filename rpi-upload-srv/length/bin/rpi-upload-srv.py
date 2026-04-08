@@ -62,7 +62,7 @@ SUB_DIR_KEYWORDS = {
     "biases": "biases",
 }
 
-def is_not_all_zeros(data, sample_count=100):
+def is_not_all_zeros(data, sample_count=10000):
     data_len = len(data)
     if data_len == 0: return False
     for _ in range(min(sample_count, data_len)):
