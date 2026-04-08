@@ -8,7 +8,7 @@ from snippets.sensors import sensor
 from snippets.config import AE_TARGET_LUMA
 
 class AdaptiveExposureEngine:
-    def __init__(self):
+    def __init__(self, reg_min, reg_max, virt_min, virt_max):
         self.target = AE_TARGET_LUMA
         self.ev = None
         self.ev_vel = 0.0
@@ -20,10 +20,10 @@ class AdaptiveExposureEngine:
         self.q_scale = 0.1
         self.kf_r = 0.5
 
-        self.REG_MIN = sensor.REG_GAIN_MIN
-        self.REG_MAX = sensor.REG_GAIN_MAX
-        self.VIRT_GAIN_MIN = sensor.VIRT_GAIN_MIN
-        self.VIRT_GAIN_MAX = sensor.VIRT_GAIN_MAX
+        self.REG_MIN = reg_min
+        self.REG_MAX = reg_max
+        self.VIRT_GAIN_MIN = virt_min
+        self.VIRT_GAIN_MAX = virt_max
 
     def _phys_to_virt_gain(self, reg_val):
         return 1.0 + (reg_val - self.REG_MIN) * (self.VIRT_GAIN_MAX - self.VIRT_GAIN_MIN) / (self.REG_MAX - self.REG_MIN)
@@ -106,8 +106,8 @@ class AdaptiveExposureEngine:
 
 _engine = None
 
-def process_ae_logic(raw_path, width, height, current_us, current_reg_gain, max_us_limit, max_reg_gain):
+def process_ae_logic(raw_path, width, height, current_us, current_reg_gain, max_us_limit, max_reg_gain, reg_min, virt_min, virt_max):
     global _engine
     if _engine is None:
-        _engine = AdaptiveExposureEngine()
+        _engine = AdaptiveExposureEngine(reg_min, max_reg_gain, virt_min, virt_max)
     return _engine.process_raw_frame(raw_path, width, height, current_us, current_reg_gain, max_us_limit, max_reg_gain)

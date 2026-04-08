@@ -1,31 +1,37 @@
 # Copyright (c) 2026 length <me@length.cc> (https://github.com/d4c00)
 # Licensed under the MIT License.
 
+# --- Basic Identity ---
 SENSOR_NAME = "imx662"
-MEDIA_ENTITY_NAME = "imx662 10-001a"
+MEDIA_ENTITY_NAME = "imx662 10-001a"   # Found via 'media-ctl -p'
+WIDTH, HEIGHT = 1936, 1100            # Native resolution
+MEDIA_CTL_FMT = "SRGGB12_1X12"        # Media-bus format
+V4L2_PIXELFORMAT = "RG12"             # Capture format (12-bit Raw)
 
-WIDTH = 1936
-HEIGHT = 1100
-MEDIA_CTL_FMT = "SRGGB12_1X12"
-V4L2_PIXELFORMAT = "RG12"
-BYTES_PER_PIXEL = 2
+# --- Physical Constraints ---
+RAW_BPP = 2          # Bytes Per Pixel (e.g., 2 for 12-bit unpacked)
+EXP_OFFSET = 8       # Exposure line offset (Hardware specific: VMAX - OFFSET)
 
-EXACT_RAW_SIZE = WIDTH * HEIGHT * BYTES_PER_PIXEL
+# --- V4L2 Control Mapping ---
+# Maps standard logic names to driver-specific V4L2 control strings
+CORE_MAPPING = {
+    "exposure": "exposure",
+    "gain": "analogue_gain",
+    "vblank": "vertical_blanking",
+    "hblank": "horizontal_blanking",
+    "pixel_rate": "pixel_rate"
+}
 
-HCG_CTRL_NAME = "hcg_enable"
-HCG_VALUE = 1
+# --- Driver Extensions ---
+# Static parameters applied once during camera initialization
+EXTENSIONS = {
+    "hcg_enable": 1,      # High Conversion Gain
+    "black_level": 64,    # Pedestal level
+    "horizontal_flip": 0,
+    "vertical_flip": 0
+}
 
-GAIN_CTRL_NAME = "analogue_gain"
-EXPOSURE_CTRL_NAME = "exposure"
-VBLANK_CTRL_NAME = "vertical_blanking"
-
-REG_GAIN_MIN = 34
-REG_GAIN_MAX = 240
+# --- AE Workspace ---
+# Normalized gain range for Auto Exposure algorithm
 VIRT_GAIN_MIN = 1.0
-VIRT_GAIN_MAX = 7.0
-
-MAX_EXPOSURE = 27.9678666666666666666
-MAX_GAIN = 240
-
-BIAS_EXPOSURE = 0.000054
-BIAS_GAIN = 34
+VIRT_GAIN_MAX = 16.0
