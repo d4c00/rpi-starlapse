@@ -15,12 +15,12 @@ class SensorContainer:
         self.V4L2_PIXELFORMAT = mod.V4L2_PIXELFORMAT
 
         self.m_node, self.s_node, self.v_node = self._find_nodes()
-
         self.hw_inventory = self._scan_v4l2_controls()
 
         for attr in ["MIN_GAIN", "MAX_GAIN", "MIN_EXPOSURE", "MAX_EXPOSURE", 
-                     "VIRT_GAIN_MIN", "VIRT_GAIN_MAX", "RAW_BPP"]:
-            setattr(self, attr, getattr(mod, attr))
+                     "VIRT_GAIN_MIN", "VIRT_GAIN_MAX", "RAW_BPP", "EXP_OFFSET"]:
+            if hasattr(mod, attr):
+                setattr(self, attr, getattr(mod, attr))
         
         self.EXACT_RAW_SIZE = self.WIDTH * self.HEIGHT * self.RAW_BPP
         self.extensions = getattr(mod, "EXTENSIONS", {})
