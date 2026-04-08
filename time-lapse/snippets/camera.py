@@ -28,18 +28,12 @@ class V4L2Camera:
 
     def capture_to_path(self, target_us, gain, out_path):
         req_vmax = int((target_us / 1000.0 * sensor.pixel_rate) / (1000 * sensor.hmax))
-        
-        v_key = sensor.core['vblank']
-        e_key = sensor.core['exposure']
-        g_key = sensor.core['gain']
-        
-        vblank_val = int(np.clip(req_vmax - sensor.HEIGHT, sensor.hw_inventory[v_key]['min'], sensor.hw_inventory[v_key]['max']))
-        exposure_val = int(np.clip(req_vmax - sensor.EXP_OFFSET, sensor.hw_inventory[e_key]['min'], sensor.hw_inventory[e_key]['max']))
-        gain_val = int(np.clip(gain, sensor.MIN_GAIN, sensor.MAX_GAIN))
 
-        self._run(f"v4l2-ctl -d {sensor.s_node} --set-ctrl={v_key}={vblank_val}")
+        ctrls_to_set = sensor.raw_config.get_runtime_ctrls(req_vmax, gain, sensor)
 
-        self._run(f"v4l2-ctl -d {sensor.s_node} --set-ctrl={e_key}={exposure_val},{g_key}={gain_val}")
+        if ctrls_to_set:
+            cmd_str = ",".join([f"{k}={v}" for k, v in ctrls_to_set.items()])
+            self._run(f"v4l2-ctl -d {sensor.s_node} --set-ctrl={cmd_str}")
 
         t0 = time.perf_counter()
         self._run(f"v4l2-ctl -d {sensor.v_node} --stream-mmap --stream-count=1 --stream-to={out_path}")
