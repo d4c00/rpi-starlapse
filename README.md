@@ -234,7 +234,7 @@ You can check what `.ko` files are available in `/usr/lib/modules/$(uname -r)/ke
 **A** Please check whether `CAMERA_ENABLED` in `snippets/config.py` is set to `True`.  
 If it is already `True` but still doesn’t work, it is likely that the camera connector is loose. Try re-inserting the FPC cable firmly and reinforcing it with tape or similar methods.
 
-**Q** Why does the log keep printing “[CLEANUP] All zeros: {path}. Deleting.”? What’s going on?  
+**Q** Why does the log keep printing “[CLEANUP] All zeros: /dev/shm/time-lapse/tmp/w_01.raw.lights_tmp. Deleting.”? What’s going on?  
 **A** This is still most likely caused by a loose cable or incorrect crystal oscillator frequency setting.
 
 ## License
