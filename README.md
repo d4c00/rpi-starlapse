@@ -168,8 +168,7 @@ server {
 ## 2. Client-side
 
 The current IMX662 configuration file is `time-lapse/snippets/sensors/imx662.py`.  
-I wrote it based on the v4l2 driver from https://github.com/will127534/imx662-v4l2-driver and set `MAX_EXPOSURE` according to the 74.25 MHz crystal oscillator frequency. You can adjust it as needed.
-
+It based on the v4l2 driver from https://github.com/will127534/imx662-v4l2-driver . You can adjust it as needed.
 In the future it may be rewritten based on https://github.com/raspberrypi/linux/pull/7239 or the merged official v4l2 driver.
 
 Next, we will begin the installation.
