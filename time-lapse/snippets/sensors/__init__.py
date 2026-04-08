@@ -8,15 +8,14 @@ from snippets.config import SENSOR_INDEX
 class SensorContainer:
     def __init__(self, mod):
         self.raw_config = mod
+
         for attr in dir(mod):
             if not attr.startswith("__"):
                 setattr(self, attr, getattr(mod, attr))
 
         self.m_node, self.s_node, self.v_node = self._find_nodes()
-        self.hw_inventory = self._scan_v4l2_controls()
 
-    def get_runtime_ctrls(self, target_us, gain):
-        return self.raw_config.get_runtime_ctrls(target_us, gain, self)
+        self.hw_inventory = self._scan_v4l2_controls()
 
     def _find_nodes(self):
         found_count = 0
@@ -32,16 +31,19 @@ class SensorContainer:
                         return path, sub, vid
                     except: continue
                 else: found_count += 1
-        raise RuntimeError(f"Sensor {self.SENSOR_NAME} not found.")
+        raise RuntimeError(f"Sensor {self.SENSOR_NAME} not found on media bus.")
 
     def _scan_v4l2_controls(self):
         inventory = {}
-        out = subprocess.check_output(f"v4l2-ctl -d {self.s_node} --list-ctrls", shell=True, text=True)
-        int_p = re.compile(r"^\s*([a-zA-Z0-9_]+)\s+.*?min=(-?\d+)\s+max=(-?\d+).*\s+value=(-?\d+)")
-        for line in out.splitlines():
-            m = int_p.search(line)
-            if m:
-                inventory[m.group(1)] = {'min': int(m.group(2)), 'max': int(m.group(3)), 'val': int(m.group(4))}
+        try:
+            out = subprocess.check_output(f"v4l2-ctl -d {self.s_node} --list-ctrls", shell=True, text=True)
+            int_p = re.compile(r"^\s*([a-zA-Z0-9_]+)\s+.*?min=(-?\d+)\s+max=(-?\d+).*\s+value=(-?\d+)")
+            for line in out.splitlines():
+                m = int_p.search(line)
+                if m:
+                    inventory[m.group(1)] = {'min': int(m.group(2)), 'max': int(m.group(3)), 'val': int(m.group(4))}
+        except Exception as e:
+            print(f"[WARN] Failed to scan controls: {e}")
         return inventory
 
 def _init_factory():
@@ -57,8 +59,10 @@ def _init_factory():
         if module_name == "sensor": continue
         mod = importlib.import_module(f"snippets.sensors.{module_name}")
         target_entity = getattr(mod, "MEDIA_ENTITY_NAME", None)
+        
         if target_entity and any(target_entity in ent for ent in detected_entities):
             return SensorContainer(mod)
-    raise RuntimeError("No matching sensor config found.")
+            
+    raise RuntimeError("No matching sensor configuration found for the connected hardware.")
 
 sensor = _init_factory()
