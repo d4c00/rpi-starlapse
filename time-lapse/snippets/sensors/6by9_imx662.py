@@ -17,7 +17,6 @@ EXP_OFFSET = 8
 def get_v4l2_limit(ctrl_name):
     try:
         res = subprocess.check_output(f"v4l2-ctl -d {ACTUAL_SUBDEV} --list-ctrls", shell=True, text=True)
-        # 匹配格式: name 0x... (type) : min=X max=Y ...
         match = re.search(rf"{ctrl_name}.*min=(\d+)\s+max=(\d+)", res)
         if match:
             return int(match.group(1)), int(match.group(2))
