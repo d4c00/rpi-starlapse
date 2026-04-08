@@ -14,9 +14,29 @@
 
 ## Preface
 
-What I’m currently using is the **Raspberry Pi Zero 2W + IMX662 module with 74.25 MHz crystal oscillator + 800 nm long-pass filter + 8 mm f/1.2 M12 lens**. This exact setup runs perfectly. Other development boards and sensors can very likely be made to work too after some minor modifications.
+The reason for choosing this combination is to capture clear infrared Milky Way images in light-polluted cities at a low cost.<br>
+###### Unit costs for the core components are as follows:
+
+    Raspberry Pi Zero 2W: $18.98
+    IMX662 Module: $24.50
+    800nm Long-pass Filter + 8mm f/1.2 M12 Lens: $10.89
+    Total: $54.37 (excluding SD card, power bank, cables, acrylic enclosure, and aluminum heatsinks).
+<br>
+The Zero 2W was selected because it is compact and power-efficient; its performance is modest but sufficient for the task.
+
+I chose the IMX662 because STARVIS 2 offers high QE (Quantum Efficiency) in the infrared spectrum while remaining affordable. However, the 74.25 MHz crystal oscillator I’m using might not be ideal for long exposures; a module with a 24 MHz oscillator—the lowest supported by the IMX662—might be more suitable.
+
+By pairing it with an 800nm long-pass filter, the color sensor can function like a mono sensor (though faint Bayer patterns remain), achieving the same sharpness and clarity as a true mono sensor. The filter is an 8.5mm diameter interference filter attached to the back of the M12 lens (facing the sensor). The filter and lens were pre-assembled by the seller.
+
+<br>
+
+---
+
+Other development boards and sensors can very likely be made to work too after some minor modifications.
 
 That said, I’ve already prepared the groundwork for supporting even more sensors. You can add additional support directly in `time-lapse/snippets/sensors`. I really hope users with different hardware will also jump in and help me try writing the code.
+<br>
+<br>
 
 ## Explanation
 
@@ -38,9 +58,14 @@ If the receiver server has unstable network or is completely unreachable, the sy
 <br>
 For more details, please check the code yourself.
 
-# Usage
 ---
-### Server-side
+
+<br>
+
+# Usage
+<br>
+
+## 1. Server-side
 Please ensure that Podman is installed in your current environment.
 
 For example, `/mnt/ssd_data/podman/rpi-upload-srv` is the directory where I plan to store the files.
@@ -130,8 +155,12 @@ server {
     }
 }
 ```
+<br>
+<br>
+
 ---
-### Client-side
+
+## 2. Client-side
 
 The current IMX662 configuration file is `time-lapse/snippets/sensors/imx662.py`.  
 I wrote it based on the v4l2 driver from https://github.com/will127534/imx662-v4l2-driver and set `MAX_EXPOSURE` according to the 74.25 MHz crystal oscillator frequency. You can adjust it as needed.
@@ -183,6 +212,9 @@ To monitor logs:
 sudo journalctl _SYSTEMD_USER_UNIT=time-lapse.service -f
 ```
 ---
+<br>
+<br>
+
 ## My Usage
 
 Although there is no dedicated flat-field shooting option, the logic is exactly the same as bright-field shooting, so you don’t need special code to shoot flats either.  
@@ -234,6 +266,9 @@ Back home, I power the Pi back on, connect it to the internal network that can r
 By the way, there was also a time when I went to collect [it] after shooting, only to find that as soon as I started shooting the starry sky, it was covered by thick clouds. Then I directly **took** several hundred frames of ten-plus-second long-exposure clouds **from the shot ones** as flats and put them into the flats folder.
 At the same time, I triggered the calibration frame shooting; after covering the lens cap to shoot darks, I put the shot darks into the biases folder.
 
+---
+<br>
+
 ## Frequently Asked Questions
 
 **Q** Why is my sensor listed in the supported sensors, but it still fails to match and be used?  
@@ -246,6 +281,12 @@ If it is already `True` but still doesn’t work, it is likely that the camera c
 
 **Q** Why does the log keep printing “[CLEANUP] All zeros: /dev/shm/time-lapse/tmp/w_01.raw.lights_tmp. Deleting.”? What’s going on?  
 **A** This is still most likely caused by a loose cable or incorrect crystal oscillator frequency setting.
+
+<br>
+<br>
+<br>
+
+---
 
 ## License
 Copyright (c) 2026 length <me@length.cc> (https://github.com/d4c00)  
