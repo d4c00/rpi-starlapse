@@ -2,6 +2,7 @@
 # Licensed under the MIT License.
 
 import os, importlib, re, subprocess
+from snippets.config import SENSOR_INDEX
 
 class SensorContainer:
     def __init__(self, mod):
@@ -38,15 +39,27 @@ class SensorContainer:
         self.EXACT_RAW_SIZE = self.WIDTH * self.HEIGHT * self.RAW_BPP
 
     def _find_nodes(self):
-        for i in range(5):
+        found_count = 0
+        for i in range(10):
             path = f"/dev/media{i}"
-            if not os.path.exists(path): continue
+            if not os.path.exists(path): 
+                continue
+   
             out = subprocess.run(f"media-ctl -d {path} -p", shell=True, capture_output=True, text=True).stdout
+
             if self.SENSOR_NAME.lower() in out.lower():
-                sub = re.search(rf"{self.SENSOR_NAME}.*?device node name\s+(/dev/v4l-subdev\d+)", out, re.S).group(1)
-                vid = re.search(r"(?:unicam-image|video-sensor|vi-output).*?device node name\s+(/dev/video\d+)", out, re.S).group(1)
-                return path, sub, vid
-        raise RuntimeError(f"Sensor {self.SENSOR_NAME} not found")
+                if found_count == SENSOR_INDEX:
+                    try:
+                        sub = re.search(rf"{self.SENSOR_NAME}.*?device node name\s+(/dev/v4l-subdev\d+)", out, re.S).group(1)
+                        vid = re.search(r"(?:unicam-image|video-sensor|vi-output).*?device node name\s+(/dev/video\d+)", out, re.S).group(1)
+                        print(f"[{self.SENSOR_NAME}] Picked sensor #{found_count} at {path}")
+                        return path, sub, vid
+                    except AttributeError:
+                        continue
+                else:
+                    found_count += 1
+                    
+        raise RuntimeError(f"Sensor {self.SENSOR_NAME} (Index: {SENSOR_INDEX}) not found. Total found: {found_count}")
 
     def _scan_v4l2_controls(self):
         inventory = {}
