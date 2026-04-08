@@ -27,6 +27,7 @@ CAMERA_ENABLED = True
 CAPTURE_INTERVAL = 30
 AE_TARGET_LUMA = 0.33
 AE_MARGIN = 1.5
+SENSOR_INDEX = 0
 
 # Calibration Trigger
 DARK_TRIGGER_FILE = "/dev/shm/time-lapse/calibration"
