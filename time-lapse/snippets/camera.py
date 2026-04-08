@@ -15,8 +15,7 @@ class V4L2Camera:
 
     def __init__(self):
         if hasattr(sensor.raw_config, "get_init_cmds"):
-            init_cmds = sensor.raw_config.get_init_cmds(sensor)
-            for cmd in init_cmds:
+            for cmd in sensor.get_init_cmds():
                 self._run(cmd)
 
     def _run(self, cmd):
@@ -27,12 +26,13 @@ class V4L2Camera:
             raise
 
     def capture_to_path(self, target_us, gain, out_path):
-        ctrls_list = sensor.get_runtime_ctrls(target_us, gain)
+        runtime_cmds = sensor.get_runtime_cmds(target_us, gain)
+        for cmd in runtime_cmds:
+            self._run(cmd)
 
-        if ctrls_list:
-            for key, val in ctrls_list:
-                self._run(f"v4l2-ctl -d {sensor.s_node} --set-ctrl={key}={val}")
-
+        capture_cmd = sensor.get_capture_cmd(out_path)
+        
         t0 = time.perf_counter()
-        self._run(f"v4l2-ctl -d {sensor.v_node} --stream-mmap --stream-count=1 --stream-to={out_path}")
+        self._run(capture_cmd)
+        
         return True, (time.perf_counter() - t0) * 1000
