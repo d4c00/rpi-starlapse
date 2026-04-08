@@ -14,7 +14,7 @@ def run_core():
     os.makedirs(SAVE_DIR, exist_ok=True)
     cleanup_shm_env()
 
-    init_snap_str = "0|666666|2.0|0.0|0.0"
+    init_snap_str = "0|666666|1.0|0.0|0.0"
     sh_snap = multiprocessing.Array('c', 128)
     sh_snap.value = init_snap_str.encode()
 
