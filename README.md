@@ -32,9 +32,13 @@ By pairing it with an 800nm long-pass filter, the color sensor can function like
 
 ---
 
-Other development boards and sensors can very likely be made to work too after some minor modifications.
+### **Call for Hardware Compatibility & Contributions**
 
-That said, I’ve already prepared the groundwork for supporting even more sensors. You can add additional support directly in `time-lapse/snippets/sensors`. I really hope users with different hardware will also jump in and help me try writing the code.
+Theoretically, by referring to the file `rpi-starlapse/time-lapse/snippets/sensors/imx662.py` and filling in the **V4L2 control mappings** used by your sensor's driver, your hardware should also be compatible. Other brands of Pi-like development boards may also work.
+
+I do not have additional hardware for testing, but I have done my best to ensure system generality. I would be very happy to receive feedback from users with different hardware.
+
+If you can write a sensor configuration file for hardware different from mine and run it successfully, I would be extremely grateful if you could create a PR to help me support more sensors.
 <br>
 <br>
 
