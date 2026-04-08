@@ -59,10 +59,9 @@ If the receiver server has unstable network or is completely unreachable, the sy
 For more details, please check the code yourself.
 
 ---
-
 <br>
 
-# Usage
+# >> Usage << 
 <br>
 
 ## 1. Server-side
@@ -158,8 +157,6 @@ server {
 <br>
 <br>
 
----
-
 ## 2. Client-side
 
 The current IMX662 configuration file is `time-lapse/snippets/sensors/imx662.py`.  
@@ -211,9 +208,10 @@ To monitor logs:
 ```bash
 sudo journalctl _SYSTEMD_USER_UNIT=time-lapse.service -f
 ```
+<br>
+<br>
+
 ---
-<br>
-<br>
 
 ## My Usage
 
@@ -265,9 +263,9 @@ Back home, I power the Pi back on, connect it to the internal network that can r
 
 By the way, there was also a time when I went to collect [it] after shooting, only to find that as soon as I started shooting the starry sky, it was covered by thick clouds. Then I directly **took** several hundred frames of ten-plus-second long-exposure clouds **from the shot ones** as flats and put them into the flats folder.
 At the same time, I triggered the calibration frame shooting; after covering the lens cap to shoot darks, I put the shot darks into the biases folder.
+<br>
 
 ---
-<br>
 
 ## Frequently Asked Questions
 
@@ -282,12 +280,8 @@ If it is already `True` but still doesn’t work, it is likely that the camera c
 **Q** Why does the log keep printing “[CLEANUP] All zeros: /dev/shm/time-lapse/tmp/w_01.raw.lights_tmp. Deleting.”? What’s going on?  
 **A** This is still most likely caused by a loose cable or incorrect crystal oscillator frequency setting.
 
-<br>
-<br>
-<br>
-
 ---
+<br>
 
-## License
-Copyright (c) 2026 length <me@length.cc> (https://github.com/d4c00)  
-Licensed under the MIT License.
+###### Copyright (c) 2026 length <me@length.cc> (https://github.com/d4c00) <br>
+###### Licensed under the MIT License.
