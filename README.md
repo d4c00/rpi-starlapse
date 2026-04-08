@@ -1,9 +1,11 @@
 ## Preface
 
 Raspberry Pi starry sky time-lapse photography, but it might not be limited to just the Raspberry Pi, and it might not even be limited to starry skies.
-<br>
-<br>
-<br>
+<div align="center">
+  <img src="https://github.com/user-attachments/assets/768b157d-196d-4502-bacf-9d13b6f02a91" width="25%" />
+  <img src="https://github.com/user-attachments/assets/0ea92a9c-518a-48d5-9285-62515a5b2186" width="25%" />
+  <img src="https://github.com/user-attachments/assets/636584fc-1f80-4664-965f-35e0f479bc7c" width="25%" />
+</div>
 What I’m currently using is the **Raspberry Pi Zero 2W + IMX662 module with 74.25 MHz crystal oscillator + 800 nm long-pass filter + 8 mm f/1.2 M12 lens**. This exact setup runs perfectly. Other development boards and sensors can very likely be made to work too after some minor modifications.
 
 That said, I’ve already prepared the groundwork for supporting even more sensors. You can add additional support directly in `time-lapse/snippets/sensors`. I really hope users with different hardware will also jump in and help me try writing the code.
