@@ -27,15 +27,13 @@ class V4L2Camera:
         return subprocess.check_output(cmd, shell=True, text=True, stderr=subprocess.STDOUT)
 
     def capture_to_path(self, target_us, gain, out_path):
-        ctrls = sensor.get_runtime_ctrls(target_us, gain)
+        req_vmax = int((target_us / 1000.0 * sensor.pixel_rate) / (1000 * sensor.hmax))
 
-        v_key = sensor.raw_config.CORE_MAPPING.get('vblank')
-        if v_key and v_key in ctrls:
-            self._run(f"v4l2-ctl -d {sensor.s_node} --set-ctrl={v_key}={ctrls.pop(v_key)}")
+        ctrls_to_set = sensor.raw_config.get_runtime_ctrls(req_vmax, gain, sensor)
 
-        if ctrls:
-            kv_pairs = ",".join([f"{k}={v}" for k, v in ctrls.items()])
-            self._run(f"v4l2-ctl -d {sensor.s_node} --set-ctrl={kv_pairs}")
+        if ctrls_to_set:
+            cmd_str = ",".join([f"{k}={v}" for k, v in ctrls_to_set.items()])
+            self._run(f"v4l2-ctl -d {sensor.s_node} --set-ctrl={cmd_str}")
 
         t0 = time.perf_counter()
         self._run(f"v4l2-ctl -d {sensor.v_node} --stream-mmap --stream-count=1 --stream-to={out_path}")
