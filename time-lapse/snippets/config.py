@@ -6,7 +6,7 @@ import os
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SAVE_DIR = os.path.join(BASE_DIR, "photo")
 
-SHM_ROOT = "/dev/shm/time-lapse"
+SHM_ROOT = f"/dev/shm/time-lapse/{DEVICE_ID}"
 SHM_QUEUE = os.path.join(SHM_ROOT, "queue")
 SAVE_DIR = os.path.join(BASE_DIR, "photo")
 SUB_DIRS = {
