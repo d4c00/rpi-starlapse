@@ -56,20 +56,27 @@ class AdaptiveExposureEngine:
             if self.ev is None:
                 self.ev = math.log2(max(self.min_energy, (current_us * current_virt_gain) / 1e6) + 1e-9)
 
-            luma_raw = np.sum(ds_raw * self.weight_map) / 255.0
-            raw_mean = np.mean(ds_raw) / 255.0
+            bg = np.median(ds_raw)
+            mad = np.median(np.abs(ds_raw - bg))
+            noise = 1.4826 * mad
 
-            luma = np.clip(luma_raw, 1e-4, 1.0)
-            if luma > self.target:
-                norm_err = (luma - self.target) / (1.0 - self.target + 1e-9)
-                err_ev = -2.0 * norm_err 
-            else:
-                norm_err = (self.target - luma) / (self.target + 1e-9)
-                err_ev = 2.0 * norm_err
+            luma = np.clip(bg / 255.0, 1e-4, 1.0)
+            raw_mean = luma 
+            
+            snr = bg / (noise + 1e-6)
+            target_snr = 4.0
+
+            snr_err = target_snr - snr
+            err_ev = 0.9 * math.tanh(snr_err / 2.0)
+
+            dark_boost = 0.6 * math.exp(-bg / 6.0)
+            noise_w = math.tanh(noise / 8.0)
+
+            err_ev = (err_ev + dark_boost) * (0.6 + 0.4 * noise_w)
 
             step = 1.2 * math.tanh(err_ev / 1.5) * (math.tanh(abs(err_ev) * 4.0) ** 3)
-            step += 0.4 * math.exp(-5.0 * (raw_mean / (self.target + 1e-9)))
-            step -= 0.4 * math.exp(-5.0 * ((1.0 - raw_mean) / (1.0 - self.target + 1e-9)))
+#            step += 0.4 * math.exp(-5.0 * (raw_mean / (self.target + 1e-9)))
+#            step -= 0.4 * math.exp(-5.0 * ((1.0 - raw_mean) / (1.0 - self.target + 1e-9)))
             step *= (math.tanh(abs(err_ev) / 0.025) ** 2)
 
             dynamic_q = self.base_q + self.q_scale * (math.tanh(abs(err_ev) * 4.0) ** 4)
