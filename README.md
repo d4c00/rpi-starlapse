@@ -333,7 +333,8 @@ Pixels: 2129600 | Mean: 904.9 | Max: 2140 | Min: 65
 00000030  40 03 84 02 41 03 1f 02  a1 02 c1 02 3c 03 b7 02  |@...A.......<...|
 00000040
 ```
-you can also use ImageJ to verify if the test.raw file is imaging correctly. If it fails to work, please ask the seller for the crystal oscillator frequency of the IMX662 module, or check if the frequency is printed on the module's PCB. If it still doesn't work, please check if the MIPI interface pinout is compatible. I am not entirely sure about the feasibility, but you might be able to get it running by modifying the Device Tree files.
+To verify the image, import test.raw into ImageJ via Import > Raw using: `16-bit Unsigned`, `1936x1100`, and `Little-endian`.<br>
+If it fails to work, please ask the seller for the crystal oscillator frequency of the IMX662 module, or check if the frequency is printed on the module's PCB. If it still doesn't work, please check if the MIPI interface pinout is compatible. I am not entirely sure about the feasibility, but you might be able to get it running by modifying the Device Tree files.
 
 <br>
 
