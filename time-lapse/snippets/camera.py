@@ -26,13 +26,18 @@ class V4L2Camera:
             raise
 
     def capture_to_path(self, target_us, gain, out_path):
-        runtime_cmds = sensor.get_runtime_cmds(target_us, gain)
+        runtime_cmds = sensor.get_runtime_cmds(
+            target_us=target_us, 
+            gain=gain, 
+            container=sensor
+        )
         for cmd in runtime_cmds:
             self._run(cmd)
 
-        capture_cmd = sensor.get_capture_cmd(out_path)
-        
+        capture_cmd = sensor.get_capture_cmd(
+            out_path=out_path, 
+            container=sensor
+        )
         t0 = time.perf_counter()
         self._run(capture_cmd)
-        
         return True, (time.perf_counter() - t0) * 1000
