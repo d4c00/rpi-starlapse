@@ -160,7 +160,7 @@ For example, `/mnt/ssd_data/podman/rpi-upload-srv` is the directory where I plan
 mkdir -p rpi-upload-srv && curl -sL https://api.github.com/repos/d4c00/rpi-starlapse/tarball/main | tar -xz -C rpi-upload-srv --strip-components=2 "*/rpi-upload-srv"
 cd ~/rpi-upload-srv
 ```
-Remember to change the Volume= mapping in the three `.container` files inside `rpi-upload-srv/quadlet/` to your actual path.
+Remember to change the Volume= mapping in the three `.container` files inside `rpi-upload-srv/quadlet/*` to your actual path.
 ```bash
 cp quadlet/* ~/.config/containers/systemd
 systemctl --user daemon-reload
@@ -201,7 +201,7 @@ systemctl --user restart rpi-upload-srv-2
 systemctl --user restart rpi-upload-srv-3
 ```
 
-**Please do not use the default `device_token`. You must modify it.**  (If your sensor is not the IMX662, you must simultaneously change the resolution, bit depth, and verification size in the three `.ini` files within `rpi-upload-srv/conf`, rather than just modifying the `device_token`.")
+**Please do not use the default `device_token`. You must modify it.**  (If your sensor is not the IMX662, you must simultaneously change the resolution, bit depth, and verification size in the three `.ini` files within `rpi-upload-srv/conf/*`, rather than just modifying the `device_token`.")
 ```bash
 sudo nano /mnt/ssd_data/podman/rpi-upload-srv/conf/rpi-upload-srv.ini
 ```
