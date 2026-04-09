@@ -174,7 +174,7 @@ rm length/vcr_osd_mono.zip
 ```bash
 bash build.sh
 ```
-Enter version number: `260408`
+Enter version number: `260409`
 
 I have enabled SELinux, so I need to:
 ```bash
