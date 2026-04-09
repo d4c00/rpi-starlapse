@@ -185,7 +185,16 @@ podman unshare chown -R 3012:3012 /mnt/ssd_data/podman/rpi-upload-srv
 sudo setfacl -R -m u:"$USER":rwx /mnt/ssd_data/podman/rpi-upload-srv
 sudo setfacl -R -d -m u:"$USER":rwx /mnt/ssd_data/podman/rpi-upload-srv
 ```
+You need to start it once to copy the configuration files to the specified directory.
+```bash
+systemctl --user restart rpi-upload-srv-2
+```
+**Please do not use the default `device_token`. You must modify it.**  (If your sensor is not the IMX662, you must simultaneously change the resolution, bit depth, and verification size in the three `.ini` files within `rpi-upload-srv/conf/*`, rather than just modifying the `device_token`.")
+```bash
+sudo nano /mnt/ssd_data/podman/rpi-upload-srv/conf/rpi-upload-srv.ini
+```
 
+It is now ready for use.
 The server has three modes, Start them respectively with:  
 
 1. Receiver mode (Auto-start at boot via systemd)
@@ -203,10 +212,6 @@ systemctl --user restart rpi-upload-srv-2
 systemctl --user restart rpi-upload-srv-3
 ```
 
-**Please do not use the default `device_token`. You must modify it.**  (If your sensor is not the IMX662, you must simultaneously change the resolution, bit depth, and verification size in the three `.ini` files within `rpi-upload-srv/conf/*`, rather than just modifying the `device_token`.")
-```bash
-sudo nano /mnt/ssd_data/podman/rpi-upload-srv/conf/rpi-upload-srv.ini
-```
 **If this is to be run on the public internet, please use Nginx or another reverse proxy to add a layer of TLS encryption whenever possible.**<br>
 Nginx configuration example:
 ```nginx
