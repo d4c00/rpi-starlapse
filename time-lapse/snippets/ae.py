@@ -12,7 +12,6 @@ class AdaptiveExposureEngine:
         self.target = AE_TARGET_LUMA
         self.ev = None
         self.ev_vel = 0.0
-        self.weight_map = None
         self.min_energy = 1e-4
 
         self.kf_p = 1.0
@@ -32,13 +31,6 @@ class AdaptiveExposureEngine:
         reg = self.REG_MIN + (virt_gain - self.VIRT_GAIN_MIN) * (self.REG_MAX - self.REG_MIN) / (self.VIRT_GAIN_MAX - self.VIRT_GAIN_MIN)
         return int(np.clip(reg, self.REG_MIN, self.REG_MAX))
 
-    def _prepare_assets(self, h, w):
-        print(f"[AE] Initializing weight map for downsampled RAW: {w}x{h}")
-        y, x = np.indices((h, w))
-        sigma = min(h, w) / 3.0
-        weight = np.exp(-((x - w/2)**2 + (y - h/2)**2) / (2 * sigma**2))
-        self.weight_map = (weight / (weight.sum() + 1e-9)).astype(np.float32)
-
     def process_raw_frame(self, raw_path, width, height, current_us, current_reg_gain, max_us, max_reg_gain):
         current_virt_gain = self._phys_to_virt_gain(current_reg_gain)
         if not os.path.exists(raw_path):
@@ -49,9 +41,6 @@ class AdaptiveExposureEngine:
             stride = 16
             ds_raw = (raw_map[0::stride, 0::stride] >> 4).astype(np.float32)
             h, w = ds_raw.shape
-            
-            if self.weight_map is None or self.weight_map.shape != (h, w):
-                self._prepare_assets(h, w)
 
             if self.ev is None:
                 self.ev = math.log2(max(self.min_energy, (current_us * current_virt_gain) / 1e6) + 1e-9)
@@ -60,8 +49,7 @@ class AdaptiveExposureEngine:
             mad = np.median(np.abs(ds_raw - bg))
             noise = 1.4826 * mad
 
-            luma = np.clip(bg / 255.0, 1e-4, 1.0)
-            raw_mean = luma 
+            luma = np.clip(bg / 255.0, 1e-4, 1.0) 
             
             snr = bg / (noise + 1e-6)
             target_snr = 4.0
