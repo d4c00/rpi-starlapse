@@ -6,6 +6,7 @@ from snippets.utils import set_led, blink_loop, check_time_server, setup_logger,
 from snippets.workers import (ae_worker, camera_worker, memory_manager_worker,
                               background_sync_worker, sync_scheduler_worker, timer_worker)
 from snippets.config import (DEVICE_ID, SAVE_DIR, CAMERA_ENABLED)
+from snippets.sensors import sensor
 
 logger = setup_logger("MAIN")
 
@@ -14,7 +15,8 @@ def run_core():
     os.makedirs(SAVE_DIR, exist_ok=True)
     cleanup_shm_env()
 
-    init_snap_str = "0|666666|1.0|0.0|0.0"
+    init_snap_str = sensor.INIT_SNAP_STR
+
     sh_snap = multiprocessing.Array('c', 128)
     sh_snap.value = init_snap_str.encode()
 
