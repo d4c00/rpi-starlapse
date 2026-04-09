@@ -84,7 +84,74 @@ For more details, please check the code yourself.
 # >> Usage << 
 <br>
 
-## 1. Server-side
+## 1. Client-side
+
+The current IMX662 configuration file is `time-lapse/snippets/sensors/imx662.py`.  
+**It based on the v4l2 driver from: https://github.com/raspberrypi/linux/pull/7239** 
+
+Next, we will begin the installation.
+Install the Linux kernel from the 6by9 Pull Request; this PR contains the unmerged imx662 V4L2 driver. The process will be slow, so please be patient.
+```bash
+sudo rpi-update pulls/7239
+```
+To manually specify the camera and crystal frequency, and enable HCG: If your IMX662 module's frequency differs from mine, please modify the value after clock-frequency=74250000. HCG mode is optional.
+```bash
+sudo grep -q "camera_auto_detect=0" /boot/firmware/config.txt || echo "camera_auto_detect=0" | sudo tee -a /boot/firmware/config.txt
+sudo grep -q "dtoverlay=imx662,clock-frequency=74250000" /boot/firmware/config.txt || echo "dtoverlay=imx662,clock-frequency=74250000" | sudo tee -a /boot/firmware/config.txt
+sudo sed -i '$s/$/ imx662.hcg_mode=1/' /boot/firmware/cmdline.txt
+```
+
+A reboot is required after the installation is complete.
+```bash
+sudo root
+```
+Then:
+```bash
+sudo loginctl enable-linger "$USER"
+```
+
+```bash
+mkdir -p time-lapse && curl -sL https://github.com/d4c00/rpi-starlapse/tarball/main | tar -xz -C time-lapse --strip-components=2 --wildcards "*/time-lapse/"
+```
+
+```bash
+mkdir -p ~/.config/systemd/user/
+cd ~/time-lapse
+cp time-lapse.service ~/.config/systemd/user/
+```
+
+**Please do not use the default `DEVICE_TOKEN`. You must modify it.**  
+```bash
+nano ~/time-lapse/snippets/config.py
+```
+Change `UPLOAD_SRV_BASE` to your upload server address.  
+`TIME_SOURCE` can be set to any website that can be reached; it is only used to check whether the internet is connected (because adding an RTC module to the Raspberry Pi Zero 2W is very inconvenient). This is to confirm that NTP time synchronization has completed before naming the files.
+
+```bash
+sudo apt update
+sudo apt install python3-numpy python3-opencv -y
+```
+Auto-start at boot via systemd
+```bash
+systemctl --user daemon-reload
+systemctl --user enable time-lapse
+systemctl --user restart time-lapse
+```
+
+If you want to shoot calibration frames (dark and bias):  
+```bash
+touch /dev/shm/time-lapse/calibration
+```
+If `CAPTURE_BIAS_FRAMES` in `config.py` is set to `true`, it will shoot both dark and bias frames. If `false`, it will only shoot dark frames.  
+After shooting is complete, the camera will be turned off. You need to manually change `CAMERA_ENABLED` back to `True` in `config.py` and run `systemctl --user restart time-lapse` to resume normal shooting.
+
+To monitor logs:  
+```bash
+sudo journalctl _SYSTEMD_USER_UNIT=time-lapse.service -f
+```
+<br>
+
+## 2. Server-side
 Please ensure that Podman is installed in your current environment.
 
 For example, `/mnt/ssd_data/podman/rpi-upload-srv` is the directory where I plan to store the files.
@@ -177,75 +244,6 @@ server {
 <br>
 <br>
 
-## 2. Client-side
-
-The current IMX662 configuration file is `time-lapse/snippets/sensors/imx662.py`.  
-**It based on the v4l2 driver from: https://github.com/raspberrypi/linux/pull/7239** 
-
-Next, we will begin the installation.
-Install the Linux kernel from the 6by9 Pull Request; this PR contains the unmerged imx662 V4L2 driver. The process will be slow, so please be patient.
-```bash
-sudo rpi-update pulls/7239
-```
-To manually specify the camera and crystal frequency, and enable HCG: If your IMX662 module's frequency differs from mine, please modify the value after clock-frequency=74250000. HCG mode is optional.
-```bash
-sudo grep -q "camera_auto_detect=0" /boot/firmware/config.txt || echo "camera_auto_detect=0" | sudo tee -a /boot/firmware/config.txt
-sudo grep -q "dtoverlay=imx662,clock-frequency=74250000" /boot/firmware/config.txt || echo "dtoverlay=imx662,clock-frequency=74250000" | sudo tee -a /boot/firmware/config.txt
-sudo sed -i '$s/$/ imx662.hcg_mode=1/' /boot/firmware/cmdline.txt
-```
-
-A reboot is required after the installation is complete.
-```bash
-sudo root
-```
-Then:
-```bash
-sudo loginctl enable-linger "$USER"
-```
-
-```bash
-mkdir -p time-lapse && curl -sL https://github.com/d4c00/rpi-starlapse/tarball/main | tar -xz -C time-lapse --strip-components=2 --wildcards "*/time-lapse/"
-```
-
-```bash
-mkdir -p ~/.config/systemd/user/
-cd ~/time-lapse
-cp time-lapse.service ~/.config/systemd/user/
-```
-
-**Please do not use the default `DEVICE_TOKEN`. You must modify it.**  
-```bash
-nano ~/time-lapse/snippets/config.py
-```
-Change `UPLOAD_SRV_BASE` to your upload server address.  
-`TIME_SOURCE` can be set to any website that can be reached; it is only used to check whether the internet is connected (because adding an RTC module to the Raspberry Pi Zero 2W is very inconvenient). This is to confirm that NTP time synchronization has completed before naming the files.
-
-```bash
-sudo apt update
-sudo apt install python3-numpy python3-opencv -y
-```
-Auto-start at boot via systemd
-```bash
-systemctl --user daemon-reload
-systemctl --user enable time-lapse
-systemctl --user restart time-lapse
-```
-
-If you want to shoot calibration frames (dark and bias):  
-```bash
-touch /dev/shm/time-lapse/calibration
-```
-If `CAPTURE_BIAS_FRAMES` in `config.py` is set to `true`, it will shoot both dark and bias frames. If `false`, it will only shoot dark frames.  
-After shooting is complete, the camera will be turned off. You need to manually change `CAMERA_ENABLED` back to `True` in `config.py` and run `systemctl --user restart time-lapse` to resume normal shooting.
-
-To monitor logs:  
-```bash
-sudo journalctl _SYSTEMD_USER_UNIT=time-lapse.service -f
-```
-<br>
-<br>
-
----
 
 ## My Usage
 
