@@ -44,7 +44,7 @@ def load_config(device_id):
         CONF['SHADOW_COLOR'] = config.getint(device_id, 'shadow_color')
         CONF['SHADOW_WIDTH'] = config.getint(device_id, 'shadow_width')
         CONF['POSITION'] = tuple(int(x.strip()) for x in config.get(device_id, 'position').split(','))
-        CONF['TIMEZONE_OFFSET_HOURS'] = config.getint(device_id, 'timezone_offset_hours')
+        CONF['TIMEZONE_OFFSET_HOURS'] = config.getfloat(device_id, 'timezone_offset_hours')
         CONF['ROTATE_DEGREES'] = config.getint(device_id, 'rotate_degrees')
         CONF['FFMPEG_CMD_TEMPLATE'] = config.get(device_id, 'cmd')
         CONF['WIDTH'] = config.getint(device_id, 'width')
