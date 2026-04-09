@@ -5,6 +5,8 @@ import os
 import subprocess
 import re
 
+INIT_SNAP_STR = "0|666666|34.0|0.0|0.0"
+
 SENSOR_NAME = "imx662"
 WIDTH, HEIGHT = 1936, 1100
 V4L2_PIXELFORMAT = "RG12"

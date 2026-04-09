@@ -14,20 +14,11 @@ class BaseSensor:
     def __init__(self, mod):
         self.mod = mod
         for name in dir(mod):
-            if name.startswith("__"): continue
-            attr = getattr(mod, name)
-            if inspect.isfunction(attr):
-                sig = inspect.signature(attr)
-                if 'container' in sig.parameters:
-                    setattr(self, name, partial(attr, container=self))
-                else:
-                    setattr(self, name, attr)
-            else:
-                setattr(self, name, attr)
+            if not name.startswith("__"):
+                setattr(self, name, getattr(mod, name))
 
         if hasattr(self, "WIDTH") and hasattr(self, "HEIGHT") and hasattr(self, "RAW_BPP"):
             self.EXACT_RAW_SIZE = self.WIDTH * self.HEIGHT * self.RAW_BPP
-
         self.v_node, self.s_node = self.find_nodes()
         self._refresh_hardware_limits()
 
