@@ -230,6 +230,7 @@ def background_sync_worker(is_online, f_sync, s_sync, pause_ev, stop_ev, sh_cam_
                 logger.info(f"[SYNC-FAST] Blocking camera for {len(photos)} files.")
                 pause_ev.set()
                 try:
+                    upload_count = 0
                     for idx, full_path in enumerate(photos):
                         if not is_online.value or stop_ev.is_set(): break
                         fname = os.path.basename(full_path)
@@ -239,6 +240,8 @@ def background_sync_worker(is_online, f_sync, s_sync, pause_ev, stop_ev, sh_cam_
                             sh_retry_count.value = MAX_UPLOAD_RETRY
                             break
                         time.sleep(0.02)
+                    if upload_count > 0:
+                        blink_loop(3, 0.1, 0.1)
                 finally:
                     pause_ev.clear()
 
