@@ -118,10 +118,15 @@ def setup_logger(name):
     return logger
 
 def cleanup_shm_env():
+    if not os.path.exists(SHM_ROOT):
+        os.makedirs(SHM_ROOT, exist_ok=True)
+        print(f"[INIT] Created SHM Root: {SHM_ROOT}")
     for d in ["tmp", "ready", "queue"]:
         path = os.path.join(SHM_ROOT, d)
-        if os.path.exists(path): shutil.rmtree(path)
+        if os.path.exists(path):
+            shutil.rmtree(path)
         os.makedirs(path, exist_ok=True)
+    print(f"[INIT] SHM environment for Device {DEVICE_ID} is READY.")
 
 def get_shm_paths(dev_id_str):
     return (
