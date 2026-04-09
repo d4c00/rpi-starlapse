@@ -39,7 +39,7 @@ class AdaptiveExposureEngine:
 
         try:
             raw_map = np.memmap(raw_path, dtype=np.uint16, mode='r', shape=(height, width))
-            stride = 16
+            stride = 8
             ds_raw = (raw_map[0::stride, 0::stride] >> 4).astype(np.float32)
             h, w = ds_raw.shape
 
