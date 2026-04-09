@@ -306,16 +306,21 @@ At the same time, I triggered the calibration frame shooting; after covering the
 **A.** If you are using a third-party sensor, you need to manually specify it in /boot/firmware/config.txt and reboot.
 Then, you can use the following commands to quickly determine if the sensor is working; (The following example shows how I check my IMX662; you may modify it according to your actual sensor.)
 ```bash
-M=$(media-ctl -p | grep -l "imx662" /dev/media* 2>/dev/null || echo "/dev/media3"); \
-sudo media-ctl -d $M -V "'imx662 10-001a':0 [fmt:SRGGB12_1X12/1936x1100]" && \
-v4l2-ctl -d /dev/v4l-subdev0 --set-ctrl=exposure=1,analogue_gain=256 && \
-v4l2-ctl -d /dev/video0 --set-fmt-video=width=1936,height=1100,pixelformat=RG12 \
---stream-mmap --stream-count=1 --stream-to=test.raw && \
-stat -c "Success! File size: %s bytes (Expected: 4259200)" test.raw
-
-ls -lh test.raw
-hexdump -C test.raw | head -n 30
-python3 -c "import numpy as np; d=np.fromfile('test.raw', dtype=np.uint16); print(f'Total pixels: {len(d)} | Mean brightness: {d.mean():.1f} | Max: {d.max()} | Min: {d.min()}')"
+M_NODE=$(for i in /dev/media*; do media-ctl -d $i -p 2>/dev/null | grep -q "imx662" && echo $i && break; done); \
+S_NODE=$(grep -l "imx662" /sys/class/video4linux/v4l-subdev*/name | head -n1 | awk -F'/' '{print "/dev/"$5}'); \
+V_NODE=$(grep -l "unicam" /sys/class/video4linux/video*/device/uevent | head -n1 | awk -F'/' '{print "/dev/"$5}'); \
+S_NAME=$(cat /sys/class/video4linux/$(basename $S_NODE)/name 2>/dev/null); \
+\
+sudo media-ctl -d $M_NODE -V "'$S_NAME':0 [fmt:SRGGB12_1X12/1936x1100 field:none]" && \
+sudo media-ctl -d $M_NODE -V "'$S_NAME':0 [crop:(0,0)/1936x1100]" && \
+sudo v4l2-ctl -d $V_NODE --set-fmt-video=width=1936,height=1100,pixelformat=RG12 && \
+\
+v4l2-ctl -d $S_NODE --set-ctrl exposure=20000,analogue_gain=500 && \
+v4l2-ctl -d $V_NODE --stream-mmap --stream-count=1 --stream-to=test.raw && \
+\
+stat -c "Size: %s (Target: 4259200)" test.raw && \
+python3 -c "import numpy as np; d=np.fromfile('test.raw', dtype='u2'); print(f'Pixels: {len(d)} | Mean: {d.mean():.1f} | Max: {d.max()} | Min: {d.min()}'); exit(0 if d.max()>0 else 1)" && \
+head -c 64 test.raw | hexdump -C
 ```
 you can also use ImageJ to verify if the test.raw file is imaging correctly. If it fails to work, please ask the seller for the crystal oscillator frequency of the IMX662 module, or check if the frequency is printed on the module's PCB. If it still doesn't work, please check if the MIPI interface pinout is compatible. I am not entirely sure about the feasibility, but you might be able to get it running by modifying the Device Tree files.
 
