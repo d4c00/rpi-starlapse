@@ -22,7 +22,7 @@ The reason for choosing this combination is to capture clear infrared Milky Way 
     800nm Long-pass Filter + 8mm f/1.2 M12 Lens: $10.89
     Total: $54.37 (excluding SD card, power bank, cables, acrylic enclosure, and aluminum heatsinks).
 ###### Below is my approximate architecture:
-    Sender (Pi)
+    Sender (Pi) (Supports multiple)
      ├── capture (v4l2)
      ├── buffer (/dev/shm)
      └── upload (HTTPS)
