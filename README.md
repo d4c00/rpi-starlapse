@@ -140,7 +140,8 @@ systemctl --user restart time-lapse
 
 If you want to shoot calibration frames (dark and bias):  
 ```bash
-touch /dev/shm/time-lapse/calibration
+# For example, device ID 01
+touch /dev/shm/time-lapse/01/calibration
 ```
 If `CAPTURE_BIAS_FRAMES` in `config.py` is set to `true`, it will shoot both dark and bias frames. If `false`, it will only shoot dark frames.  
 After shooting is complete, the camera will be turned off. You need to manually change `CAMERA_ENABLED` back to `True` in `config.py` and run `systemctl --user restart time-lapse` to resume normal shooting.
@@ -174,7 +175,7 @@ rm length/vcr_osd_mono.zip
 ```bash
 bash build.sh
 ```
-Enter version number: `260408`
+Enter version number: `260409`
 
 I have enabled SELinux, so I need to:
 ```bash
