@@ -322,6 +322,17 @@ stat -c "Size: %s (Target: 4259200)" test.raw && \
 python3 -c "import numpy as np; d=np.fromfile('test.raw', dtype='u2'); print(f'Pixels: {len(d)} | Mean: {d.mean():.1f} | Max: {d.max()} | Min: {d.min()}'); exit(0 if d.max()>0 else 1)" && \
 head -c 64 test.raw | hexdump -C
 ```
+If configured correctly, it will output something like this:
+```bash
+<
+Size: 4259200 (Target: 4259200)
+Pixels: 2129600 | Mean: 904.9 | Max: 2140 | Min: 65
+00000000  d2 02 6c 02 57 02 fe 02  2c 02 ef 02 02 03 59 03  |..l.W...,.....Y.|
+00000010  53 03 98 02 7f 02 a5 02  72 02 7f 03 ff 02 d5 03  |S.......r.......|
+00000020  cb 02 1f 03 fd 02 ae 02  96 03 df 02 ca 02 d9 03  |................|
+00000030  40 03 84 02 41 03 1f 02  a1 02 c1 02 3c 03 b7 02  |@...A.......<...|
+00000040
+```
 you can also use ImageJ to verify if the test.raw file is imaging correctly. If it fails to work, please ask the seller for the crystal oscillator frequency of the IMX662 module, or check if the frequency is printed on the module's PCB. If it still doesn't work, please check if the MIPI interface pinout is compatible. I am not entirely sure about the feasibility, but you might be able to get it running by modifying the Device Tree files.
 
 <br>
