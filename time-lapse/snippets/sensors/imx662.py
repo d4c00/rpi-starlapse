@@ -64,8 +64,7 @@ def get_init_cmds():
     return [
         f"media-ctl -d {m_node} -V '\"{full_entity_name}\":0 [fmt:{MBUS_FORMAT}/{WIDTH}x{HEIGHT} field:none]'",
         f"media-ctl -d {m_node} -V '\"{full_entity_name}\":0 [crop:(0,0)/{WIDTH}x{HEIGHT}]'",
-        f"v4l2-ctl -d {v_node} --set-fmt-video=width={WIDTH},height={HEIGHT},pixelformat={V4L2_PIXELFORMAT}"
-    ]
+        f"v4l2-ctl -d {v_node} --set-fmt-video=width={WIDTH},height={HEIGHT},pixelformat={V4L2_PIXELFORMAT}"]
 
 def get_runtime_cmds(target_us, gain, container):
     out = subprocess.check_output(f"v4l2-ctl -d {container.s_node} --list-ctrls", shell=True, text=True)
@@ -75,22 +74,21 @@ def get_runtime_cmds(target_us, gain, container):
         return int(m.group(1)) if m else 0
 
     pixel_rate = fetch("pixel_rate")
-    h_blank = fetch("horizontal_blanking")
+    h_max = fetch("horizontal_blanking", "max")
     v_min = fetch("vertical_blanking", "min")
     v_max = fetch("vertical_blanking", "max")
-    e_max_hard = fetch("exposure", "max")
 
+    h_blank = h_max
     line_length = WIDTH + h_blank
+
     v_total = (target_us / 1000000.0) * pixel_rate / line_length
     v_blank = int(min(max(v_total - HEIGHT, v_min), v_max))
 
-    safe_exp = int(min((HEIGHT + v_blank) - EXP_OFFSET, e_max_hard))
+    safe_exp = int((HEIGHT + v_blank) - EXP_OFFSET)
 
-    cmd = (f"v4l2-ctl -d {container.s_node} "
-           f"--set-ctrl vertical_blanking={v_blank} "
-           f"--set-ctrl exposure={safe_exp} "
-           f"--set-ctrl analogue_gain={int(gain)}")
-    return [cmd]
+    return [
+        f"v4l2-ctl -d {container.s_node} --set-ctrl horizontal_blanking={h_blank}",
+        f"v4l2-ctl -d {container.s_node} --set-ctrl vertical_blanking={v_blank} --set-ctrl exposure={safe_exp} --set-ctrl analogue_gain={int(gain)}"]
 
 def get_capture_cmd(out_path, container):
     return f"v4l2-ctl -d {container.v_node} --stream-mmap --stream-count=1 --stream-to={out_path}"
