@@ -171,10 +171,15 @@ The current IMX662 configuration file is `time-lapse/snippets/sensors/imx662.py`
 It based on the v4l2 driver from https://github.com/raspberrypi/linux/pull/7239 . 
 
 Next, we will begin the installation.
+Install the Linux kernel from the 6by9 Pull Request; this PR contains the unmerged imx662 V4L2 driver. The process will be slow, so please be patient.
 ```bash
 sudo rpi-update pulls/7239
 ```
-
+A reboot is required after the installation is complete.
+```bash
+sudo root
+```
+Then:
 ```bash
 sudo loginctl enable-linger "$USER"
 ```
