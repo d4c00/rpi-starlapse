@@ -7,7 +7,7 @@ import configparser
 from PIL import Image
 from tqdm import tqdm
 
-def load_config(config_path):
+def load_config(config_path, device_id):
     config = configparser.ConfigParser()
     if not os.path.exists(config_path):
         raise FileNotFoundError(f"Configuration file missing: {config_path}")
@@ -15,14 +15,14 @@ def load_config(config_path):
     config.read(config_path, encoding='utf-8')
 
     return {
-        'width': config.getint('IMAGE_SPEC', 'width'),
-        'height': config.getint('IMAGE_SPEC', 'height'),
-        'black_level': config.getint('IMAGE_SPEC', 'black_level'),
-        'white_level': config.getint('IMAGE_SPEC', 'white_level'),
-        'container_bits': config.getint('IMAGE_SPEC', 'container_bits'),
-        'sig_bits': config.getint('IMAGE_SPEC', 'significant_bits'),
-        'contrast': config.getfloat('IMAGE_SPEC', 'contrast'),
-        'gamma': config.getfloat('IMAGE_SPEC', 'gamma')
+        'width': config.getint(device_id, 'width'),
+        'height': config.getint(device_id, 'height'),
+        'black_level': config.getint(device_id, 'black_level'),
+        'white_level': config.getint(device_id, 'white_level'),
+        'container_bits': config.getint(device_id, 'container_bits'),
+        'sig_bits': config.getint(device_id, 'significant_bits'),
+        'contrast': config.getfloat(device_id, 'contrast'),
+        'gamma': config.getfloat(device_id, 'gamma')
     }
 
 def process_for_jpg(image, cfg):
@@ -59,6 +59,12 @@ def convert_raw_to_mono_tiff():
     device_ids = [d for d in os.listdir(base_input_dir) if os.path.isdir(os.path.join(base_input_dir, d))]
 
     for device_id in device_ids:
+        try:
+            cfg = load_config(CONFIG_FILE_PATH, device_id)
+        except Exception as e:
+            print(f"Skip device {device_id}: {e}")
+            continue
+            
         device_root = os.path.join(base_input_dir, device_id)
 
         sub_dirs = [s for s in os.listdir(device_root) if os.path.isdir(os.path.join(device_root, s))]
