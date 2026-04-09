@@ -175,6 +175,13 @@ Install the Linux kernel from the 6by9 Pull Request; this PR contains the unmerg
 ```bash
 sudo rpi-update pulls/7239
 ```
+To manually specify the camera and crystal frequency, and enable HCG: If your IMX662 module's frequency differs from mine, please modify the value after clock-frequency=74250000. HCG mode is optional.
+```bash
+sudo grep -q "camera_auto_detect=0" /boot/firmware/config.txt || echo "camera_auto_detect=0" | sudo tee -a /boot/firmware/config.txt
+sudo grep -q "dtoverlay=imx662,clock-frequency=74250000" /boot/firmware/config.txt || echo "dtoverlay=imx662,clock-frequency=74250000" | sudo tee -a /boot/firmware/config.txt
+sudo sed -i '$s/$/ imx662.hcg_mode=1/' /boot/firmware/cmdline.txt
+```
+
 A reboot is required after the installation is complete.
 ```bash
 sudo root
@@ -285,12 +292,29 @@ At the same time, I triggered the calibration frame shooting; after covering the
 ## Frequently Asked Questions
 
 **Q** Why is my sensor listed in the supported sensors, but it still fails to match and be used?  
-**A** If you are using a third-party sensor, you need to manually specify it in `/boot/firmware/config.txt`.  
-You can check what `.ko` files are available in `/usr/lib/modules/$(uname -r)/kernel/drivers/media/i2c`. If your sensor is not there, you will need to find a community open-source driver, write one yourself, or try something like `sudo rpi-update pulls/7239` (this is 6by9’s v4l2 driver PR for IMX662; at the time of writing this document, the PR was still in Draft status).
+**A** If you are using a third-party sensor, you need to manually specify it in /boot/firmware/config.txt and reboot.
+Then, you can use the following commands to quickly determine if the sensor is working;
+```bash
+M=$(media-ctl -p | grep -l "imx662" /dev/media* 2>/dev/null || echo "/dev/media3"); \
+sudo media-ctl -d $M -V "'imx662 10-001a':0 [fmt:SRGGB12_1X12/1936x1100]" && \
+v4l2-ctl -d /dev/v4l-subdev0 --set-ctrl=exposure=1,analogue_gain=256 && \
+v4l2-ctl -d /dev/video0 --set-fmt-video=width=1936,height=1100,pixelformat=RG12 \
+--stream-mmap --stream-count=1 --stream-to=test.raw && \
+stat -c "Success! File size: %s bytes (Expected: 4259200)" test.raw
+
+ls -lh test.raw
+hexdump -C test.raw | head -n 30
+python3 -c "import numpy as np; d=np.fromfile('test.raw', dtype=np.uint16); print(f'Total pixels: {len(d)} | Mean brightness: {d.mean():.1f} | Max: {d.max()} | Min: {d.min()}')"
+```
+you can also use ImageJ to verify if the test.raw file is imaging correctly. If it fails to work, please ask the seller for the crystal oscillator frequency of the IMX662 module, or check if the frequency is printed on the module's PCB. If it still doesn't work, please check if the MIPI interface pinout is compatible. I am not entirely sure about the feasibility, but you might be able to get it running by modifying the Device Tree files.
+
+<br>
 
 **Q** Why does it print “Camera verified READY.” in the console but then stop and not continue taking photos?  
 **A** Please check whether `CAMERA_ENABLED` in `snippets/config.py` is set to `True`.  
 If it is already `True` but still doesn’t work, it is likely that the camera connector is loose. Try re-inserting the FPC cable firmly and reinforcing it with tape or similar methods.
+
+<br>
 
 **Q** Why does the log keep printing “[CLEANUP] All zeros: /dev/shm/time-lapse/tmp/w_01.raw.lights_tmp. Deleting.”? What’s going on?  
 **A** This is still most likely caused by a loose cable or incorrect crystal oscillator frequency setting.
