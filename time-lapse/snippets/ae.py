@@ -81,7 +81,7 @@ class AdaptiveExposureEngine:
             grad = (np.mean(np.abs(np.diff(blur, axis=0))) +
                     np.mean(np.abs(np.diff(blur, axis=1))))
 
-            structure = np.clip(grad - noise * 0.8, 0.0, None)
+            structure = np.clip(grad - noise * 1.2, 0.0, None)
 
             structure_gate = math.tanh(structure / (bg + 1e-6))
 
