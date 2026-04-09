@@ -1,5 +1,6 @@
 # Copyright (c) 2026 length <me@length.cc> (https://github.com/d4c00)
 # Licensed under the MIT License.
+
 import os
 import re
 import configparser
