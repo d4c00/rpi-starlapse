@@ -29,7 +29,7 @@ def load_configuration():
         print("Error: [settings] missing 'port' configuration or invalid")
         sys.exit(1)
 
-    sections = [s for s in config.sections() if s.startswith('device_')]
+    sections = [s for s in config.sections() if s.isdigit()]
     if not sections:
         print("Error: No [device_xx] configuration found in the config file")
         sys.exit(1)

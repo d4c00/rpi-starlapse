@@ -43,15 +43,6 @@ def convert_raw_to_mono_tiff():
     base_input_dir = "/home/length/uploads"
     base_output_dir = "/home/length/output"
 
-    try:
-        cfg = load_config(CONFIG_FILE_PATH)
-    except Exception as e:
-        print(f"Configuration error: {e}")
-        return
-
-    dtype_map = {16: np.uint16, 32: np.uint32}
-    target_dtype = dtype_map.get(cfg['container_bits'], np.uint16)
-
     if not os.path.exists(base_input_dir):
         print("Input directory does not exist")
         return
@@ -61,6 +52,8 @@ def convert_raw_to_mono_tiff():
     for device_id in device_ids:
         try:
             cfg = load_config(CONFIG_FILE_PATH, device_id)
+            dtype_map = {16: np.uint16, 32: np.uint32}
+            target_dtype = dtype_map.get(cfg['container_bits'], np.uint16)
         except Exception as e:
             print(f"Skip device {device_id}: {e}")
             continue
