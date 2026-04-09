@@ -74,10 +74,6 @@ class AdaptiveExposureEngine:
             luma_err = self.target - luma
             luma_term = math.tanh(luma_err * 4.0)
 
-            err_ev = snr_term + dark_term + 0.3 * luma_term * structure_gate
-
-            err_ev = math.tanh(err_ev * math.tanh(noise / 8.0 + 0.5))
-            
             blur = (ds_raw +
                     np.roll(ds_raw, 1, 0) + np.roll(ds_raw, -1, 0) +
                     np.roll(ds_raw, 1, 1) + np.roll(ds_raw, -1, 1)) / 5.0
@@ -88,6 +84,10 @@ class AdaptiveExposureEngine:
             structure = np.clip(grad - noise * 0.8, 0.0, None)
 
             structure_gate = math.tanh(structure / (bg + 1e-6))
+
+            err_ev = snr_term + dark_term + 0.3 * luma_term * structure_gate
+
+            err_ev = math.tanh(err_ev * math.tanh(noise / 8.0 + 0.5))
 
             step = 1.2 * math.tanh(err_ev)
 
