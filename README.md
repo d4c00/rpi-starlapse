@@ -23,10 +23,9 @@ The reason for choosing this combination is to capture clear infrared Milky Way 
     Total: $54.37 (excluding SD card, power bank, cables, acrylic enclosure, and aluminum heatsinks).
 ###### Below is my approximate architecture:
     Sender (Pi)
-     └── capture (v4l2)
-     └── buffer (/dev/shm)
+     ├── capture (v4l2)
+     ├── buffer (/dev/shm)
      └── upload (HTTPS)
-
     Receiver (Server)
      ├── upload handler
      ├── RAW processing
