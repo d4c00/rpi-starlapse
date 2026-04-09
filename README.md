@@ -26,6 +26,7 @@ The reason for choosing this combination is to capture clear infrared Milky Way 
      ├── capture (v4l2)
      ├── buffer (/dev/shm)
      └── upload (HTTPS)
+     
     Receiver (Server)
      ├── upload handler
      ├── RAW processing
