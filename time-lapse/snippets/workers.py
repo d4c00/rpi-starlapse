@@ -160,7 +160,7 @@ def ae_worker(stop_ev, sh_frame_id, sh_last_ae_id, sh_snap, sh_dev_id, data_q, r
 
                 new_s, new_g, m_val, new_ev = process_ae_logic(
                     target_raw, W, H, p["t_us"], p["g"], limit_us, 
-                    sensor.MAX_GAIN, sensor.MIN_GAIN, sensor.VIRT_GAIN_MIN, sensor.VIRT_GAIN_MAX
+                    sensor.MAX_GAIN, sensor.MIN_GAIN
                 )
 
                 p["y"] = m_val

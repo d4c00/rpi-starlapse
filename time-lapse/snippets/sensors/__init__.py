@@ -28,9 +28,7 @@ class BaseSensor:
             self.MIN_EXPOSURE = int(re.search(r"exposure.*?min=(\d+)", out).group(1))
             self.MAX_EXPOSURE = int(re.search(r"exposure.*?max=(\d+)", out).group(1))
             self.MIN_GAIN = int(re.search(r"analogue_gain.*?min=(\d+)", out).group(1))
-            self.MAX_GAIN = int(re.search(r"analogue_gain.*?max=(\d+)", out).group(1))
-            self.VIRT_GAIN_MIN = 1.0
-            self.VIRT_GAIN_MAX = 16.0 
+            self.MAX_GAIN = int(re.search(r"analogue_gain.*?max=(\d+)", out).group(1)) 
         except:
             pass
 
