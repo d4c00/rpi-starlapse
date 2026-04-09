@@ -106,8 +106,8 @@ class AdaptiveExposureEngine:
 
 _engine = None
 
-def process_ae_logic(raw_path, width, height, current_us, current_reg_gain, max_us_limit, max_reg_gain, reg_min, virt_min, virt_max):
+def process_ae_logic(raw_path, width, height, current_us, current_reg_gain, max_us_limit, max_reg_gain, reg_min):
     global _engine
     if _engine is None:
-        _engine = AdaptiveExposureEngine(reg_min, max_reg_gain, virt_min, virt_max)
+        _engine = AdaptiveExposureEngine(reg_min, max_reg_gain, 1.0, 16.0)
     return _engine.process_raw_frame(raw_path, width, height, current_us, current_reg_gain, max_us_limit, max_reg_gain)
