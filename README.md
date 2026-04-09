@@ -201,7 +201,7 @@ systemctl --user restart rpi-upload-srv-2
 systemctl --user restart rpi-upload-srv-3
 ```
 
-**Please do not use the default `device_token`. You must modify it.**  
+**Please do not use the default `device_token`. You must modify it.**  (If your sensor is not the IMX662, you must simultaneously change the resolution, bit depth, and verification size in the three `.ini` files within `rpi-upload-srv/conf`, rather than just modifying the `device_token`.")
 ```bash
 sudo nano /mnt/ssd_data/podman/rpi-upload-srv/conf/rpi-upload-srv.ini
 ```
