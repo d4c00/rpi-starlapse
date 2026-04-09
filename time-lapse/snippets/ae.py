@@ -7,6 +7,7 @@ import os
 from snippets.sensors import sensor
 from snippets.config import AE_TARGET_LUMA
 
+
 class AdaptiveExposureEngine:
     def __init__(self, reg_min, reg_max, virt_min, virt_max):
         self.target = AE_TARGET_LUMA
@@ -49,8 +50,8 @@ class AdaptiveExposureEngine:
             mad = np.median(np.abs(ds_raw - bg))
             noise = 1.4826 * mad
 
-            luma = np.clip(bg / 255.0, 1e-4, 1.0) 
-            
+            luma = np.clip(bg / 255.0, 1e-4, 1.0)
+
             snr = bg / (noise + 1e-6)
             target_snr = 4.0
 
@@ -100,10 +101,11 @@ class AdaptiveExposureEngine:
             print(f"[AE] RAW Process Error: {e}")
             return int(current_us), float(current_reg_gain), 0.5, self.ev if self.ev is not None else 0.0
 
+
 _engine = None
+
 
 def process_ae_logic(raw_path, width, height, current_us, current_reg_gain, max_us_limit, max_reg_gain, reg_min):
     global _engine
     if _engine is None:
         _engine = AdaptiveExposureEngine(reg_min, max_reg_gain, 1.0, 16.0)
-    return _engine.process_raw_frame(raw_path, width, height, current_us, current_reg_gain, max_us_limit, max_reg_gain)
