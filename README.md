@@ -291,8 +291,8 @@ At the same time, I triggered the calibration frame shooting; after covering the
 
 ## Frequently Asked Questions
 
-**Q** Why is my sensor listed in the supported sensors, but it still fails to match and be used?  
-**A** If you are using a third-party sensor, you need to manually specify it in /boot/firmware/config.txt and reboot.
+**Q.** Why is my sensor listed in the supported sensors, but it still fails to match and be used?  
+**A.** If you are using a third-party sensor, you need to manually specify it in /boot/firmware/config.txt and reboot.
 Then, you can use the following commands to quickly determine if the sensor is working;
 ```bash
 M=$(media-ctl -p | grep -l "imx662" /dev/media* 2>/dev/null || echo "/dev/media3"); \
@@ -310,14 +310,14 @@ you can also use ImageJ to verify if the test.raw file is imaging correctly. If 
 
 <br>
 
-**Q** Why does it print “Camera verified READY.” in the console but then stop and not continue taking photos?  
-**A** Please check whether `CAMERA_ENABLED` in `snippets/config.py` is set to `True`.  
+**Q.** Why does it print “Camera verified READY.” in the console but then stop and not continue taking photos?  
+**A.** Please check whether `CAMERA_ENABLED` in `snippets/config.py` is set to `True`.  
 If it is already `True` but still doesn’t work, it is likely that the camera connector is loose. Try re-inserting the FPC cable firmly and reinforcing it with tape or similar methods.
 
 <br>
 
-**Q** Why does the log keep printing “[CLEANUP] All zeros: /dev/shm/time-lapse/tmp/w_01.raw.lights_tmp. Deleting.”? What’s going on?  
-**A** This is still most likely caused by a loose cable or incorrect crystal oscillator frequency setting.
+**Q.** Why does the log keep printing “[CLEANUP] All zeros: /dev/shm/time-lapse/tmp/w_01.raw.lights_tmp. Deleting.”? What’s going on?  
+**A.** This is still most likely caused by a loose cable or incorrect crystal oscillator frequency setting.
 
 ---
 <br>
