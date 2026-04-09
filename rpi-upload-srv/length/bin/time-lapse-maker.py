@@ -152,8 +152,17 @@ def draw_with_shadow(draw, x, y, text, font):
 
 def create_timelapse():
     print("======== Time-Lapse Maker ========")
-    load_config()
-    scale = CONF['FONT_SIZE'] / 30.0
+    
+    device_dirs = sorted([d for d in os.listdir(INPUT_ROOT_DIR) if os.path.isdir(os.path.join(INPUT_ROOT_DIR, d))])
+
+    for device_id in device_dirs:
+        try:
+            load_config(device_id)
+        except Exception as e:
+            print(f"Skip device {device_id}: No config or error: {e}")
+            continue
+
+        scale = CONF['FONT_SIZE'] / 30.0
     
     try:
         font = ImageFont.truetype(CONF['FONT_PATH'], CONF['FONT_SIZE'])
