@@ -14,13 +14,25 @@
 
 ## Preface
 
-The reason for choosing this combination is to capture clear infrared Milky Way images in light-polluted cities at a low cost.<br>
-###### Unit costs for the core components are as follows:
+The reason for choosing this combination is to capture clear infrared Milky Way images in light-polluted cities at a low cost.
 
+###### Unit costs for the core components are as follows:
     Raspberry Pi Zero 2W: $18.98
     IMX662 Module: $24.50
     800nm Long-pass Filter + 8mm f/1.2 M12 Lens: $10.89
     Total: $54.37 (excluding SD card, power bank, cables, acrylic enclosure, and aluminum heatsinks).
+###### Below is my approximate architecture:
+    Sender (Pi)
+     └── capture (v4l2)
+     └── buffer (/dev/shm)
+     └── upload (HTTPS)
+
+    Receiver (Server)
+     ├── upload handler
+     ├── RAW processing
+     ├── calibration
+     └── timelapse rendering
+     
 <br>
 The Zero 2W was selected because it is compact and power-efficient; its performance is modest but sufficient for the task.
 
