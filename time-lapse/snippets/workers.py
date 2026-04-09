@@ -230,18 +230,17 @@ def background_sync_worker(is_online, f_sync, s_sync, pause_ev, stop_ev, sh_cam_
                 logger.info(f"[SYNC-FAST] Blocking camera for {len(photos)} files.")
                 pause_ev.set()
                 try:
-                    upload_count = 0
                     for idx, full_path in enumerate(photos):
                         if not is_online.value or stop_ev.is_set(): break
                         fname = os.path.basename(full_path)
-                        if not upload_with_retry(sess, fname, full_path, "SYNC-F", f"Seq-{idx}", is_online, stop_ev, sh_retry_count, MAX_UPLOAD_RETRY):
+                        if upload_with_retry(sess, fname, full_path, "SYNC-F", f"Seq-{idx}", is_online, stop_ev, sh_retry_count, MAX_UPLOAD_RETRY):
+                            flash_led(0.05)
+                        else:
                             logger.error("[SYNC-FAST] Network interrupted. Releasing camera.")
                             is_online.value = False
                             sh_retry_count.value = MAX_UPLOAD_RETRY
                             break
                         time.sleep(0.02)
-                    if upload_count > 0:
-                        blink_loop(3, 0.1, 0.1)
                 finally:
                     pause_ev.clear()
 
