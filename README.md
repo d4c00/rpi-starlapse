@@ -293,7 +293,7 @@ At the same time, I triggered the calibration frame shooting; after covering the
 
 **Q.** Why is my sensor listed in the supported sensors, but it still fails to match and be used?  
 **A.** If you are using a third-party sensor, you need to manually specify it in /boot/firmware/config.txt and reboot.
-Then, you can use the following commands to quickly determine if the sensor is working;
+Then, you can use the following commands to quickly determine if the sensor is working; (The following example shows how I check my IMX662; you may modify it according to your actual sensor.)
 ```bash
 M=$(media-ctl -p | grep -l "imx662" /dev/media* 2>/dev/null || echo "/dev/media3"); \
 sudo media-ctl -d $M -V "'imx662 10-001a':0 [fmt:SRGGB12_1X12/1936x1100]" && \
