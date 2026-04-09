@@ -86,11 +86,11 @@ def get_runtime_cmds(target_us, gain, container):
 
     safe_exp = int(min((HEIGHT + v_blank) - EXP_OFFSET, e_max_hard))
 
-    return [
-        f"v4l2-ctl -d {container.s_node} --set-ctrl vertical_blanking={v_blank}",
-        f"v4l2-ctl -d {container.s_node} --set-ctrl exposure={safe_exp}",
-        f"v4l2-ctl -d {container.s_node} --set-ctrl analogue_gain={int(gain)}"
-    ]
+    cmd = (f"v4l2-ctl -d {container.s_node} "
+           f"--set-ctrl vertical_blanking={v_blank} "
+           f"--set-ctrl exposure={safe_exp} "
+           f"--set-ctrl analogue_gain={int(gain)}")
+    return [cmd]
 
 def get_capture_cmd(out_path, container):
     return f"v4l2-ctl -d {container.v_node} --stream-mmap --stream-count=1 --stream-to={out_path}"
