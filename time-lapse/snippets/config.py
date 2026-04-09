@@ -6,7 +6,8 @@ import os
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SAVE_DIR = os.path.join(BASE_DIR, "photo")
 
-SHM_ROOT = "/dev/shm/time-lapse"
+DEVICE_ID = "01"
+SHM_ROOT = f"/dev/shm/time-lapse/{DEVICE_ID}"
 SHM_QUEUE = os.path.join(SHM_ROOT, "queue")
 SAVE_DIR = os.path.join(BASE_DIR, "photo")
 SUB_DIRS = {
@@ -16,7 +17,6 @@ SUB_DIRS = {
 }
 
 # Network
-DEVICE_ID = "01"
 DEVICE_TOKEN = "6XQzzwB0R8kwFQOp3Dg8YzK2sWisbtdQbFf8Qk4raDlFgaAKXpqTbs7EVhOodUOFQl0lQumiG4LzQoS7FW4rnzlKXp3IPwE2O7bpu7nvo3i3DKyjUrKrzOK3ahdRJQvb"
 UPLOAD_SRV_BASE = "https://rpi-upload-srv.example.com"
 SERVER_URL = f"{UPLOAD_SRV_BASE.rstrip('/')}/upload"

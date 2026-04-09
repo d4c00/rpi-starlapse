@@ -87,6 +87,7 @@ def run_core():
 
 if __name__ == "__main__":
     sys.stdout.reconfigure(line_buffering=True)
+    print(f"wait check_time_server...", flush=True)
     while not check_time_server():
         blink_loop(1, 0.5, 0.5)
         time.sleep(1)

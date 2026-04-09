@@ -19,7 +19,7 @@ OUTPUT_ROOT_DIR = "/home/length/output"
 
 CONF = {}
 
-def load_config():
+def load_config(device_id):
     if not os.path.exists(CONFIG_FILE_PATH):
         print(f"Error: Configuration file not found: {CONFIG_FILE_PATH}")
         sys.exit(1)
@@ -31,24 +31,24 @@ def load_config():
         return tuple(int(x.strip()) for x in config.get(section, option).split(','))
 
     try:
-        CONF['FRAMERATE'] = config.getint('settings', 'framerate', fallback=120)
-        CONF['FRAME_SKIP'] = config.getint('settings', 'frame_skip', fallback=1)
-        CONF['BLACK_LEVEL'] = config.getint('settings', 'black_level', fallback=0)
-        CONF['WHITE_LEVEL'] = config.getint('settings', 'white_level', fallback=4095)
-        CONF['CONTRAST'] = config.getfloat('settings', 'contrast')
-        CONF['GAMMA'] = config.getfloat('settings', 'gamma')
-        CONF['FONT_PATH'] = config.get('timestamp', 'font_path')
-        CONF['FONT_SIZE'] = config.getint('timestamp', 'font_size', fallback=30)
-        CONF['TEXT_COLOR'] = config.getint('timestamp', 'text_color')
-        CONF['SHADOW_COLOR'] = config.getint('timestamp', 'shadow_color')
-        CONF['SHADOW_WIDTH'] = config.getint('timestamp', 'shadow_width')
-        CONF['POSITION'] = get_tuple('timestamp', 'position')
-        CONF['TIMEZONE_OFFSET_HOURS'] = config.getint('timestamp', 'timezone_offset_hours')
-        CONF['ROTATE_DEGREES'] = config.getint('video', 'rotate_degrees', fallback=0)
-        CONF['FFMPEG_CMD_TEMPLATE'] = config.get('ffmpeg', 'cmd')
-        CONF['WIDTH'] = config.getint('settings', 'width', fallback=1936)
-        CONF['HEIGHT'] = config.getint('settings', 'height', fallback=1100)
-        CONF['MAX_VALUE'] = config.getint('settings', 'max_value', fallback=4095)
+        CONF['FRAMERATE'] = config.getint(device_id, 'framerate')
+        CONF['FRAME_SKIP'] = config.getint(device_id, 'frame_skip')
+        CONF['BLACK_LEVEL'] = config.getint(device_id, 'black_level')
+        CONF['WHITE_LEVEL'] = config.getint(device_id, 'white_level')
+        CONF['CONTRAST'] = config.getfloat(device_id, 'contrast')
+        CONF['GAMMA'] = config.getfloat(device_id, 'gamma')
+        CONF['FONT_PATH'] = config.get(device_id, 'font_path')
+        CONF['FONT_SIZE'] = config.getint(device_id, 'font_size')
+        CONF['TEXT_COLOR'] = config.getint(device_id, 'text_color')
+        CONF['SHADOW_COLOR'] = config.getint(device_id, 'shadow_color')
+        CONF['SHADOW_WIDTH'] = config.getint(device_id, 'shadow_width')
+        CONF['POSITION'] = tuple(int(x.strip()) for x in config.get(device_id, 'position').split(','))
+        CONF['TIMEZONE_OFFSET_HOURS'] = config.getint(device_id, 'timezone_offset_hours')
+        CONF['ROTATE_DEGREES'] = config.getint(device_id, 'rotate_degrees')
+        CONF['FFMPEG_CMD_TEMPLATE'] = config.get(device_id, 'cmd')
+        CONF['WIDTH'] = config.getint(device_id, 'width')
+        CONF['HEIGHT'] = config.getint(device_id, 'height')
+        CONF['MAX_VALUE'] = config.getint(device_id, 'max_value')
     except Exception as e:
         print(f"Configuration parsing error: {e}")
         sys.exit(1)
@@ -152,8 +152,17 @@ def draw_with_shadow(draw, x, y, text, font):
 
 def create_timelapse():
     print("======== Time-Lapse Maker ========")
-    load_config()
-    scale = CONF['FONT_SIZE'] / 30.0
+    
+    device_dirs = sorted([d for d in os.listdir(INPUT_ROOT_DIR) if os.path.isdir(os.path.join(INPUT_ROOT_DIR, d))])
+
+    for device_id in device_dirs:
+        try:
+            load_config(device_id)
+        except Exception as e:
+            print(f"Skip device {device_id}: No config or error: {e}")
+            continue
+
+        scale = CONF['FONT_SIZE'] / 30.0
     
     try:
         font = ImageFont.truetype(CONF['FONT_PATH'], CONF['FONT_SIZE'])
