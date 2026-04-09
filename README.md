@@ -98,7 +98,7 @@ To manually specify the camera and crystal frequency, and enable HCG: If your IM
 ```bash
 sudo grep -q "camera_auto_detect=0" /boot/firmware/config.txt || echo "camera_auto_detect=0" | sudo tee -a /boot/firmware/config.txt
 sudo grep -q "dtoverlay=imx662,clock-frequency=74250000" /boot/firmware/config.txt || echo "dtoverlay=imx662,clock-frequency=74250000" | sudo tee -a /boot/firmware/config.txt
-sudo sed -i '$s/$/ imx662.hcg_mode=1/' /boot/firmware/cmdline.txt
+grep -q "imx662.hcg_mode" /boot/firmware/cmdline.txt || sudo sed -i '$s/$/ imx662.hcg_mode=1/' /boot/firmware/cmdline.txt
 ```
 
 A reboot is required after the installation is complete.
