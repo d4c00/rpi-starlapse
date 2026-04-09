@@ -67,17 +67,13 @@ class AdaptiveExposureEngine:
             target_snr = 4.0
 
             snr_err = target_snr - snr
-            err_ev = 0.9 * math.tanh(snr_err / 2.0)
 
-            dark_boost = 0.6 * math.exp(-bg / 6.0)
-            noise_w = math.tanh(noise / 8.0)
+            err_ev = math.tanh(snr_err / 2.0) \
+                   + 0.5 * math.exp(-bg / 6.0)
 
-            err_ev = (err_ev + dark_boost) * (0.6 + 0.4 * noise_w)
+            err_ev = math.tanh(err_ev * math.tanh(noise / 8.0 + 0.5))
 
-            step = 1.2 * math.tanh(err_ev / 1.5) * (math.tanh(abs(err_ev) * 4.0) ** 3)
-#            step += 0.4 * math.exp(-5.0 * (raw_mean / (self.target + 1e-9)))
-#            step -= 0.4 * math.exp(-5.0 * ((1.0 - raw_mean) / (1.0 - self.target + 1e-9)))
-            step *= (math.tanh(abs(err_ev) / 0.025) ** 2)
+            step = 1.4 * math.tanh(err_ev / 1.2)
 
             dynamic_q = self.base_q + self.q_scale * (math.tanh(abs(err_ev) * 4.0) ** 4)
             ev_predict = self.ev + self.ev_vel
