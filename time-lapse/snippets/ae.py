@@ -73,7 +73,7 @@ class AdaptiveExposureEngine:
 
             err_ev = math.tanh(err_ev * math.tanh(noise / 8.0 + 0.5))
 
-            step = 1.4 * math.tanh(err_ev / 1.2)
+            step = 1.2 * math.tanh(err_ev)
 
             dynamic_q = self.base_q + self.q_scale * (math.tanh(abs(err_ev) * 4.0) ** 4)
             ev_predict = self.ev + self.ev_vel
