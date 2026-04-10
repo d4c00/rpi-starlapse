@@ -4,9 +4,7 @@
 import numpy as np
 import math
 import os
-from snippets.sensors import sensor
 from snippets.config import AE_TARGET_LUMA
-
 
 class AdaptiveExposureEngine:
     def __init__(self, reg_min, reg_max, virt_min, virt_max):
