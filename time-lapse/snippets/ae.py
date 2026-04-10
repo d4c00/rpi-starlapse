@@ -35,6 +35,7 @@ class AdaptiveExposureEngine:
     def process_raw_frame(self, raw_path, width, height, current_us, current_reg_gain, max_us, max_reg_gain):
         current_virt_gain = self._phys_to_virt_gain(current_reg_gain)
         if not os.path.exists(raw_path):
+            self.ev_vel = 0.0
             return int(current_us), float(current_reg_gain), self.target, 0.0
 
         try:
@@ -99,6 +100,8 @@ class AdaptiveExposureEngine:
 
         except Exception as e:
             print(f"[AE] RAW Process Error: {e}")
+            self.ev_vel = 0.0
+            if 'raw_map' in locals(): del raw_map
             return int(current_us), float(current_reg_gain), self.target, 0.0
 
 _engine = None
