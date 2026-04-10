@@ -4,6 +4,7 @@
 import os
 import subprocess
 import re
+import numpy as np
 
 INIT_SNAP_STR = "0|666666|34.0|0.0|0.0"
 
@@ -74,21 +75,17 @@ def get_runtime_cmds(target_us, gain, container):
         return int(m.group(1)) if m else 0
 
     pixel_rate = fetch("pixel_rate")
-    h_max = fetch("horizontal_blanking", "max")
+    h_blank = fetch("horizontal_blanking", "max")
     v_min = fetch("vertical_blanking", "min")
     v_max = fetch("vertical_blanking", "max")
 
-    h_blank = h_max
     line_length = WIDTH + h_blank
+    target_v_total = (target_us * pixel_rate) / (line_length * 1000000.0)
+    v_blank = int(np.clip(target_v_total - HEIGHT + EXP_OFFSET, v_min, v_max))
+    current_v_total = HEIGHT + v_blank
+    safe_exp = int(np.clip(target_v_total, 1, current_v_total - EXP_OFFSET))
 
-    v_total = (target_us / 1000000.0) * pixel_rate / line_length
-    v_blank = int(min(max(v_total - HEIGHT, v_min), v_max))
-
-    safe_exp = int((HEIGHT + v_blank) - EXP_OFFSET)
-
-    return [
-        f"v4l2-ctl -d {container.s_node} --set-ctrl horizontal_blanking={h_blank}",
-        f"v4l2-ctl -d {container.s_node} --set-ctrl vertical_blanking={v_blank} --set-ctrl exposure={safe_exp} --set-ctrl analogue_gain={int(gain)}"]
+    return [f"v4l2-ctl -d {container.s_node} --set-ctrl horizontal_blanking={h_blank} --set-ctrl vertical_blanking={v_blank} --set-ctrl exposure={safe_exp} --set-ctrl analogue_gain={int(gain)}"]
 
 def get_capture_cmd(out_path, container):
     return f"v4l2-ctl -d {container.v_node} --stream-mmap --stream-count=1 --stream-to={out_path}"
