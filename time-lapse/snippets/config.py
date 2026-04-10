@@ -30,7 +30,7 @@ AE_MARGIN = 1.0
 SENSOR_INDEX = 0
 
 # Calibration Trigger
-DARK_TRIGGER_FILE = "/dev/shm/time-lapse/calibration"
+DARK_TRIGGER_FILE = f"/dev/shm/time-lapse/{DEVICE_ID}/calibration"
 # Dark Frames
 DARK_FRAME_COUNT = 100
 # Bias Frames
