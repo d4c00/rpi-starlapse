@@ -27,7 +27,7 @@ class AdaptiveExposureEngine:
         reg = self.REG_MIN + (virt_gain - self.VIRT_GAIN_MIN) * (self.REG_MAX - self.REG_MIN) / (self.VIRT_GAIN_MAX - self.VIRT_GAIN_MIN)
         return int(np.clip(reg, self.REG_MIN, self.REG_MAX))
 
-    def process_raw_frame(self, raw_path, width, height, current_us, current_reg_gain, max_us, max_reg_gain):
+    def process_raw_frame(self, raw_path, width, height, current_us, current_reg_gain, max_us, max_reg_gain, raw_bits):
         current_virt_gain = self._phys_to_virt_gain(current_reg_gain)
         
         if not os.path.exists(raw_path):
@@ -36,10 +36,11 @@ class AdaptiveExposureEngine:
         try:
             raw_map = np.memmap(raw_path, dtype=np.uint16, mode='r', shape=(height, width))
             stride = 8
-            ds_raw = (raw_map[0::stride, 0::stride] >> 4).astype(np.float32)
-            
+            ds_raw = raw_map[0::stride, 0::stride].astype(np.float32)
             bg = np.median(ds_raw)
-            luma = np.clip(bg / 255.0, 1e-4, 1.0)
+            max_dynamic_range = float((1 << raw_bits) - 1)
+            luma = np.clip(bg / max_dynamic_range, 1e-4, 1.0)
+            
             del raw_map
 
             if self.ev is None:
@@ -89,8 +90,8 @@ class AdaptiveExposureEngine:
 
 _engine = None
 
-def process_ae_logic(raw_path, width, height, current_us, current_reg_gain, max_us_limit, max_reg_gain, reg_min):
+def process_ae_logic(raw_path, width, height, current_us, current_reg_gain, max_us_limit, max_reg_gain, reg_min, raw_bits):
     global _engine
     if _engine is None:
         _engine = AdaptiveExposureEngine(reg_min, max_reg_gain, 1.0, 16.0)
-    return _engine.process_raw_frame(raw_path, width, height, current_us, current_reg_gain, max_us_limit, max_reg_gain)
+    return _engine.process_raw_frame(raw_path, width, height, current_us, current_reg_gain, max_us_limit, max_reg_gain, raw_bits)
