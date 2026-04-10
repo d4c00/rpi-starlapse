@@ -76,13 +76,19 @@ class AdaptiveExposureEngine:
             k_gain = p_predict / (p_predict + self.kf_r)
             next_ev_raw = self.ev + step
             residual = next_ev_raw - ev_predict
+
             self.ev = ev_predict + k_gain * residual
             self.ev_vel = self.ev_vel * 0.5 + (k_gain * 0.3) * residual 
             self.kf_p = (1.0 - k_gain) * p_predict
 
             limit_virt_gain_max = self._phys_to_virt_gain(max_reg_gain)
+            min_ev = math.log2(self.min_energy)
             max_ev = math.log2((float(max_us) * limit_virt_gain_max) / 1e6)
-            self.ev = np.clip(self.ev, math.log2(self.min_energy), max_ev)
+
+            if self.ev > max_ev or self.ev < min_ev:
+                self.ev_vel *= 0.1
+
+            self.ev = np.clip(self.ev, min_ev, max_ev)
 
             total_energy_us = (2.0 ** self.ev) * 1e6
 
