@@ -172,7 +172,7 @@ def ae_worker(stop_ev, sh_frame_id, sh_last_ae_id, sh_snap, sh_dev_id, data_q, r
                     snap_data = pack_snap(curr_id, new_s, new_g, new_ev, m_val)
 
                 dispatch_to_manager(data_q, mode, dev_id_str, p, target_raw, logger)
-                sh_snap.value = snap_data.encode()
+                if mode != "biases": sh_snap.value = snap_data.encode()
 
                 cost_ms = (time.perf_counter() - t0) * 1000
                 logger.info(f"[AE-RAW] ID:{curr_id} | Mode:{mode} | Done:{cost_ms:.1f}ms | NextT:{ (new_s if use_ae else p['t_us'])/1000:.1f}ms | Y:{m_val:.3f}")
