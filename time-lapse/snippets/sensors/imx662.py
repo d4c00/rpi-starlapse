@@ -16,7 +16,7 @@ EXACT_RAW_SIZE = WIDTH * HEIGHT * 2
 
 V4L2_PIXELFORMAT = "RG12" 
 MBUS_FORMAT = "SRGGB12_1X12"
-EXP_OFFSET = 8 
+EXP_OFFSET = 0 
 
 class DevContainer:
     def __init__(self, v_node, s_node):
