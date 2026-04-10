@@ -45,6 +45,12 @@ def find_nodes():
                         break
     return v_node, s_node
 
+_v_n, _s_n = find_nodes()
+_out = subprocess.check_output(f"v4l2-ctl -d {_s_n} --list-ctrls", shell=True, text=True)
+_f = lambda n, f: int(re.search(rf"{n}.*?{f}=(\d+)", _out).group(1))
+MAX_EXPOSURE = ((WIDTH + _f("horizontal_blanking", "max")) * (HEIGHT + _f("vertical_blanking", "max"))) / _f("pixel_rate", "value")
+print(f"[*] Hardware Max Exposure: {MAX_EXPOSURE:.10f}s")
+
 def get_init_cmds():
     v_node, s_node = find_nodes()
     if not s_node: return []
