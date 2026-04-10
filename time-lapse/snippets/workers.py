@@ -74,7 +74,7 @@ def camera_worker(sh_frame_id, sh_last_ae_id, data_q, stop_ev, trigger_ev, sh_sn
             except: pass
             
             logger.info(">>> [CALIBRATION] Starting calibration frames. Please cover the lens cap <<<")
-            blink_loop(50, 0.2, 0.2) 
+            blink_loop(30, 0.2, 0.2) 
 
             logger.info(f">>> [1/2] Capturing Darks (Count:{DARK_FRAME_COUNT})")
             for _ in range(DARK_FRAME_COUNT):
