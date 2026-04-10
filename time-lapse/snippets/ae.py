@@ -60,9 +60,10 @@ class AdaptiveExposureEngine:
             dark_term = 0.1 * math.exp(-bg / 2.0)
 
             luma_err = self.target - luma
-            luma_term = math.tanh(luma_err * 5.0)
+            luma_term = math.copysign(luma_err**2, luma_err) * 5.0 
+            luma_term = math.tanh(luma_term)
 
-            err_ev = (0.5 * snr_term) + (1.0 * dark_term) + (4.0 * luma_term)
+            err_ev = (1.0 * snr_term) + (1.0 * dark_term) + (2.0 * luma_term)
 
             err_ev = math.tanh(err_ev * math.tanh(noise / 8.0 + 0.5))
 
