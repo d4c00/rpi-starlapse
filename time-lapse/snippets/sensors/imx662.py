@@ -49,7 +49,14 @@ _v_n, _s_n = find_nodes()
 _out = subprocess.check_output(f"v4l2-ctl -d {_s_n} --list-ctrls", shell=True, text=True)
 _f = lambda n, f: int(re.search(rf"{n}.*?{f}=(\d+)", _out).group(1))
 MAX_EXPOSURE = ((WIDTH + _f("horizontal_blanking", "max")) * (HEIGHT + _f("vertical_blanking", "max"))) / _f("pixel_rate", "value")
+
+_min_exp_val = _f("exposure", "min")
+_h_blank_val = _f("horizontal_blanking", "value")
+_pixel_rate = _f("pixel_rate", "value")
+MIN_EXPOSURE = (_min_exp_val * (WIDTH + _h_blank_val)) / _pixel_rate
+
 print(f"[*] Hardware Max Exposure: {MAX_EXPOSURE:.10f}s")
+print(f"[*] Hardware Min Exposure: {MIN_EXPOSURE:.10f}s")
 
 def get_init_cmds():
     v_node, s_node = find_nodes()
