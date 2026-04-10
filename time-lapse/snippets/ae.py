@@ -53,8 +53,6 @@ class AdaptiveExposureEngine:
 
             alignment = np.sign(self.velocity * exact_ev_step + 1e-9)
 
-            alignment = np.sign(self.velocity * exact_ev_step + 1e-9)
-
             is_same_dir = (0.5 * alignment + 0.5)
 
             brake_force = math.tanh(abs(exact_ev_step) / 1.2) 
