@@ -166,7 +166,9 @@ def ae_worker(stop_ev, sh_frame_id, sh_last_ae_id, sh_snap, sh_dev_id, data_q, r
                 p["y"] = m_val
                 if not use_ae:
                     p["ev"] = 0.0
-                    snap_data = pack_snap(curr_id, p["t_us"], p["g"], 0.0, m_val)
+                    actual_t = int(sensor.MIN_EXPOSURE * 1e6) if mode == "biases" else p["t_us"]
+                    actual_g = sensor.MIN_GAIN if mode == "biases" else p["g"]
+                    snap_data = pack_snap(curr_id, actual_t, actual_g, 0.0, m_val)
                 else:
                     p["ev"] = new_ev
                     snap_data = pack_snap(curr_id, new_s, new_g, new_ev, m_val)
