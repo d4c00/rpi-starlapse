@@ -8,6 +8,12 @@
 
 ##### The CAD drawing for the acrylic enclosure shown in the examples can be found at: [PMMA_3mm_BLK_Opaque_Matte_260408.dwg](https://github.com/d4c00/rpi-starlapse/raw/refs/heads/main/CAD/PMMA_3mm_BLK_Opaque_Matte_260408.dwg)
 
+<div align="center">
+  <a href="https://www.youtube.com/watch?v=GwNxKLBiHG8">
+    <img src="https://img.youtube.com/vi/GwNxKLBiHG8/maxresdefault.jpg" alt="Capturing City Stars" style="width:80%;">
+  </a>
+</div>
+
 <br>
 
 ---
