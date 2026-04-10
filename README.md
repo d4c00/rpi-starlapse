@@ -8,6 +8,7 @@
 
 ##### The CAD drawing for the acrylic enclosure shown in the examples can be found at: [PMMA_3mm_BLK_Opaque_Matte_260408.dwg](https://github.com/d4c00/rpi-starlapse/raw/refs/heads/main/CAD/PMMA_3mm_BLK_Opaque_Matte_260408.dwg)
 
+### Examples of particularly harsh environments:
 In a **Bortle 8** city, I captured a section of the Milky Way between Aquila and Lyra. Even with the interference of **56.8% moonlight** at an angular distance of **18°** from the target and **partly cloudy** skies, it still managed to capture a number of stars.<br>
 The image is a stack of 64 frames, where the Milky Way is faintly visible under the moonlight.(Lunar glare in bottom-left)
 <div align="center">
