@@ -8,15 +8,13 @@
 
 ##### The CAD drawing for the acrylic enclosure shown in the examples can be found at: [PMMA_3mm_BLK_Opaque_Matte_260408.dwg](https://github.com/d4c00/rpi-starlapse/raw/refs/heads/main/CAD/PMMA_3mm_BLK_Opaque_Matte_260408.dwg)
 
-In the center of a Bortle 8 city, I used this **to** find stars in the infrared spectrum. Even with the interference of 56.8% moonlight and partly cloudy skies, it still managed to capture quite a few stars.
+In the center of a **Bortle 8** city, I used this to find stars in the infrared spectrum. Even with the interference of **56.8% moonlight** and **partly cloudy** skies, it still managed to capture quite a few stars.<br>
 The cover image is a stack of 64 frames, where the Milky Way is faintly visible under the moonlight.
 <div align="center">
-  <a href="https://www.youtube.com/watch?v=GwNxKLBiHG8">
-    <img src="https://img.youtube.com/vi/GwNxKLBiHG8/maxresdefault.jpg" alt="Capturing City Stars" style="width:80%;">
-    <br>
-    ▶️ <b>Watch the Full Time-lapse Video on YouTube</b>
-  </a>
+  <img src="https://github.com/user-attachments/assets/36020c35-77c3-42ef-b876-6872854ba693" width="77%" />
 </div>
+
+> **Video:** [Watch the Full Time-lapse on YouTube](https://www.youtube.com/watch?v=GwNxKLBiHG8) 
 
 <br>
 
