@@ -27,7 +27,7 @@ class AdaptiveExposureEngine:
         reg = self.REG_MIN + (virt_gain - self.VIRT_GAIN_MIN) * (self.REG_MAX - self.REG_MIN) / (self.VIRT_GAIN_MAX - self.VIRT_GAIN_MIN)
         return int(np.clip(reg, self.REG_MIN, self.REG_MAX))
 
-    def process_raw_frame(self, raw_path, width, height, current_us, current_reg_gain, max_us, max_reg_gain):
+    def process_raw_frame(self, raw_path, width, height, current_us, current_reg_gain, max_us, max_reg_gain, raw_bits):
         current_virt_gain = self._phys_to_virt_gain(current_reg_gain)
         
         if not os.path.exists(raw_path):
