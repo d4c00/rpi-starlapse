@@ -8,7 +8,7 @@
 
 ##### The CAD drawing for the acrylic enclosure shown in the examples can be found at: [PMMA_3mm_BLK_Opaque_Matte_260408.dwg](https://github.com/d4c00/rpi-starlapse/raw/refs/heads/main/CAD/PMMA_3mm_BLK_Opaque_Matte_260408.dwg)
 
-In the center of a **Bortle 8** city, I used this to find stars in the infrared spectrum. Even with the interference of **56.8% moonlight** and **partly cloudy** skies, it still managed to capture quite a few stars.<br>
+In a **Bortle 8** city, I captured a section of the Milky Way between Aquila and Lyra. Even with the interference of **56.8% moonlight** at an angular distance of **18°** from the target and **partly cloudy** skies, it still managed to capture a number of stars.<br>
 The cover image is a stack of 64 frames, where the Milky Way is faintly visible under the moonlight.
 <div align="center">
   <img src="https://github.com/user-attachments/assets/36020c35-77c3-42ef-b876-6872854ba693" width="77%" />
