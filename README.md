@@ -10,7 +10,9 @@
 
 ### Examples of particularly harsh environments:
 In a **Bortle 8** city, I captured a section of the Milky Way between Aquila and Lyra. Even with the interference of **56.8% moonlight** at an angular distance of **18°** from the target and **partly cloudy** skies, and using a ordinary power bank (which introduces significant readout noise), it still managed to capture a number of stars.<br>
-The image is a stack of 64 frames, where the Milky Way is faintly visible under the moonlight.(Lunar glare in bottom-left)
+The image shows the Milky Way faintly visible under moonlight (with lunar glare in the bottom-left).
+Exposure time: 29, gain: 34.
+Stacked 64 light frames along with flat frames and dark flats (no dark frames).
 <div align="center">
   <img src="https://github.com/user-attachments/assets/36020c35-77c3-42ef-b876-6872854ba693" width="77%" />
 </div>
