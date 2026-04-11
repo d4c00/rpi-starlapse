@@ -15,8 +15,8 @@ The image is a stack of 64 frames, where the Milky Way is faintly visible under 
   <img src="https://github.com/user-attachments/assets/36020c35-77c3-42ef-b876-6872854ba693" width="77%" />
 </div>
 
-> **Video:** [Watch the Full Time-lapse on YouTube](https://www.youtube.com/watch?v=GwNxKLBiHG8) 
-
+> **Video:** [Watch the Full Time-lapse on YouTube](https://www.youtube.com/watch?v=GwNxKLBiHG8) <br>
+> **Star Field Identification:** [Astrometry Results](https://nova.astrometry.net/user_images/15025237)
 <br>
 
 ---
