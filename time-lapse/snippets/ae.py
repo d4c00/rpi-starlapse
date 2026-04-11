@@ -27,7 +27,7 @@ class AdaptiveExposureEngine:
         reg = self.REG_MIN + (virt_gain - self.VIRT_GAIN_MIN) * (self.REG_MAX - self.REG_MIN) / (self.VIRT_GAIN_MAX - self.VIRT_GAIN_MIN)
         return int(np.clip(reg, self.REG_MIN, self.REG_MAX))
 
-    def process_raw_frame(self, raw_path, width, height, current_us, current_reg_gain, max_us, max_reg_gain, raw_bits):
+    def process_raw_frame(self, raw_path, width, height, current_us, current_reg_gain, max_us, min_us, max_reg_gain, raw_bits):
         current_virt_gain = self._phys_to_virt_gain(current_reg_gain)
         
         if not os.path.exists(raw_path):
@@ -66,19 +66,21 @@ class AdaptiveExposureEngine:
             self.velocity = np.clip(self.velocity, -0.5, 0.5)
             self.ev += self.velocity
 
-            limit_virt_gain_max = self._phys_to_virt_gain(max_reg_gain)
-
             total_energy_us = (2.0 ** self.ev) * 1e6
 
-            if total_energy_us <= max_us:
-                next_us = max(1.0, total_energy_us / self.VIRT_GAIN_MIN)
+            limit_virt_gain_max = self._phys_to_virt_gain(max_reg_gain)
+        
+            if total_energy_us <= (max_us * self.VIRT_GAIN_MIN):
+                next_us = np.clip(total_energy_us / self.VIRT_GAIN_MIN, min_us, max_us)
                 next_virt_gain = self.VIRT_GAIN_MIN
             else:
                 next_us = float(max_us)
-                next_virt_gain = min(limit_virt_gain_max, total_energy_us / (next_us + 1e-9))
+                next_virt_gain = np.clip(total_energy_us / (next_us + 1e-9), self.VIRT_GAIN_MIN, limit_virt_gain_max)
+            
+            actual_phys_ev = math.log2((next_us * next_virt_gain) / 1e6 + 1e-9)
+            self.ev = actual_phys_ev 
 
             next_reg_gain = self._virt_to_phys_gain(next_virt_gain)
-
             return int(next_us), float(next_reg_gain), float(luma), float(exact_ev_step)
 
         except Exception as e:
@@ -88,8 +90,8 @@ class AdaptiveExposureEngine:
 
 _engine = None
 
-def process_ae_logic(raw_path, width, height, current_us, current_reg_gain, max_us_limit, max_reg_gain, reg_min, raw_bits):
+def process_ae_logic(raw_path, width, height, current_us, current_reg_gain, max_us_limit, min_us_limit, max_reg_gain, reg_min, raw_bits):
     global _engine
     if _engine is None:
         _engine = AdaptiveExposureEngine(reg_min, max_reg_gain, 1.0, 16.0)
-    return _engine.process_raw_frame(raw_path, width, height, current_us, current_reg_gain, max_us_limit, max_reg_gain, raw_bits)
+    return _engine.process_raw_frame(raw_path, width, height, current_us, current_reg_gain, max_us_limit, min_us_limit, max_reg_gain, raw_bits)
