@@ -27,7 +27,7 @@ class AdaptiveExposureEngine:
         reg = self.REG_MIN + (virt_gain - self.VIRT_GAIN_MIN) * (self.REG_MAX - self.REG_MIN) / (self.VIRT_GAIN_MAX - self.VIRT_GAIN_MIN)
         return int(np.clip(reg, self.REG_MIN, self.REG_MAX))
 
-    def process_raw_frame(self, raw_path, width, height, current_us, current_reg_gain, max_us, max_reg_gain, raw_bits):
+    def process_raw_frame(self, raw_path, width, height, current_us, current_reg_gain, max_us, min_us, max_reg_gain, raw_bits):
         current_virt_gain = self._phys_to_virt_gain(current_reg_gain)
         
         if not os.path.exists(raw_path):
@@ -81,11 +81,11 @@ class AdaptiveExposureEngine:
                 next_us = float(max_us)
                 next_virt_gain = np.clip(total_energy_us / (next_us + 1e-9), self.VIRT_GAIN_MIN, limit_virt_gain_max)
             
-        actual_phys_ev = math.log2((next_us * next_virt_gain) / 1e6 + 1e-9)
-        self.ev = actual_phys_ev 
+            actual_phys_ev = math.log2((next_us * next_virt_gain) / 1e6 + 1e-9)
+            self.ev = actual_phys_ev 
 
-        next_reg_gain = self._virt_to_phys_gain(next_virt_gain)
-        return int(next_us), float(next_reg_gain), float(luma), float(exact_ev_step)
+            next_reg_gain = self._virt_to_phys_gain(next_virt_gain)
+            return int(next_us), float(next_reg_gain), float(luma), float(exact_ev_step)
 
         except Exception as e:
             print(f"[AE] RAW Process Error: {e}")
