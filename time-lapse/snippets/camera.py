@@ -45,17 +45,6 @@ class V4L2Camera:
         for cmd in runtime_cmds:
             self._run(cmd)
 
-        fd = self.stream_proc.stdout.fileno()
-        old_flags = fcntl.fcntl(fd, fcntl.F_GETFL)
-        fcntl.fcntl(fd, fcntl.F_SETFL, old_flags | os.O_NONBLOCK)
-        try:
-            while True:
-                if not self.stream_proc.stdout.read(sensor.EXACT_RAW_SIZE): break
-        except (BlockingIOError, TypeError, IOError):
-            pass
-        finally:
-            fcntl.fcntl(fd, fcntl.F_SETFL, old_flags)
-
         t0 = time.perf_counter()
 
         raw_data = self.stream_proc.stdout.read(sensor.EXACT_RAW_SIZE)
