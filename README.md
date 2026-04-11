@@ -124,6 +124,7 @@ sudo loginctl enable-linger "$USER"
 mkdir -p time-lapse && curl -sL https://github.com/d4c00/rpi-starlapse/tarball/main | tar -xz -C time-lapse --strip-components=2 --wildcards "*/time-lapse/"
 ```
 
+If your shooting interval is greater than 10 minutes, you need to modify the `WatchdogSec=600` parameter in `time-lapse.service`.
 ```bash
 mkdir -p ~/.config/systemd/user/
 cd ~/time-lapse
