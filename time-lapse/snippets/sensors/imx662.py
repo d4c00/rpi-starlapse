@@ -52,12 +52,17 @@ _f = lambda n, f: int(re.search(rf"{n}.*?{f}=(\d+)", _out).group(1))
 def _calculate_phys_exposure(exp_lines, mode="min"):
     _out_now = subprocess.check_output(f"v4l2-ctl -d {_s_n} --list-ctrls", shell=True, text=True)
     _fetch = lambda n, f: int(re.search(rf"{n}.*?{f}=(\d+)", _out_now).group(1))
+    
     h_blank = _fetch("horizontal_blanking", mode)
-    return (exp_lines * (WIDTH + h_blank)) / _fetch("pixel_rate", "value")
+    pixel_rate = _fetch("pixel_rate", "value")
+    
+    return (exp_lines * (WIDTH + h_blank)) / pixel_rate
 
 MIN_EXPOSURE = _calculate_phys_exposure(_f("exposure", "min"), mode="min")
 
-MAX_EXPOSURE = _calculate_phys_exposure(_f("exposure", "max"), mode="max")
+v_total_max = HEIGHT + _f("vertical_blanking", "max")
+
+MAX_EXPOSURE = _calculate_phys_exposure(v_total_max, mode="max")
 
 AE_MIN_US = int(MIN_EXPOSURE * 1e6)
 
