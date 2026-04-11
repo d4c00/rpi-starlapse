@@ -26,7 +26,7 @@ TIME_SOURCE = "https://any.example.com/"
 CAMERA_ENABLED = True
 CAPTURE_INTERVAL = 30
 AE_TARGET_LUMA = 0.33
-AE_MARGIN = 0.1
+AE_MARGIN = 0.15
 SENSOR_INDEX = 0
 
 # Calibration Trigger
