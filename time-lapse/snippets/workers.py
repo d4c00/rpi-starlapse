@@ -158,8 +158,12 @@ def ae_worker(stop_ev, sh_frame_id, sh_last_ae_id, sh_snap, sh_dev_id, data_q, r
                 limit_us = min((CAPTURE_INTERVAL - AE_MARGIN), sensor.MAX_EXPOSURE) * 1e6
 
                 new_s, new_g, m_val, new_ev = process_ae_logic(
-                    target_raw, W, H, p["t_us"], p["g"], limit_us, 
-                    sensor.MAX_GAIN, sensor.MIN_GAIN, sensor.BIT
+                    target_raw, W, H, p["t_us"], p["g"], 
+                    limit_us,
+                    int(sensor.MIN_EXPOSURE * 1e6),
+                    sensor.MAX_GAIN, 
+                    sensor.MIN_GAIN, 
+                    sensor.BIT
                 )
 
                 p["y"] = m_val
