@@ -42,7 +42,7 @@ def capture_frame(cam, mode, target, r_path, sh_frame_id, sh_last_ae_id, is_onli
         final_ready_path = f"{r_path}.{tag}.{curr_id}"
         os.replace(target, final_ready_path)
 
-        logger.info(f"[{mode.upper()} OK] ID:{curr_id} | {cap_dur:.1f}ms")
+        logger.info(f"[{mode.upper()} OK] ID:{curr_id} | Read:{cap_dur:.1f}ms")
         status = True
     else:
         logger.error(f"[{mode.upper()} FAIL] {mode} capture failed.")
