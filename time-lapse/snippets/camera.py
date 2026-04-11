@@ -1,8 +1,10 @@
 # Copyright (c) 2026 length <me@length.cc> (https://github.com/d4c00)
 # Licensed under the MIT License.
 
+import os
 import time
 import subprocess
+import fcntl
 from snippets.sensors import sensor
 from snippets.utils import setup_logger
 
@@ -43,14 +45,27 @@ class V4L2Camera:
         for cmd in runtime_cmds:
             self._run(cmd)
 
+        fd = self.stream_proc.stdout.fileno()
+        old_flags = fcntl.fcntl(fd, fcntl.F_GETFL)
+        fcntl.fcntl(fd, fcntl.F_SETFL, old_flags | os.O_NONBLOCK)
+        try:
+            while True:
+                if not self.stream_proc.stdout.read(sensor.EXACT_RAW_SIZE): break
+        except (BlockingIOError, TypeError, IOError):
+            pass
+        finally:
+            fcntl.fcntl(fd, fcntl.F_SETFL, old_flags)
+
         t0 = time.perf_counter()
 
         raw_data = self.stream_proc.stdout.read(sensor.EXACT_RAW_SIZE)
-        
+
+        capture_elapsed_ms = (time.perf_counter() - t0) * 1000
+
         if len(raw_data) == sensor.EXACT_RAW_SIZE:
             with open(out_path, 'wb') as f:
                 f.write(raw_data)
-            return True, (time.perf_counter() - t0) * 1000
+            return True, capture_elapsed_ms
         else:
             logger.error("Frame read incomplete or stream died.")
             return False, 0
