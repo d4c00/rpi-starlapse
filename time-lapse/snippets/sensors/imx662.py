@@ -55,11 +55,9 @@ def _calculate_phys_exposure(exp_lines):
     _fetch = lambda n, f: int(re.search(rf"{n}.*?{f}=(\d+)", _out_now).group(1))
     return (exp_lines * (WIDTH + _fetch("horizontal_blanking", "value"))) / _fetch("pixel_rate", "value")
 
-# 物理极限值 (单位: 秒)
 MIN_EXPOSURE = _calculate_phys_exposure(_f("exposure", "min"))
 MAX_EXPOSURE = _calculate_phys_exposure(_f("exposure", "max"))
 
-# AE 专用下限 (单位: 微秒)，确保不被 BaseSensor 覆盖
 AE_MIN_US = int(MIN_EXPOSURE * 1e6)
 
 def print_hardware_info():
