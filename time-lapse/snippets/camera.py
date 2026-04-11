@@ -18,6 +18,15 @@ class V4L2Camera:
             for cmd in sensor.get_init_cmds():
                 self._run(cmd)
 
+        self.stream_proc = subprocess.Popen(
+            f"v4l2-ctl -d {sensor.v_node} --stream-mmap --stream-count=0 --stream-to=-",
+            shell=True, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL
+        )
+
+    def __del__(self):
+        if hasattr(self, 'stream_proc'):
+            self.stream_proc.terminate()
+
     def _run(self, cmd):
         try:
             return subprocess.check_output(cmd, shell=True, text=True, stderr=subprocess.STDOUT)
