@@ -43,10 +43,14 @@ class V4L2Camera:
         for cmd in runtime_cmds:
             self._run(cmd)
 
-        capture_cmd = sensor.get_capture_cmd(
-            out_path=out_path, 
-            container=sensor
-        )
         t0 = time.perf_counter()
-        self._run(capture_cmd)
-        return True, (time.perf_counter() - t0) * 1000
+
+        raw_data = self.stream_proc.stdout.read(sensor.EXACT_RAW_SIZE)
+        
+        if len(raw_data) == sensor.EXACT_RAW_SIZE:
+            with open(out_path, 'wb') as f:
+                f.write(raw_data)
+            return True, (time.perf_counter() - t0) * 1000
+        else:
+            logger.error("Frame read incomplete or stream died.")
+            return False, 0
