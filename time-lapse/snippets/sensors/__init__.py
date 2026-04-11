@@ -25,8 +25,8 @@ class BaseSensor:
     def _refresh_hardware_limits(self):
         try:
             out = subprocess.check_output(f"v4l2-ctl -d {self.s_node} --list-ctrls", shell=True, text=True)
-            self.MIN_EXPOSURE = int(re.search(r"exposure.*?min=(\d+)", out).group(1))
-            self.MAX_EXPOSURE = int(re.search(r"exposure.*?max=(\d+)", out).group(1))
+            self.HW_MIN_LINES = int(re.search(r"exposure.*?min=(\d+)", out).group(1))
+            self.HW_MAX_LINES = int(re.search(r"exposure.*?max=(\d+)", out).group(1))
             self.MIN_GAIN = int(re.search(r"analogue_gain.*?min=(\d+)", out).group(1))
             self.MAX_GAIN = int(re.search(r"analogue_gain.*?max=(\d+)", out).group(1)) 
         except:
