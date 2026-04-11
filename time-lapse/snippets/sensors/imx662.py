@@ -50,13 +50,22 @@ _out = subprocess.check_output(f"v4l2-ctl -d {_s_n} --list-ctrls", shell=True, t
 _f = lambda n, f: int(re.search(rf"{n}.*?{f}=(\d+)", _out).group(1))
 MAX_EXPOSURE = ((WIDTH + _f("horizontal_blanking", "max")) * (HEIGHT + _f("vertical_blanking", "max"))) / _f("pixel_rate", "value")
 
-_min_exp_val = _f("exposure", "min")
-_h_blank_val = _f("horizontal_blanking", "value")
-_pixel_rate = _f("pixel_rate", "value")
-MIN_EXPOSURE = (_min_exp_val * (WIDTH + _h_blank_val)) / _pixel_rate
+def _calculate_phys_exposure(exp_lines):
+    _out_now = subprocess.check_output(f"v4l2-ctl -d {_s_n} --list-ctrls", shell=True, text=True)
+    _fetch = lambda n, f: int(re.search(rf"{n}.*?{f}=(\d+)", _out_now).group(1))
+    return (exp_lines * (WIDTH + _fetch("horizontal_blanking", "value"))) / _fetch("pixel_rate", "value")
 
-print(f"[*] Hardware Max Exposure: {MAX_EXPOSURE:.10f}s")
-print(f"[*] Hardware Min Exposure: {MIN_EXPOSURE:.10f}s")
+# 物理极限值 (单位: 秒)
+MIN_EXPOSURE = _calculate_phys_exposure(_f("exposure", "min"))
+MAX_EXPOSURE = _calculate_phys_exposure(_f("exposure", "max"))
+
+# AE 专用下限 (单位: 微秒)，确保不被 BaseSensor 覆盖
+AE_MIN_US = int(MIN_EXPOSURE * 1e6)
+
+def print_hardware_info():
+    print(f"[*] Hardware Max Exposure: {MAX_EXPOSURE:.6f}s")
+    print(f"[*] Hardware Min Exposure: {MIN_EXPOSURE:.6f}s")
+    print(f"[*] AE Logic Min Limit: {AE_MIN_US}us")
 
 def get_init_cmds():
     v_node, s_node = find_nodes()
