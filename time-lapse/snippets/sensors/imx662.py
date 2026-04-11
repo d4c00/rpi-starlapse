@@ -48,15 +48,16 @@ def find_nodes():
 _v_n, _s_n = find_nodes()
 _out = subprocess.check_output(f"v4l2-ctl -d {_s_n} --list-ctrls", shell=True, text=True)
 _f = lambda n, f: int(re.search(rf"{n}.*?{f}=(\d+)", _out).group(1))
-MAX_EXPOSURE = ((WIDTH + _f("horizontal_blanking", "max")) * (HEIGHT + _f("vertical_blanking", "max"))) / _f("pixel_rate", "value")
 
-def _calculate_phys_exposure(exp_lines):
+def _calculate_phys_exposure(exp_lines, mode="min"):
     _out_now = subprocess.check_output(f"v4l2-ctl -d {_s_n} --list-ctrls", shell=True, text=True)
     _fetch = lambda n, f: int(re.search(rf"{n}.*?{f}=(\d+)", _out_now).group(1))
-    return (exp_lines * (WIDTH + _fetch("horizontal_blanking", "value"))) / _fetch("pixel_rate", "value")
+    h_blank = _fetch("horizontal_blanking", mode)
+    return (exp_lines * (WIDTH + h_blank)) / _fetch("pixel_rate", "value")
 
-MIN_EXPOSURE = _calculate_phys_exposure(_f("exposure", "min"))
-MAX_EXPOSURE = _calculate_phys_exposure(_f("exposure", "max"))
+MIN_EXPOSURE = _calculate_phys_exposure(_f("exposure", "min"), mode="min")
+
+MAX_EXPOSURE = _calculate_phys_exposure(_f("exposure", "max"), mode="max")
 
 AE_MIN_US = int(MIN_EXPOSURE * 1e6)
 
@@ -64,6 +65,8 @@ def print_hardware_info():
     print(f"[*] Hardware Max Exposure: {MAX_EXPOSURE:.6f}s")
     print(f"[*] Hardware Min Exposure: {MIN_EXPOSURE:.6f}s")
     print(f"[*] AE Logic Min Limit: {AE_MIN_US}us")
+
+print_hardware_info()
 
 def get_init_cmds():
     v_node, s_node = find_nodes()
@@ -96,15 +99,28 @@ def get_runtime_cmds(target_us, gain, container):
         return int(m.group(1)) if m else 0
 
     pixel_rate = fetch("pixel_rate")
-    h_blank = fetch("horizontal_blanking", "max")
+    h_min = fetch("horizontal_blanking", "min")
+    h_max = fetch("horizontal_blanking", "max")
     v_min = fetch("vertical_blanking", "min")
     v_max = fetch("vertical_blanking", "max")
 
-    line_length = WIDTH + h_blank
-    target_v_total = (target_us * pixel_rate) / (line_length * 1000000.0)
-    v_blank = int(np.clip(target_v_total - HEIGHT + EXP_OFFSET, v_min, v_max))
+    total_clocks_needed = (target_us * pixel_rate) / 1000000.0
+
+    line_min = WIDTH + h_min
+    v_total_at_hmin = total_clocks_needed / line_min
+    
+    if v_total_at_hmin <= (HEIGHT + v_max):
+        h_blank = h_min
+        v_blank = int(np.clip(v_total_at_hmin - HEIGHT + EXP_OFFSET, v_min, v_max))
+    else:
+        v_blank = v_max
+        v_total_fixed = HEIGHT + v_blank
+        line_needed = total_clocks_needed / v_total_fixed
+        h_blank = int(np.clip(line_needed - WIDTH, h_min, h_max))
+
+    current_line_length = WIDTH + h_blank
     current_v_total = HEIGHT + v_blank
-    safe_exp = int(np.clip(target_v_total, 1, current_v_total - EXP_OFFSET))
+    safe_exp = int(np.clip(total_clocks_needed / current_line_length, 1, current_v_total - EXP_OFFSET))
 
     return [f"v4l2-ctl -d {container.s_node} --set-ctrl horizontal_blanking={h_blank} --set-ctrl vertical_blanking={v_blank} --set-ctrl exposure={safe_exp} --set-ctrl analogue_gain={int(gain)}"]
 
