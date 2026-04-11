@@ -66,10 +66,7 @@ class AdaptiveExposureEngine:
             self.velocity = np.clip(self.velocity, -0.5, 0.5)
             self.ev += self.velocity
 
-            limit_virt_gain_max = self._phys_to_virt_gain(max_reg_gain)
-
             total_energy_us = (2.0 ** self.ev) * 1e6
-
 
             limit_virt_gain_max = self._phys_to_virt_gain(max_reg_gain)
         
