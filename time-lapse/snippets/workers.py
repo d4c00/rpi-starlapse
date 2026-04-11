@@ -36,7 +36,6 @@ def capture_frame(cam, mode, target, r_path, sh_frame_id, sh_last_ae_id, is_onli
 
     if success and is_valid_raw(target):
         curr_id = sh_frame_id.value + 1
-        sh_snap.value = pack_snap(curr_id, s_us, g, p.get("ev", 0), p.get("y", 0)).encode()
         sh_frame_id.value = curr_id
 
         tag = target.split('.')[-1]
@@ -166,7 +165,13 @@ def ae_worker(stop_ev, sh_frame_id, sh_last_ae_id, sh_snap, sh_dev_id, data_q, r
                 p["y"] = m_val
                 if not use_ae:
                     p["ev"] = 0.0
-                    snap_data = pack_snap(curr_id, p["t_us"], p["g"], 0.0, m_val)
+                    if mode == "biases":
+                        s_target = int(sensor.MIN_EXPOSURE * 1e6)
+                        g_target = sensor.MIN_GAIN
+                    else:
+                        s_target, g_target = p["t_us"], p["g"]
+                    
+                    snap_data = pack_snap(curr_id, s_target, g_target, 0.0, m_val)
                 else:
                     p["ev"] = new_ev
                     snap_data = pack_snap(curr_id, new_s, new_g, new_ev, m_val)
