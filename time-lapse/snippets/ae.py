@@ -49,7 +49,7 @@ class AdaptiveExposureEngine:
 
             exact_ev_step = math.log2(self.target / luma)
 
-            base_pull = (exact_ev_step ** 2) * np.sign(exact_ev_step) * 0.001
+            base_pull = (exact_ev_step ** 2) * np.sign(exact_ev_step) * 0.0003
 
             alignment = np.sign(self.velocity * exact_ev_step + 1e-9)
 
@@ -65,7 +65,7 @@ class AdaptiveExposureEngine:
             raw_movement = (self.velocity * is_same_dir * soft_damping) + (base_pull * self.accel_factor)
             self.velocity = raw_movement * brake_force
 
-            self.velocity = np.clip(self.velocity, -1.0, 1.0)
+            self.velocity = np.clip(self.velocity, -0.3, 0.3)
             self.ev += self.velocity
 
             total_energy_us = (2.0 ** self.ev) * 1e6
