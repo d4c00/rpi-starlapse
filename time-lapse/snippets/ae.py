@@ -55,15 +55,15 @@ class AdaptiveExposureEngine:
 
             is_same_dir = (0.5 * alignment + 0.5)
 
-            brake_force = math.tanh((abs(exact_ev_step) / 1.6) ** 100.0)
+            brake_force = math.tanh((abs(exact_ev_step) / 1.6) ** 1.2)
 
             soft_damping = 1.0 - math.exp(-(abs(exact_ev_step) / 0.15) ** 2.0)
 
             self.accel_factor = (self.accel_factor * 2.0 * is_same_dir) + (4.0 * (1.0 - is_same_dir))
             self.accel_factor = min(self.accel_factor, 128.0)
 
-            self.velocity = (self.velocity * is_same_dir * brake_force * soft_damping) + (base_pull * self.accel_factor)
-
+            raw_movement = (self.velocity * is_same_dir * soft_damping) + (base_pull * self.accel_factor)
+            self.velocity = raw_movement * brake_force
 
             self.velocity = np.clip(self.velocity, -1.0, 1.0)
             self.ev += self.velocity
