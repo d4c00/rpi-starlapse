@@ -6,7 +6,7 @@ import math
 import os
 from snippets.config import AE_TARGET_LUMA
 
-MAX_LUMA_JUMP_RATIO = 0.5
+MAX_LUMA_JUMP_RATIO = 0.7
 VIRT_GAIN_MIN_VAL   = 1.0
 VIRT_GAIN_MAX_VAL   = 16.0
 DELAY_FRAMES_COUNT  = 2
