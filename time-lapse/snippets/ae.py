@@ -7,7 +7,7 @@ import os
 from snippets.config import AE_TARGET_LUMA
 
 class AdaptiveExposureEngine:
-    def __init__(self, reg_min, reg_max, virt_min, virt_max):
+    def __init__(self, reg_min, reg_max, virt_min, virt_max, delay_frames=2):
         self.target = AE_TARGET_LUMA
         self.ev = None
         self.min_energy = 1e-4
@@ -20,6 +20,10 @@ class AdaptiveExposureEngine:
         self.VIRT_GAIN_MIN = virt_min
         self.VIRT_GAIN_MAX = virt_max
 
+        self.delay_frames = delay_frames
+        self.history = []
+        self._history_initialized = False
+
     def _phys_to_virt_gain(self, reg_val):
         return 1.0 + (reg_val - self.REG_MIN) * (self.VIRT_GAIN_MAX - self.VIRT_GAIN_MIN) / (self.REG_MAX - self.REG_MIN)
 
@@ -28,9 +32,20 @@ class AdaptiveExposureEngine:
         return int(np.clip(reg, self.REG_MIN, self.REG_MAX))
 
     def process_raw_frame(self, raw_path, width, height, current_us, current_reg_gain, max_us, min_us, max_reg_gain, raw_bits):
-        current_virt_gain = self._phys_to_virt_gain(current_reg_gain)
+        if not self._history_initialized:
+            self.history = [(current_us, current_reg_gain)] * max(0, self.delay_frames)
+            self._history_initialized = True
+
+        if self.delay_frames > 0:
+            actual_us, actual_reg_gain = self.history.pop(0)
+        else:
+            actual_us, actual_reg_gain = current_us, current_reg_gain
+
+        current_virt_gain = self._phys_to_virt_gain(actual_reg_gain)
         
         if not os.path.exists(raw_path):
+            if self.delay_frames > 0:
+                self.history.append((current_us, current_reg_gain))
             return int(current_us), float(current_reg_gain), self.target, 0.0
 
         try:
@@ -44,7 +59,7 @@ class AdaptiveExposureEngine:
             del raw_map
 
             if self.ev is None:
-                self.ev = math.log2(max(self.min_energy, (current_us * current_virt_gain) / 1e6) + 1e-9)
+                self.ev = math.log2(max(self.min_energy, (actual_us * current_virt_gain) / 1e6) + 1e-9)
                 self.velocity = 0.0
 
             MAX_HW_EV = 12.0 
@@ -90,17 +105,23 @@ class AdaptiveExposureEngine:
             self.ev = actual_phys_ev 
 
             next_reg_gain = self._virt_to_phys_gain(next_virt_gain)
+
+            if self.delay_frames > 0:
+                self.history.append((next_us, next_reg_gain))
+            
             return int(next_us), float(next_reg_gain), float(luma), float(exact_ev_step)
 
         except Exception as e:
             print(f"[AE] RAW Process Error: {e}")
             if 'raw_map' in locals(): del raw_map
+            if self.delay_frames > 0:
+                self.history.append((current_us, current_reg_gain))
             return int(current_us), float(current_reg_gain), self.target, 0.0
 
 _engine = None
 
-def process_ae_logic(raw_path, width, height, current_us, current_reg_gain, max_us_limit, min_us_limit, max_reg_gain, reg_min, raw_bits):
+def process_ae_logic(raw_path, width, height, current_us, current_reg_gain, max_us_limit, min_us_limit, max_reg_gain, reg_min, raw_bits, delay_frames=2):
     global _engine
     if _engine is None:
-        _engine = AdaptiveExposureEngine(reg_min, max_reg_gain, 1.0, 16.0)
+        _engine = AdaptiveExposureEngine(reg_min, max_reg_gain, 1.0, 16.0, delay_frames=delay_frames)
     return _engine.process_raw_frame(raw_path, width, height, current_us, current_reg_gain, max_us_limit, min_us_limit, max_reg_gain, raw_bits)
