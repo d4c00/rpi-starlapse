@@ -11,26 +11,15 @@
 ---
 
 ### Examples:
-Bortle Class 8 city, exposure time 29.85 seconds, gain 34, Milky Way core captured during a no-moon window. There were many clouds, so I could only select 12 frames where the clouds were relatively thin for stacking.
+Bortle Class 8 city, exposure time 29.85 seconds, gain 34, Milky Way core captured during a no-moon window. There were many clouds, so I could only select 12 frames where the clouds were relatively thin for stacking.<br>
+Although it will affect heat dissipation, I made a simple waterproof cover using plastic wrap and rubber bands.<br>
 <div align="center">
-  <img src="https://github.com/user-attachments/assets/2bd2f249-cacb-420a-9651-b76b8fc18d34" width="77%" />
+  <img src="https://github.com/user-attachments/assets/1f644288-32f0-4d52-a18b-33de4bfa7503" width="36.7%" />
+  <img src="https://github.com/user-attachments/assets/2bd2f249-cacb-420a-9651-b76b8fc18d34" width="50%" />
 </div>
 
 > **Video:** [Watch the Full Time-lapse on YouTube](https://youtu.be/KsnQ170sJx0) <br>
 > **Star Field Identification:** [Astrometry Results](https://nova.astrometry.net/user_images/15042173)
-
-### Examples of particularly harsh environments:
-In a **Bortle 8** city, I captured a section of the Milky Way between Aquila and Lyra. Even with the interference of **56.8% moonlight** at an angular distance of **18°** from the target and **partly cloudy** skies, and using a ordinary power bank (which introduces significant readout noise), it still managed to capture a number of stars.<br>
-The image shows the Milky Way faintly visible under moonlight (with lunar glare in the bottom-left).<br>
-Exposure time: 29, gain: 34.<br>
-Stacked 64 light frames along with flat frames and dark flats (no dark frames).<br>
-<div align="center">
-  <img src="https://github.com/user-attachments/assets/36020c35-77c3-42ef-b876-6872854ba693" width="77%" />
-</div>
-
-> **Video:** [Watch the Full Time-lapse on YouTube](https://www.youtube.com/watch?v=GwNxKLBiHG8) <br>
-> **Star Field Identification:** [Astrometry Results](https://nova.astrometry.net/user_images/15025237)
-<br>
 
 ---
 
