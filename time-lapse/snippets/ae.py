@@ -10,7 +10,6 @@ class AdaptiveExposureEngine:
     def __init__(self, reg_min, reg_max, virt_min, virt_max, delay_frames=2):
         self.target = AE_TARGET_LUMA
         self.ev = None
-        self.min_energy = 1e-4
 
         self.velocity = 0.0 
         self.accel_factor = 1.0
@@ -59,7 +58,7 @@ class AdaptiveExposureEngine:
             del raw_map
 
             if self.ev is None:
-                self.ev = math.log2(max(self.min_energy, (actual_us * current_virt_gain) / 1e6) + 1e-9)
+                self.ev = math.log2(((actual_us * current_virt_gain) / 1e6) + 1e-9)
                 self.velocity = 0.0
 
             MAX_HW_EV = 12.0 
