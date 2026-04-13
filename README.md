@@ -18,7 +18,7 @@ Although it will affect heat dissipation, I made a simple waterproof cover using
   <img src="https://github.com/user-attachments/assets/2bd2f249-cacb-420a-9651-b76b8fc18d34" width="50%" />
 </div>
 
-> **Video:** [Watch the Full Time-lapse on YouTube](https://youtu.be/KsnQ170sJx0) <br>
+> **Video:** [Watch the Full Time-lapse on YouTube](https://youtu.be/f4vXq_x-JbU) <br>
 > **Star Field Identification:** [Astrometry Results](https://nova.astrometry.net/user_images/15042173)
 
 ---
