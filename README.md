@@ -23,11 +23,8 @@ Although it will affect heat dissipation, I made a simple waterproof cover using
 
 ---
 
-## Preface
-
-The reason for choosing this combination is to capture clear infrared Milky Way images in light-polluted cities at a low cost.
-
-###### Unit costs for the core components are as follows:
+# COST: $54.37
+###### The reason for choosing this combination is to capture clear infrared Milky Way images in light-polluted cities at a low cost.<br>Unit costs for the core components are as follows:
     Raspberry Pi Zero 2W: $18.98
     IMX662 Module: $24.50
     800nm Long-pass Filter + 8mm f/1.2 M12 Lens: $10.89
