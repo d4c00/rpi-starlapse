@@ -14,8 +14,8 @@
 Bortle Class 8 city, exposure time 29.85 seconds, gain 34, Milky Way core captured during a no-moon window. There were many clouds, so I could only select 12 frames where the clouds were relatively thin for stacking.<br>
 Although it will affect heat dissipation, I made a simple waterproof cover using plastic wrap and rubber bands.<br>
 <div align="center">
-  <img src="https://github.com/user-attachments/assets/1f644288-32f0-4d52-a18b-33de4bfa7503" width="36.7%" />
-  <img src="https://github.com/user-attachments/assets/2bd2f249-cacb-420a-9651-b76b8fc18d34" width="50%" />
+  <img src="https://github.com/user-attachments/assets/1f644288-32f0-4d52-a18b-33de4bfa7503" width="37.85%" />
+  <img src="https://github.com/user-attachments/assets/6bb80677-c68b-441c-8960-0c81179bf39c" width="50%" />
 </div>
 
 > **Video:** [Watch the Full Time-lapse on YouTube](https://youtu.be/f4vXq_x-JbU) <br>
