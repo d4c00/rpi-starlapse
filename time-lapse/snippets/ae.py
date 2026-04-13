@@ -6,23 +6,28 @@ import math
 import os
 from snippets.config import AE_TARGET_LUMA
 
+MAX_LUMA_JUMP_RATIO = 0.5
+VIRT_GAIN_MIN_VAL   = 1.0
+VIRT_GAIN_MAX_VAL   = 16.0
+DELAY_FRAMES_COUNT  = 2
+
 class AdaptiveExposureEngine:
-    def __init__(self, reg_min, reg_max, virt_min, virt_max, delay_frames=2):
+    def __init__(self, reg_min, reg_max):
         self.target = AE_TARGET_LUMA
         self.ev = None
+
+        self.LIMIT_DN = math.log2(1.0 - MAX_LUMA_JUMP_RATIO)
+        self.LIMIT_UP = math.log2(1.0 + MAX_LUMA_JUMP_RATIO)
 
         self.velocity = 0.0 
         self.accel_factor = 1.0
 
         self.REG_MIN = reg_min
         self.REG_MAX = reg_max
-        self.VIRT_GAIN_MIN = virt_min
-        self.VIRT_GAIN_MAX = virt_max
+        self.VIRT_GAIN_MIN = VIRT_GAIN_MIN_VAL
+        self.VIRT_GAIN_MAX = VIRT_GAIN_MAX_VAL
 
-        self.MAX_STEP_DOWN = -1.0
-        self.MAX_STEP_UP = 0.585
-
-        self.delay_frames = delay_frames
+        self.delay_frames = DELAY_FRAMES_COUNT
         self.history = []
         self._history_initialized = False
 
@@ -57,7 +62,6 @@ class AdaptiveExposureEngine:
             bg = np.median(ds_raw)
             max_dynamic_range = float((1 << raw_bits) - 1)
             luma = np.clip(bg / max_dynamic_range, 1e-4, 1.0)
-            
             del raw_map
 
             actual_ev = math.log2(((actual_us * current_virt_gain) / 1e6) + 1e-9)
@@ -66,19 +70,20 @@ class AdaptiveExposureEngine:
                 self.ev = actual_ev
                 self.velocity = 0.0
 
+            MAX_HW_EV = 12.0 
+
             if luma <= self.target:
                 dist = (self.target - luma) / max(self.target, 1e-9)
-                exact_ev_step = (dist ** 0.5) * (self.MAX_STEP_UP * 10.0) 
+                exact_ev_step = (dist ** 0.5) * MAX_HW_EV 
             else:
                 dist = (luma - self.target) / max(1.0 - self.target, 1e-9)
-                exact_ev_step = -(dist ** 0.5) * (abs(self.MAX_STEP_DOWN) * 10.0)
+                exact_ev_step = -(dist ** 0.5) * MAX_HW_EV
 
             base_pull = (exact_ev_step ** 2) * np.sign(exact_ev_step) * 0.00001
             alignment = np.sign(self.velocity * exact_ev_step + 1e-9)
             is_same_dir = (0.5 * alignment + 0.5)
 
-            ref_limit = self.MAX_STEP_UP if exact_ev_step > 0 else abs(self.MAX_STEP_DOWN)
-            brake_force = math.tanh((abs(exact_ev_step) / (ref_limit * 10.0)) ** 1.2)
+            brake_force = math.tanh((abs(exact_ev_step) / 12.0) ** 1.2)
             soft_damping = 1.0 - math.exp(-(abs(exact_ev_step) / 1.0) ** 2.0)
 
             self.accel_factor = (self.accel_factor * 2.0 * is_same_dir) + (4.0 * (1.0 - is_same_dir))
@@ -87,9 +92,10 @@ class AdaptiveExposureEngine:
             raw_movement = (self.velocity * is_same_dir * soft_damping) + (base_pull * self.accel_factor)
             self.velocity = raw_movement * brake_force
 
-            self.velocity = np.clip(self.velocity, self.MAX_STEP_DOWN, self.MAX_STEP_UP)
+            scale = self.LIMIT_UP if self.velocity > 0 else abs(self.LIMIT_DN)
+            self.velocity = np.clip(self.velocity * scale, self.LIMIT_DN, self.LIMIT_UP)
+            
             self.ev = actual_ev + self.velocity
-
             total_energy_us = (2.0 ** self.ev) * 1e6
             limit_virt_gain_max = self._phys_to_virt_gain(max_reg_gain)
         
@@ -119,8 +125,8 @@ class AdaptiveExposureEngine:
 
 _engine = None
 
-def process_ae_logic(raw_path, width, height, current_us, current_reg_gain, max_us_limit, min_us_limit, max_reg_gain, reg_min, raw_bits, delay_frames=2):
+def process_ae_logic(raw_path, width, height, current_us, current_reg_gain, max_us_limit, min_us_limit, max_reg_gain, reg_min, raw_bits):
     global _engine
     if _engine is None:
-        _engine = AdaptiveExposureEngine(reg_min, max_reg_gain, 1.0, 16.0, delay_frames=delay_frames)
+        _engine = AdaptiveExposureEngine(reg_min, max_reg_gain)
     return _engine.process_raw_frame(raw_path, width, height, current_us, current_reg_gain, max_us_limit, min_us_limit, max_reg_gain, raw_bits)
