@@ -47,17 +47,24 @@ class AdaptiveExposureEngine:
                 self.ev = math.log2(max(self.min_energy, (current_us * current_virt_gain) / 1e6) + 1e-9)
                 self.velocity = 0.0
 
-            exact_ev_step = math.log2(self.target / luma)
+            MAX_HW_EV = 12.0 
 
-            base_pull = (exact_ev_step ** 2) * np.sign(exact_ev_step) * 0.0003
+            if luma <= self.target:
+                dist = (self.target - luma) / max(self.target, 1e-9)
+                exact_ev_step = (dist ** 0.5) * MAX_HW_EV 
+            else:
+                dist = (luma - self.target) / max(1.0 - self.target, 1e-9)
+                exact_ev_step = -(dist ** 0.5) * MAX_HW_EV
+
+            base_pull = (exact_ev_step ** 2) * np.sign(exact_ev_step) * 0.00001
 
             alignment = np.sign(self.velocity * exact_ev_step + 1e-9)
 
             is_same_dir = (0.5 * alignment + 0.5)
 
-            brake_force = math.tanh((abs(exact_ev_step) / 1.6) ** 1.2)
+            brake_force = math.tanh((abs(exact_ev_step) / 12.0) ** 0.6)
 
-            soft_damping = 1.0 - math.exp(-(abs(exact_ev_step) / 0.15) ** 2.0)
+            soft_damping = 1.0 - math.exp(-(abs(exact_ev_step) / 1.0) ** 2.0)
 
             self.accel_factor = (self.accel_factor * 2.0 * is_same_dir) + (4.0 * (1.0 - is_same_dir))
             self.accel_factor = min(self.accel_factor, 128.0)
@@ -65,7 +72,7 @@ class AdaptiveExposureEngine:
             raw_movement = (self.velocity * is_same_dir * soft_damping) + (base_pull * self.accel_factor)
             self.velocity = raw_movement * brake_force
 
-            self.velocity = np.clip(self.velocity, -0.3, 0.3)
+            self.velocity = np.clip(self.velocity, -0.8, 0.8)
             self.ev += self.velocity
 
             total_energy_us = (2.0 ** self.ev) * 1e6
