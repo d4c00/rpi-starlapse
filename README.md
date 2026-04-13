@@ -163,7 +163,8 @@ sudo journalctl _SYSTEMD_USER_UNIT=time-lapse.service -f
 <br>
 
 ## 2. Server-side
-Please ensure that Podman is installed in your current environment.
+The following examples are based on Podman and a Linux system with SELinux enabled.<br>
+Of course, this is just my personal preference; you can also use Docker or disable SELinux.
 
 For example, `/mnt/ssd_data/podman/rpi-upload-srv` is the directory where I plan to store the files.
 
