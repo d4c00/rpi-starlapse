@@ -57,8 +57,10 @@ class AdaptiveExposureEngine:
             
             del raw_map
 
+            actual_ev = math.log2(((actual_us * current_virt_gain) / 1e6) + 1e-9)
+
             if self.ev is None:
-                self.ev = math.log2(((actual_us * current_virt_gain) / 1e6) + 1e-9)
+                self.ev = actual_ev
                 self.velocity = 0.0
 
             MAX_HW_EV = 12.0 
@@ -87,7 +89,7 @@ class AdaptiveExposureEngine:
             self.velocity = raw_movement * brake_force
 
             self.velocity = np.clip(self.velocity, -0.8, 0.8)
-            self.ev += self.velocity
+            self.ev = actual_ev + self.velocity
 
             total_energy_us = (2.0 ** self.ev) * 1e6
 
