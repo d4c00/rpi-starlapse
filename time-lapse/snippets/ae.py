@@ -7,9 +7,9 @@ import os
 from snippets.config import AE_TARGET_LUMA
 
 MAX_LUMA_JUMP_RATIO = 0.7
-VIRT_GAIN_MIN_VAL   = 0.3
-VIRT_GAIN_MAX_VAL   = 72.0
-DELAY_FRAMES_COUNT  = 2
+VIRT_GAIN_MIN_VAL = 1
+VIRT_GAIN_MAX_VAL = 9.77237
+DELAY_FRAMES_COUNT = 2
 
 class AdaptiveExposureEngine:
     def __init__(self, reg_min, reg_max):
@@ -48,7 +48,7 @@ class AdaptiveExposureEngine:
         else:
             actual_us, actual_reg_gain = current_us, current_reg_gain
 
-        current_virt_gain = self._phys_to_virt_gain(actual_reg_gain)
+        actual_virt_gain = self._phys_to_virt_gain(actual_reg_gain)
         
         if not os.path.exists(raw_path):
             if self.delay_frames > 0:
@@ -64,11 +64,10 @@ class AdaptiveExposureEngine:
             luma = np.clip(bg / max_dynamic_range, 1e-4, 1.0)
             del raw_map
 
-            actual_ev = math.log2(((actual_us * current_virt_gain) / 1e6) + 1e-9)
+            actual_ev = math.log2(((actual_us * actual_virt_gain) / 1e6) + 1e-9)
 
-            if self.ev is None:
-                self.ev = actual_ev
-                self.velocity = 0.0
+            self.ev = actual_ev 
+            if self.velocity is None: self.velocity = 0.0
 
             MAX_HW_EV = 12.0 
 
@@ -94,20 +93,17 @@ class AdaptiveExposureEngine:
 
             scale = self.LIMIT_UP if self.velocity > 0 else abs(self.LIMIT_DN)
             self.velocity = np.clip(self.velocity * scale, self.LIMIT_DN, self.LIMIT_UP)
-            
-            self.ev = actual_ev + self.velocity
-            total_energy_us = (2.0 ** self.ev) * 1e6
+
+            target_ev = self.ev + self.velocity
+            total_energy_us = (2.0 ** target_ev) * 1e6
             limit_virt_gain_max = self._phys_to_virt_gain(max_reg_gain)
-        
+
             if total_energy_us <= (max_us * self.VIRT_GAIN_MIN):
                 next_us = np.clip(total_energy_us / self.VIRT_GAIN_MIN, min_us, max_us)
                 next_virt_gain = self.VIRT_GAIN_MIN
             else:
                 next_us = float(max_us)
                 next_virt_gain = np.clip(total_energy_us / (next_us + 1e-9), self.VIRT_GAIN_MIN, limit_virt_gain_max)
-            
-            actual_phys_ev = math.log2((next_us * next_virt_gain) / 1e6 + 1e-9)
-            self.ev = actual_phys_ev 
 
             next_reg_gain = self._virt_to_phys_gain(next_virt_gain)
 
