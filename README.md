@@ -52,7 +52,7 @@ By pairing it with an 800nm long-pass filter, the color sensor can function like
 
 ---
 
-### **Call for Hardware Compatibility & Contributions**
+### Help Me Support More Hardware
 
 Theoretically, as long as you are using a Linux-based device with a camera connected via the **MIPI interface** and controlled by **V4L2 drivers**, your hardware should be compatible. By referring to the file `rpi-starlapse/time-lapse/snippets/sensors/imx662.py` and filling in the **V4L2 control mappings** specific to your sensor's driver, it can be made to work. Other brands of Pi-like development boards may also be compatible.
 
@@ -68,7 +68,8 @@ If you have any questions, you are more than welcome to contact me at any time.
 
 ## Explanation
 
-Pure mono workflow — only monochrome (black-and-white) sensors are considered.
+Currently, it is only considered to be treated as a **monochrome** sensor. First, debayering under an 800nm long-pass filter is both troublesome and may reduce sharpness.<br>
+The disadvantage is that color sensors will still have a faint grid-like feel (traces of the Bayer array), unless you are using a true monochrome sensor.
 <br>
 <br>
 I also wrote a separate auto-exposure algorithm that bypasses the ISP and supports long exposure. It only pulls up the gain when pulling the shutter time to the upper limit still results in underexposure.
