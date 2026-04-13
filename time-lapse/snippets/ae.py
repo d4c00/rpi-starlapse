@@ -116,3 +116,11 @@ class AdaptiveExposureEngine:
             if self.delay_frames > 0:
                 self.history.append((current_us, current_reg_gain))
             return int(current_us), float(current_reg_gain), self.target, 0.0
+
+_engine = None
+
+def process_ae_logic(raw_path, width, height, current_us, current_reg_gain, max_us_limit, min_us_limit, max_reg_gain, reg_min, raw_bits, delay_frames=2):
+    global _engine
+    if _engine is None:
+        _engine = AdaptiveExposureEngine(reg_min, max_reg_gain, 1.0, 16.0, delay_frames=delay_frames)
+    return _engine.process_raw_frame(raw_path, width, height, current_us, current_reg_gain, max_us_limit, min_us_limit, max_reg_gain, raw_bits)
