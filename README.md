@@ -8,6 +8,19 @@
 
 ##### The CAD drawing for the acrylic enclosure shown in the examples can be found at: [PMMA_3mm_BLK_Opaque_Matte_260408.dwg](https://github.com/d4c00/rpi-starlapse/raw/refs/heads/main/CAD/PMMA_3mm_BLK_Opaque_Matte_260408.dwg)
 
+---
+<br>
+
+### Examples:
+Bortle Class 8 city, exposure time 29.85 seconds, gain 34, Milky Way core captured during a no-moon window. There were many clouds, so I could only select 12 frames where the clouds were relatively thin for stacking.
+<div align="center">
+  <img src="https://github.com/user-attachments/assets/2bd2f249-cacb-420a-9651-b76b8fc18d34" width="77%" />
+</div>
+
+> **Video:** [Watch the Full Time-lapse on YouTube](https://youtu.be/KsnQ170sJx0) <br>
+> **Star Field Identification:** [Astrometry Results](https://nova.astrometry.net/user_images/15042173)
+<br>
+
 ### Examples of particularly harsh environments:
 In a **Bortle 8** city, I captured a section of the Milky Way between Aquila and Lyra. Even with the interference of **56.8% moonlight** at an angular distance of **18°** from the target and **partly cloudy** skies, and using a ordinary power bank (which introduces significant readout noise), it still managed to capture a number of stars.<br>
 The image shows the Milky Way faintly visible under moonlight (with lunar glare in the bottom-left).<br>
