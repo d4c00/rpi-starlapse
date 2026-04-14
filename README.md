@@ -96,12 +96,12 @@ For more details, please check the code yourself.
 ## 1. Client-side
 
 The current IMX662 configuration file is `time-lapse/snippets/sensors/imx662.py`.  
-**It based on the v4l2 driver from: https://github.com/raspberrypi/linux/pull/7239** 
+**It based on the v4l2 driver from: https://github.com/raspberrypi/linux/pull/7315** 
 
 Next, we will begin the installation.
-Install the Linux kernel from the 6by9 Pull Request; this PR contains the unmerged imx662 V4L2 driver. The process will be slow, so please be patient.
+Install the Linux kernel from the 6by9 and Alexander Pull Request; this PR contains the unmerged imx662 V4L2 driver. The process will be slow, so please be patient.
 ```bash
-sudo rpi-update pulls/7239
+sudo rpi-update pulls/7315
 ```
 To manually specify the camera and crystal frequency, and enable HCG: <br>
 **If your IMX662 module's frequency differs from mine, please modify the value `clock-frequency=74250000`.** HCG mode is optional.
