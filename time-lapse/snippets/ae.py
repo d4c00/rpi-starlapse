@@ -66,7 +66,6 @@ class AdaptiveExposureEngine:
 
             actual_ev = math.log2(((actual_us * actual_virt_gain) / 1e6) + 1e-9)
 
-            self.ev = actual_ev 
             if self.velocity is None: self.velocity = 0.0
 
             MAX_HW_EV = 12.0 
@@ -78,12 +77,24 @@ class AdaptiveExposureEngine:
                 dist = (luma - self.target) / max(1.0 - self.target, 1e-9)
                 exact_ev_step = -(dist ** 0.5) * MAX_HW_EV
 
-            base_pull = (exact_ev_step ** 2) * np.sign(exact_ev_step) * 0.00001
-            alignment = np.sign(self.velocity * exact_ev_step + 1e-9)
+            ideal_ev = actual_ev + exact_ev_step
+
+            if self.delay_frames > 0 and len(self.history) > 0:
+                latest_us, latest_reg_gain = self.history[-1]
+            else:
+                latest_us, latest_reg_gain = current_us, current_reg_gain
+
+            latest_virt_gain = self._phys_to_virt_gain(latest_reg_gain)
+            latest_ev = math.log2(((latest_us * latest_virt_gain) / 1e6) + 1e-9)
+
+            remaining_ev_step = ideal_ev - latest_ev
+
+            base_pull = (remaining_ev_step ** 2) * np.sign(remaining_ev_step) * 0.00001
+            alignment = np.sign(self.velocity * remaining_ev_step + 1e-9)
             is_same_dir = (0.5 * alignment + 0.5)
 
-            brake_force = math.tanh((abs(exact_ev_step) / 12.0) ** 1.6)
-            soft_damping = 1.0 - math.exp(-(abs(exact_ev_step) / 2.0) ** 2.0)
+            brake_force = math.tanh((abs(remaining_ev_step) / 12.0) ** 1.6)
+            soft_damping = 1.0 - math.exp(-(abs(remaining_ev_step) / 2.0) ** 2.0)
 
             self.accel_factor = (self.accel_factor * 2.0 * is_same_dir) + (4.0 * (1.0 - is_same_dir))
             self.accel_factor = min(self.accel_factor, 256.0)
@@ -94,7 +105,9 @@ class AdaptiveExposureEngine:
             scale = self.LIMIT_UP if self.velocity > 0 else abs(self.LIMIT_DN)
             self.velocity = np.clip(self.velocity * scale, self.LIMIT_DN, self.LIMIT_UP)
 
-            target_ev = self.ev + self.velocity
+            target_ev = latest_ev + self.velocity
+            self.ev = target_ev 
+            
             total_energy_us = (2.0 ** target_ev) * 1e6
             limit_virt_gain_max = self._phys_to_virt_gain(max_reg_gain)
 
