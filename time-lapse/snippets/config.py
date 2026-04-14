@@ -32,10 +32,10 @@ SENSOR_INDEX = 0
 # Calibration Trigger
 DARK_TRIGGER_FILE = f"/dev/shm/time-lapse/{DEVICE_ID}/calibration"
 # Dark Frames
-DARK_FRAME_COUNT = 100
+DARK_FRAME_COUNT = 32
 # Bias Frames
 CAPTURE_BIAS_FRAMES = False
-BIAS_FRAME_COUNT = 100
+BIAS_FRAME_COUNT = 128
 BIAS_INTERVAL = 2.0
 
 # Sync & Upload
