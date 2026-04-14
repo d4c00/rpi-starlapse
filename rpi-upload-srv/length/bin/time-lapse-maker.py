@@ -239,7 +239,7 @@ def create_timelapse():
             process.wait()
 
             if all_times:
-                final_v = os.path.join(device_output_base, f"{min(all_times).strftime('%Y%m%d_%H%M%S')}~{max(all_times).strftime('%Y%m%d_%H%M%S')}_calibrated.mp4")
+                final_v = os.path.join(device_output_base, f"{min(all_times).strftime('%Y%m%d_%H%M%S')}~{max(all_times).strftime('%Y%m%d_%H%M%S')}.mp4")
                 if os.path.exists(final_v): os.remove(final_v)
                 os.rename(temp_output_v, final_v)
                 print(f"Successfully exported: {final_v}")
