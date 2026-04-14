@@ -9,7 +9,7 @@ from snippets.config import AE_TARGET_LUMA
 MAX_LUMA_JUMP_RATIO = 0.7
 VIRT_GAIN_MIN_VAL = 1
 VIRT_GAIN_MAX_VAL = 9.77237
-DELAY_FRAMES_COUNT = 2
+DELAY_FRAMES_COUNT = 5
 
 class AdaptiveExposureEngine:
     def __init__(self, reg_min, reg_max):
@@ -122,7 +122,7 @@ class AdaptiveExposureEngine:
 
             if self.delay_frames > 0:
                 self.history.append((next_us, next_reg_gain))
-            
+
             return int(next_us), float(next_reg_gain), float(luma), float(exact_ev_step)
 
         except Exception as e:
