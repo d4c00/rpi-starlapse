@@ -41,7 +41,6 @@ def find_nodes():
 
     return v_node, s_node
 
-
 _v_n, _s_n = find_nodes()
 
 def get_init_cmds():
@@ -101,9 +100,31 @@ def _load_ctrl_cache(dev):
         "h_max": _fetch(out, "horizontal_blanking", "max"),
         "v_min": _fetch(out, "vertical_blanking", "min"),
         "v_max": _fetch(out, "vertical_blanking", "max"),
+        "exp_min": _fetch(out, "exposure", "min"),
+        "exp_max": _fetch(out, "exposure", "max"),
+        "gain_min": _fetch(out, "analogue_gain", "min"),
+        "gain_max": _fetch(out, "analogue_gain", "max"),
     }
 
     return _ctrl_cache
+
+def print_hardware_info(container):
+    try:
+        ctrl = _load_ctrl_cache(container.s_node)
+
+        h_blank = ctrl["h_min"]
+        pixel_rate = ctrl["pixel_rate"]
+
+        min_exp_s = (ctrl["exp_min"] * (WIDTH + h_blank)) / pixel_rate
+        max_exp_s = ((HEIGHT + ctrl["v_max"]) * (WIDTH + h_blank)) / pixel_rate
+
+        print(f"[*] Exposure Min: {min_exp_s:.6f}s")
+        print(f"[*] Exposure Max: {max_exp_s:.6f}s")
+        print(f"[*] Gain Min: {ctrl['gain_min']}")
+        print(f"[*] Gain Max: {ctrl['gain_max']}")
+
+    except Exception as e:
+        print(f"[!] Failed to read hardware info: {e}")
 
 def get_runtime_cmds(target_us, gain, container):
     ctrl = _load_ctrl_cache(container.s_node)
@@ -133,8 +154,14 @@ def get_runtime_cmds(target_us, gain, container):
 
     exposure = int(np.clip(
         total_clocks / line_len,
-        1,
-        v_total - EXP_OFFSET
+        ctrl["exp_min"],
+        ctrl["exp_max"]
+    ))
+
+    gain = int(np.clip(
+        gain,
+        ctrl["gain_min"],
+        ctrl["gain_max"]
     ))
 
     return [
@@ -142,7 +169,7 @@ def get_runtime_cmds(target_us, gain, container):
         f"-c horizontal_blanking={h_blank},"
         f"vertical_blanking={v_blank},"
         f"exposure={exposure},"
-        f"analogue_gain={int(gain)}"
+        f"analogue_gain={gain}"
     ]
 
 def get_capture_cmd(out_path, container):
