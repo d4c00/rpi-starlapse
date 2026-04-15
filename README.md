@@ -103,12 +103,11 @@ Install the Linux kernel from the 6by9 and Alexander Pull Request; this PR conta
 ```bash
 sudo rpi-update pulls/7315
 ```
-To manually specify the camera and crystal frequency, and enable HCG: <br>
-**If your IMX662 module's frequency differs from mine, please modify the value `clock-frequency=74250000`.** HCG mode is optional.
+To manually specify the camera and crystal frequency: <br>
+**If your IMX662 module's frequency differs from mine, please modify the value `clock-frequency=74250000`.**
 ```bash
 sudo grep -q "camera_auto_detect=0" /boot/firmware/config.txt || echo "camera_auto_detect=0" | sudo tee -a /boot/firmware/config.txt
 sudo grep -q "dtoverlay=imx662,clock-frequency=74250000" /boot/firmware/config.txt || echo "dtoverlay=imx662,clock-frequency=74250000" | sudo tee -a /boot/firmware/config.txt
-grep -q "imx662.hcg_mode" /boot/firmware/cmdline.txt || sudo sed -i '$s/$/ imx662.hcg_mode=1/' /boot/firmware/cmdline.txt
 ```
 
 A reboot is required after the installation is complete.
