@@ -6,7 +6,7 @@ import subprocess
 import re
 import numpy as np
 
-INIT_SNAP_STR = "0|1000000|0|0.0|0.0"
+INIT_SNAP_STR = "0|1000000|34|0|0"
 
 SENSOR_NAME = "imx662"
 WIDTH, HEIGHT = 1936, 1096
