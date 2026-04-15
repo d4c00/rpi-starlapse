@@ -87,7 +87,7 @@ class AdaptiveExposureEngine:
         alignment = np.sign(self.velocity * remaining_ev + 1e-9)
         is_same_dir = 0.5 * alignment + 0.5
 
-        brake_force = math.tanh((abs(remaining_ev) / 12.0) ** 1.6)
+        brake_force = math.tanh((abs(remaining_ev) / 12.0) ** 0.8)
         soft_damping = 1.0 - math.exp(-(abs(remaining_ev) / 2.0) ** 2.0)
 
         self.accel_factor = (
