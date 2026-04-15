@@ -38,7 +38,6 @@ class AdaptiveExposureEngine:
         return int(np.clip(reg, self.REG_MIN, self.REG_MAX))
 
     def process_raw_frame(self, raw_path, width, height, current_us, current_reg_gain, max_us, min_us, max_reg_gain, raw_bits):
-
         if self.delay_frames > 0 and len(self.history) < self.delay_frames:
             self.history.append((current_us, current_reg_gain))
             return int(current_us), float(current_reg_gain), self.target, 0.0
