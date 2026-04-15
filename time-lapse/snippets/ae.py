@@ -29,7 +29,6 @@ class AdaptiveExposureEngine:
 
         self.delay_frames = DELAY_FRAMES_COUNT
         self.history = []
-        self._history_initialized = False
 
     def _phys_to_virt_gain(self, reg_val):
         return 1.0 + (reg_val - self.REG_MIN) * (self.VIRT_GAIN_MAX - self.VIRT_GAIN_MIN) / (self.REG_MAX - self.REG_MIN)
@@ -39,9 +38,10 @@ class AdaptiveExposureEngine:
         return int(np.clip(reg, self.REG_MIN, self.REG_MAX))
 
     def process_raw_frame(self, raw_path, width, height, current_us, current_reg_gain, max_us, min_us, max_reg_gain, raw_bits):
-        if not self._history_initialized:
-            self.history = [(current_us, current_reg_gain)] * max(0, self.delay_frames)
-            self._history_initialized = True
+
+        if self.delay_frames > 0 and len(self.history) < self.delay_frames:
+            self.history.append((current_us, current_reg_gain))
+            return int(current_us), float(current_reg_gain), self.target, 0.0
 
         if self.delay_frames > 0:
             actual_us, actual_reg_gain = self.history.pop(0)
