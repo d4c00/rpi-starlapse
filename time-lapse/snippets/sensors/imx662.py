@@ -95,7 +95,7 @@ def get_init_cmds():
         f"media-ctl -d {m_node} -V '\"{full_entity_name}\":0 [fmt:{MBUS_FORMAT}/{WIDTH}x{HEIGHT} field:none]'",
         f"media-ctl -d {m_node} -V '\"{full_entity_name}\":0 [crop:(0,0)/{WIDTH}x{HEIGHT}]'",
         f"v4l2-ctl -d {_v_n} --set-fmt-video=width={WIDTH},height={HEIGHT},pixelformat={V4L2_PIXELFORMAT}",
-        f"v4l2-ctl -d {_s_n} --set-ctrl \"HCG Enable\"=1"   # 初始化时强制开启 HCG
+        f"v4l2-ctl -d {_s_n} --set-ctrl \"HCG Enable\"=1"
     ]
 
 def get_runtime_cmds(target_us, gain, container):
