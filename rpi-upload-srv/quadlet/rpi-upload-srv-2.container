@@ -4,7 +4,7 @@
 ContainerName=rpi-upload-srv-2
 Environment=MODE=2
 Group=3012
-Image=length/rpi-upload-srv:260410
+Image=length/rpi-upload-srv:260415
 User=3012
 Volume=/mnt/ssd_data/podman/rpi-upload-srv/conf:/home/length/conf:z
 Volume=/mnt/ssd_data/podman/rpi-upload-srv/output:/home/length/output:z
