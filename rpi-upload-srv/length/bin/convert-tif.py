@@ -23,11 +23,15 @@ def load_config(config_path, device_id):
         'container_bits': config.getint(device_id, 'container_bits'),
         'sig_bits': config.getint(device_id, 'significant_bits'),
         'contrast': config.getfloat(device_id, 'contrast'),
-        'gamma': config.getfloat(device_id, 'gamma')
+        'gamma': config.getfloat(device_id, 'gamma'),
+        'brightness': config.getfloat(device_id, 'brightness', fallback=0.0)
     }
 
 def process_for_jpg(image, cfg):
     img_float = (image.astype(np.float32) - cfg['black_level']) / (cfg['white_level'] - cfg['black_level'])
+    img_float = np.clip(img_float, 0, 1)
+
+    img_float = img_float + cfg['brightness']
     img_float = np.clip(img_float, 0, 1)
 
     img_float = (img_float - 0.5) * cfg['contrast'] + 0.5
@@ -60,7 +64,6 @@ def convert_raw_to_mono_tiff():
             continue
             
         device_root = os.path.join(base_input_dir, device_id)
-
         sub_dirs = [s for s in os.listdir(device_root) if os.path.isdir(os.path.join(device_root, s))]
 
         for sub_name in sub_dirs:
@@ -87,7 +90,9 @@ def convert_raw_to_mono_tiff():
                         print(f"  [Size Error] {filename} - Expected {cfg['width'] * cfg['height']} pixels, but got {raw_data.size}")
                         continue
                 
-                    image = raw_data.reshape((cfg['height'], cfg['width']))
+                    image = raw_data.reshape((cfg['height'], cfg['width'])
+
+                    )
 
                     image = np.clip(image, cfg['black_level'], cfg['white_level']).astype(np.uint16)
 

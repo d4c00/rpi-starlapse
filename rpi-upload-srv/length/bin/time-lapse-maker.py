@@ -28,9 +28,6 @@ def load_config(device_id):
     config = configparser.ConfigParser()
     config.read(CONFIG_FILE_PATH, encoding='utf-8')
 
-    def get_tuple(section, option):
-        return tuple(int(x.strip()) for x in config.get(section, option).split(','))
-
     try:
         CONF['FRAMERATE'] = config.getint(device_id, 'framerate')
         CONF['FRAME_SKIP'] = config.getint(device_id, 'frame_skip')
@@ -38,6 +35,7 @@ def load_config(device_id):
         CONF['WHITE_LEVEL'] = config.getint(device_id, 'white_level')
         CONF['CONTRAST'] = config.getfloat(device_id, 'contrast')
         CONF['GAMMA'] = config.getfloat(device_id, 'gamma')
+        CONF['BRIGHTNESS'] = config.getfloat(device_id, 'brightness', fallback=0.0)
         CONF['FONT_PATH'] = config.get(device_id, 'font_path')
         CONF['FONT_SIZE'] = config.getint(device_id, 'font_size')
         CONF['TEXT_COLOR'] = config.getint(device_id, 'text_color')
@@ -132,11 +130,17 @@ def process_frame(filepath, m_dark=None, m_bias=None, m_flat=None):
     img = clean_isolated_pixels(img, threshold=800)
 
     img = np.clip(img, 0, CONF['MAX_VALUE'])
+
     img = (img - CONF['BLACK_LEVEL']) / (CONF['WHITE_LEVEL'] - CONF['BLACK_LEVEL'])
     img = np.clip(img, 0, 1)
 
+    if CONF['BRIGHTNESS'] != 0:
+        img = img + CONF['BRIGHTNESS']
+        img = np.clip(img, 0, 1)
+
     if CONF['CONTRAST'] != 1.0:
         img = (img - 0.5) * CONF['CONTRAST'] + 0.5
+
     if CONF['GAMMA'] != 1.0:
         img = np.power(np.clip(img, 0, 1), 1.0 / CONF['GAMMA'])
     
@@ -165,14 +169,11 @@ def create_timelapse():
 
         scale = CONF['FONT_SIZE'] / 30.0
     
-    try:
-        font = ImageFont.truetype(CONF['FONT_PATH'], CONF['FONT_SIZE'])
-    except:
-        font = ImageFont.load_default()
+        try:
+            font = ImageFont.truetype(CONF['FONT_PATH'], CONF['FONT_SIZE'])
+        except:
+            font = ImageFont.load_default()
 
-    device_dirs = sorted([d for d in os.listdir(INPUT_ROOT_DIR) if os.path.isdir(os.path.join(INPUT_ROOT_DIR, d))])
-
-    for device_id in device_dirs:
         m_dark = get_master_frame(device_id, "darks")
         m_bias = get_master_frame(device_id, "biases")
         m_flat = get_master_frame(device_id, "flats")
