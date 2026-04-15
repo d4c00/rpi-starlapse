@@ -6,10 +6,10 @@ import subprocess
 import re
 import numpy as np
 
-INIT_SNAP_STR = "0|1000000|34.0|0.0|0.0"
+INIT_SNAP_STR = "0|1000000|34|0|0"
 
 SENSOR_NAME = "imx662"
-WIDTH, HEIGHT = 1936, 1100
+WIDTH, HEIGHT = 1936, 1096
 
 BIT = 12
 EXACT_RAW_SIZE = WIDTH * HEIGHT * 2 
@@ -46,6 +46,7 @@ def find_nodes():
     return v_node, s_node
 
 _v_n, _s_n = find_nodes()
+
 _out = subprocess.check_output(f"v4l2-ctl -d {_s_n} --list-ctrls", shell=True, text=True)
 _f = lambda n, f: int(re.search(rf"{n}.*?{f}=(\d+)", _out).group(1))
 
@@ -59,25 +60,23 @@ def _calculate_phys_exposure(exp_lines, mode="min"):
     return (exp_lines * (WIDTH + h_blank)) / pixel_rate
 
 MIN_EXPOSURE = _calculate_phys_exposure(_f("exposure", "min"), mode="min")
-
 v_total_max = HEIGHT + _f("vertical_blanking", "max")
-
 MAX_EXPOSURE = _calculate_phys_exposure(v_total_max, mode="max")
-
 AE_MIN_US = int(MIN_EXPOSURE * 1e6)
 
 def print_hardware_info():
-    print(f"[*] Hardware Max Exposure: {MAX_EXPOSURE:.6f}s")
-    print(f"[*] Hardware Min Exposure: {MIN_EXPOSURE:.6f}s")
+    print(f"[*] Drive Max Exposure: {MAX_EXPOSURE:.6f}s")
+    print(f"[*] Drive Min Exposure: {MIN_EXPOSURE:.6f}s")
     print(f"[*] AE Logic Min Limit: {AE_MIN_US}us")
 
 print_hardware_info()
 
 def get_init_cmds():
-    v_node, s_node = find_nodes()
-    if not s_node: return []
+    if not _s_n:
+        return []
 
-    subdev_name = os.path.basename(s_node)
+    subdev_name = os.path.basename(_s_n)
+
     with open(f"/sys/class/video4linux/{subdev_name}/name", 'r') as f:
         full_entity_name = f.read().strip()
 
@@ -89,12 +88,15 @@ def get_init_cmds():
                 if SENSOR_NAME in out:
                     m_node = f"/dev/media{i}"
                     break
-            except: pass
+            except:
+                pass
 
     return [
         f"media-ctl -d {m_node} -V '\"{full_entity_name}\":0 [fmt:{MBUS_FORMAT}/{WIDTH}x{HEIGHT} field:none]'",
         f"media-ctl -d {m_node} -V '\"{full_entity_name}\":0 [crop:(0,0)/{WIDTH}x{HEIGHT}]'",
-        f"v4l2-ctl -d {v_node} --set-fmt-video=width={WIDTH},height={HEIGHT},pixelformat={V4L2_PIXELFORMAT}"]
+        f"v4l2-ctl -d {_v_n} --set-fmt-video=width={WIDTH},height={HEIGHT},pixelformat={V4L2_PIXELFORMAT}",
+        f"v4l2-ctl -d {_s_n} --set-ctrl hcg_enable=1"
+    ]
 
 def get_runtime_cmds(target_us, gain, container):
     out = subprocess.check_output(f"v4l2-ctl -d {container.s_node} --list-ctrls", shell=True, text=True)
