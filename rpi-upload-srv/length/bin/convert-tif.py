@@ -24,7 +24,7 @@ def load_config(config_path, device_id):
         'sig_bits': config.getint(device_id, 'significant_bits'),
         'contrast': config.getfloat(device_id, 'contrast'),
         'gamma': config.getfloat(device_id, 'gamma'),
-        'brightness': config.getfloat(device_id, 'brightness', fallback=0.0)  # 新增
+        'brightness': config.getfloat(device_id, 'brightness', fallback=0.0)
     }
 
 def process_for_jpg(image, cfg):
