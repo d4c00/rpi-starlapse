@@ -52,7 +52,7 @@ class AdaptiveExposureEngine:
 
         try:
             raw_map = np.memmap(raw_path, dtype=np.uint16, mode="r", shape=(height, width))
-            ds = raw_map[0::2, 0::2].astype(np.float32)
+            ds = raw_map[0::4, 0::4].astype(np.float32)
             median = np.median(ds)
             del raw_map
 
