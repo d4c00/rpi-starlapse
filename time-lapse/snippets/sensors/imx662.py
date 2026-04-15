@@ -65,8 +65,8 @@ MAX_EXPOSURE = _calculate_phys_exposure(v_total_max, mode="max")
 AE_MIN_US = int(MIN_EXPOSURE * 1e6)
 
 def print_hardware_info():
-    print(f"[*] Hardware Max Exposure: {MAX_EXPOSURE:.6f}s")
-    print(f"[*] Hardware Min Exposure: {MIN_EXPOSURE:.6f}s")
+    print(f"[*] Drive Max Exposure: {MAX_EXPOSURE:.6f}s")
+    print(f"[*] Drive Min Exposure: {MIN_EXPOSURE:.6f}s")
     print(f"[*] AE Logic Min Limit: {AE_MIN_US}us")
 
 print_hardware_info()
