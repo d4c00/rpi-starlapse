@@ -327,14 +327,14 @@ S_NODE=$(grep -l "imx662" /sys/class/video4linux/v4l-subdev*/name | head -n1 | a
 V_NODE=$(grep -l "unicam" /sys/class/video4linux/video*/device/uevent | head -n1 | awk -F'/' '{print "/dev/"$5}'); \
 S_NAME=$(cat /sys/class/video4linux/$(basename $S_NODE)/name 2>/dev/null); \
 \
-sudo media-ctl -d $M_NODE -V "'$S_NAME':0 [fmt:SRGGB12_1X12/1936x1100 field:none]" && \
-sudo media-ctl -d $M_NODE -V "'$S_NAME':0 [crop:(0,0)/1936x1100]" && \
-sudo v4l2-ctl -d $V_NODE --set-fmt-video=width=1936,height=1100,pixelformat=RG12 && \
+sudo media-ctl -d $M_NODE -V "'$S_NAME':0 [fmt:SRGGB12_1X12/1936x1096 field:none]" && \
+sudo media-ctl -d $M_NODE -V "'$S_NAME':0 [crop:(0,0)/1936x1096]" && \
+sudo v4l2-ctl -d $V_NODE --set-fmt-video=width=1936,height=1096,pixelformat=RG12 && \
 \
 v4l2-ctl -d $S_NODE --set-ctrl exposure=20000,analogue_gain=500 && \
 v4l2-ctl -d $V_NODE --stream-mmap --stream-count=1 --stream-to=test.raw && \
 \
-stat -c "Size: %s (Target: 4259200)" test.raw && \
+stat -c "Size: %s (Target: 4243712)" test.raw && \
 python3 -c "import numpy as np; d=np.fromfile('test.raw', dtype='u2'); print(f'Pixels: {len(d)} | Mean: {d.mean():.1f} | Max: {d.max()} | Min: {d.min()}'); exit(0 if d.max()>0 else 1)" && \
 head -c 64 test.raw | hexdump -C
 ```
