@@ -8,10 +8,10 @@ from snippets.config import AE_TARGET_LUMA
 
 
 MAX_LUMA_JUMP_RATIO = 0.5
-VIRT_GAIN_MIN_VAL = 1
-VIRT_GAIN_MAX_VAL = 9.77237
 DELAY_FRAMES_COUNT = 1
 MAX_HW_EV = 12.0
+GAIN_DB_MIN_VAL = 30.3
+GAIN_DB_MAX_VAL = 72.0
 
 
 class AdaptiveExposureEngine:
@@ -19,8 +19,10 @@ class AdaptiveExposureEngine:
         self.target = AE_TARGET_LUMA
         self.REG_MIN = reg_min
         self.REG_MAX = reg_max
-        self.VIRT_GAIN_MIN = VIRT_GAIN_MIN_VAL
-        self.VIRT_GAIN_MAX = VIRT_GAIN_MAX_VAL
+
+        self.GAIN_DB_MIN = GAIN_DB_MIN_VAL
+        self.GAIN_DB_MAX = GAIN_DB_MAX_VAL
+        self.MIN_LINEAR_GAIN = 10 ** (self.GAIN_DB_MIN / 20.0)
 
         self.LIMIT_DN = math.log2(1.0 - MAX_LUMA_JUMP_RATIO)
         self.LIMIT_UP = math.log2(1.0 + MAX_LUMA_JUMP_RATIO)
@@ -32,15 +34,24 @@ class AdaptiveExposureEngine:
         self.delay_frames = DELAY_FRAMES_COUNT
         self.history = []
 
+
     def _phys_to_virt_gain(self, reg_val):
-        return 1.0 + (reg_val - self.REG_MIN) * (
-            self.VIRT_GAIN_MAX - self.VIRT_GAIN_MIN
+        if self.REG_MAX == self.REG_MIN:
+            return 1.0
+        db = self.GAIN_DB_MIN + (reg_val - self.REG_MIN) * (
+            self.GAIN_DB_MAX - self.GAIN_DB_MIN
         ) / (self.REG_MAX - self.REG_MIN)
+        return 10 ** (db / 20.0)
 
     def _virt_to_phys_gain(self, virt_gain):
-        reg = self.REG_MIN + (virt_gain - self.VIRT_GAIN_MIN) * (
+        if virt_gain <= 0:
+            return self.REG_MIN
+        db = 20.0 * math.log10(virt_gain)
+        if self.GAIN_DB_MAX == self.GAIN_DB_MIN:
+            return self.REG_MIN
+        reg = self.REG_MIN + (db - self.GAIN_DB_MIN) * (
             self.REG_MAX - self.REG_MIN
-        ) / (self.VIRT_GAIN_MAX - self.VIRT_GAIN_MIN)
+        ) / (self.GAIN_DB_MAX - self.GAIN_DB_MIN)
         return int(np.clip(reg, self.REG_MIN, self.REG_MAX))
 
     def _compute_ev(self, exposure_us, virt_gain):
@@ -101,25 +112,26 @@ class AdaptiveExposureEngine:
         self.velocity = 0.0
         self.accel_factor = 1.0
 
-    def _allocate_energy( self, target_ev, max_us, min_us, max_reg_gain,):
+    def _allocate_energy(self, target_ev, max_us, min_us, max_reg_gain):
         total_energy = (2.0 ** target_ev) * 1e6
 
         max_virt_gain = self._phys_to_virt_gain(max_reg_gain)
 
-        if total_energy <= max_us * self.VIRT_GAIN_MIN:
-            next_us = np.clip(total_energy / self.VIRT_GAIN_MIN, min_us, max_us)
-            virt_gain = self.VIRT_GAIN_MIN
+        if total_energy <= max_us * self.MIN_LINEAR_GAIN:
+            next_us = np.clip(total_energy / self.MIN_LINEAR_GAIN, min_us, max_us)
+            virt_gain = self.MIN_LINEAR_GAIN
         else:
             next_us = float(max_us)
             virt_gain = np.clip(
                 total_energy / (next_us + 1e-9),
-                self.VIRT_GAIN_MIN,
-                max_virt_gain,)
+                self.MIN_LINEAR_GAIN,
+                max_virt_gain,
+            )
 
         reg_gain = self._virt_to_phys_gain(virt_gain)
         return next_us, reg_gain
 
-    def _process_delay_frame( self, raw_path, width, height, current_us, current_reg_gain, raw_bits):
+    def _process_delay_frame(self, raw_path, width, height, current_us, current_reg_gain, raw_bits):
         luma = self._measure_luma(raw_path, width, height, raw_bits)
 
         virt_gain = self._phys_to_virt_gain(current_reg_gain)
@@ -131,7 +143,7 @@ class AdaptiveExposureEngine:
 
         return current_us, current_reg_gain, luma, step
 
-    def process_raw_frame(self, raw_path, width, height, current_us, current_reg_gain, max_us, min_us, max_reg_gain, raw_bits ):
+    def process_raw_frame(self, raw_path, width, height, current_us, current_reg_gain, max_us, min_us, max_reg_gain, raw_bits):
         if self.delay_frames > 0 and len(self.history) < self.delay_frames:
             self.history.append((current_us, current_reg_gain))
             return self._process_delay_frame(
@@ -169,6 +181,7 @@ class AdaptiveExposureEngine:
             self.history.append((next_us, next_reg))
 
         return int(next_us), float(next_reg), float(luma), float(ev_step)
+
 
 _engine = None
 
