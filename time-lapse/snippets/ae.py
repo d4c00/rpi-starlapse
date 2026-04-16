@@ -82,7 +82,7 @@ class AdaptiveExposureEngine:
             return -(dist ** 0.5) * MAX_HW_EV
 
     def _update_controller(self, remaining_ev):
-        base_pull = (remaining_ev ** 2) * np.sign(remaining_ev) * 5e-5
+        base_pull = (remaining_ev ** 2) * np.sign(remaining_ev) * 1e-4
 
         alignment = np.sign(self.velocity * remaining_ev + 1e-9)
         is_same_dir = 0.5 * alignment + 0.5
