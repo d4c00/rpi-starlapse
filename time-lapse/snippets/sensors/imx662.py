@@ -3,133 +3,115 @@
 
 import os
 import subprocess
-import re
+import fcntl
+import videodev2 as v4l2
 import numpy as np
-
-INIT_SNAP_STR = "0|1000000|34|0|0"
 
 SENSOR_NAME = "imx662"
 WIDTH, HEIGHT = 1936, 1096
-
 BIT = 12
-EXACT_RAW_SIZE = WIDTH * HEIGHT * 2 
-
 V4L2_PIXELFORMAT = "RG12" 
 MBUS_FORMAT = "SRGGB12_1X12"
 EXP_OFFSET = 0 
+INIT_SNAP_STR = "0|1000000|34|0|0"
 
-class DevContainer:
-    def __init__(self, v_node, s_node):
-        self.v_node = v_node
-        self.s_node = s_node
+def get_v4l2_ctrls(fd):
+    ctrls = {}
+    q_ctrl = v4l2.v4l2_queryctrl()
+    q_ctrl.id = v4l2.V4L2_CTRL_FLAG_NEXT_CTRL
 
-def find_nodes():
-    v_node, s_node = None, None
-    base_v4l = "/sys/class/video4linux"
+    while True:
+        try:
+            fcntl.ioctl(fd, v4l2.VIDIOC_QUERYCTRL, q_ctrl)
+        except OSError:
+            break
 
-    for dev in sorted(os.listdir(base_v4l)):
-        path = os.path.join(base_v4l, dev, "name")
-        if os.path.exists(path):
-            with open(path, 'r') as f:
-                if SENSOR_NAME in f.read():
-                    s_node = f"/dev/{dev}"
-                    break
+        if not (q_ctrl.flags & v4l2.V4L2_CTRL_FLAG_DISABLED):
+            name = bytes(q_ctrl.name).split(b'\x00')[0].decode('utf-8', 'ignore').lower().replace(" ", "_")
 
-    for dev in sorted(os.listdir(base_v4l)):
-        if dev.startswith("video"):
-            u_path = os.path.join(base_v4l, dev, "device/uevent")
-            if os.path.exists(u_path):
-                with open(u_path, 'r') as f:
-                    if "unicam" in f.read().lower():
-                        v_node = f"/dev/{dev}"
-                        break
-    return v_node, s_node
-
-_v_n, _s_n = find_nodes()
-
-_out = subprocess.check_output(f"v4l2-ctl -d {_s_n} --list-ctrls", shell=True, text=True)
-_f = lambda n, f: int(re.search(rf"{n}.*?{f}=(\d+)", _out).group(1))
-
-def _calculate_phys_exposure(exp_lines, mode="min"):
-    _out_now = subprocess.check_output(f"v4l2-ctl -d {_s_n} --list-ctrls", shell=True, text=True)
-    _fetch = lambda n, f: int(re.search(rf"{n}.*?{f}=(\d+)", _out_now).group(1))
-    
-    h_blank = _fetch("horizontal_blanking", mode)
-    pixel_rate = _fetch("pixel_rate", "value")
-    
-    return (exp_lines * (WIDTH + h_blank)) / pixel_rate
-
-MIN_EXPOSURE = _calculate_phys_exposure(_f("exposure", "min"), mode="min")
-v_total_max = HEIGHT + _f("vertical_blanking", "max")
-MAX_EXPOSURE = _calculate_phys_exposure(v_total_max, mode="max")
-AE_MIN_US = int(MIN_EXPOSURE * 1e6)
-
-def print_hardware_info():
-    print(f"[*] Drive Max Exposure: {MAX_EXPOSURE:.6f}s")
-    print(f"[*] Drive Min Exposure: {MIN_EXPOSURE:.6f}s")
-    print(f"[*] AE Logic Min Limit: {AE_MIN_US}us")
-
-print_hardware_info()
-
-def get_init_cmds():
-    if not _s_n:
-        return []
-
-    subdev_name = os.path.basename(_s_n)
-
-    with open(f"/sys/class/video4linux/{subdev_name}/name", 'r') as f:
-        full_entity_name = f.read().strip()
-
-    m_node = "/dev/media0"
-    for i in range(5):
-        if os.path.exists(f"/dev/media{i}"):
+            g_ctrl = v4l2.v4l2_control(id=q_ctrl.id)
             try:
-                out = subprocess.check_output(f"media-ctl -d /dev/media{i} -p", shell=True, text=True)
-                if SENSOR_NAME in out:
-                    m_node = f"/dev/media{i}"
-                    break
-            except:
-                pass
+                fcntl.ioctl(fd, v4l2.VIDIOC_G_CTRL, g_ctrl)
+                val = g_ctrl.value
+            except OSError:
+                val = q_ctrl.default_value
+            
+            ctrls[name] = {
+                'id': q_ctrl.id, 
+                'min': q_ctrl.minimum, 
+                'max': q_ctrl.maximum, 
+                'val': val
+            }
+        
+        q_ctrl.id |= v4l2.V4L2_CTRL_FLAG_NEXT_CTRL
+    return ctrls
 
-    return [
-        f"media-ctl -d {m_node} -V '\"{full_entity_name}\":0 [fmt:{MBUS_FORMAT}/{WIDTH}x{HEIGHT} field:none]'",
-        f"media-ctl -d {m_node} -V '\"{full_entity_name}\":0 [crop:(0,0)/{WIDTH}x{HEIGHT}]'",
-        f"v4l2-ctl -d {_v_n} --set-fmt-video=width={WIDTH},height={HEIGHT},pixelformat={V4L2_PIXELFORMAT}",
-        f"v4l2-ctl -d {_s_n} --set-ctrl hcg_enable=1"
-    ]
-
-def get_runtime_cmds(target_us, gain, container):
-    out = subprocess.check_output(f"v4l2-ctl -d {container.s_node} --list-ctrls", shell=True, text=True)
+def _calculate_phys_exposure(exp_lines, container, mode="min"):
+    if not hasattr(container, 'PIXEL_RATE_VAL'):
+        raise RuntimeError("PIXEL_RATE_VAL not initialized. Run apply_init first.")
     
-    def fetch(name, field="value"):
-        m = re.search(rf"{name}.*?{field}=(\d+)", out)
-        return int(m.group(1)) if m else 0
+    p_rate = container.PIXEL_RATE_VAL
+    ctrls = get_v4l2_ctrls(container.s_fd)
 
-    pixel_rate = fetch("pixel_rate")
-    h_min = fetch("horizontal_blanking", "min")
-    h_max = fetch("horizontal_blanking", "max")
-    v_min = fetch("vertical_blanking", "min")
-    v_max = fetch("vertical_blanking", "max")
-
-    total_clocks_needed = (target_us * pixel_rate) / 1000000.0
-
-    line_min = WIDTH + h_min
-    v_total_at_hmin = total_clocks_needed / line_min
+    h_blank = ctrls['horizontal_blanking'][mode] if mode in ['min', 'max'] else ctrls['horizontal_blanking']['val']
     
-    if v_total_at_hmin <= (HEIGHT + v_max):
-        h_blank = h_min
-        v_blank = int(np.clip(v_total_at_hmin - HEIGHT + EXP_OFFSET, v_min, v_max))
-    else:
-        v_blank = v_max
-        v_total_fixed = HEIGHT + v_blank
-        line_needed = total_clocks_needed / v_total_fixed
-        h_blank = int(np.clip(line_needed - WIDTH, h_min, h_max))
+    # Line Time = (Width + H_Blank) / Pixel_Rate
+    return (exp_lines * (WIDTH + h_blank)) / float(p_rate)
 
-    current_line_length = WIDTH + h_blank
-    current_v_total = HEIGHT + v_blank
-    safe_exp = int(np.clip(total_clocks_needed / current_line_length, 1, current_v_total - EXP_OFFSET))
+def apply_init(container):
+    sub_name = os.path.basename(container.s_node)
+    
+    out = subprocess.check_output(f"v4l2-ctl -d {container.s_node} -C pixel_rate", shell=True, text=True)
+    container.PIXEL_RATE_VAL = int(out.split(':')[-1].strip())
 
-    return [f"v4l2-ctl -d {container.s_node} -c horizontal_blanking={h_blank},vertical_blanking={v_blank},exposure={safe_exp},analogue_gain={int(gain)}"]
+    with open(f"/sys/class/video4linux/{sub_name}/name", 'r') as f:
+        full_entity = f.read().strip()
+    
+    m_node = None
+    for i in range(5):
+        m_p = f"/dev/media{i}"
+        if os.path.exists(m_p):
+            res = subprocess.getoutput(f"media-ctl -d {m_p} -p")
+            if SENSOR_NAME in res:
+                m_node = m_p
+                break
+    
+    if not m_node:
+        raise RuntimeError(f"Could not find media node for {SENSOR_NAME}")
 
-def get_capture_cmd(out_path, container):
-    return f"v4l2-ctl -d {container.v_node} --stream-mmap --stream-count=1 --stream-to={out_path}"
+    subprocess.run(f"media-ctl -d {m_node} -V '\"{full_entity}\":0 [fmt:{MBUS_FORMAT}/{WIDTH}x{HEIGHT} field:none]'", shell=True, check=True)
+
+    fmt = v4l2.v4l2_format()
+    fmt.type = v4l2.V4L2_BUF_TYPE_VIDEO_CAPTURE
+    fmt.fmt.pix.width = WIDTH
+    fmt.fmt.pix.height = HEIGHT
+    fmt.fmt.pix.pixelformat = v4l2.v4l2_fourcc(*V4L2_PIXELFORMAT)
+    fmt.fmt.pix.field = v4l2.V4L2_FIELD_NONE
+    fcntl.ioctl(container.v_fd, v4l2.VIDIOC_S_FMT, fmt)
+
+def apply_runtime(target_us, gain, container):
+    if not hasattr(container, 'PIXEL_RATE_VAL'):
+        return
+
+    fd = container.s_fd
+    ctrls = get_v4l2_ctrls(fd)
+    
+    p_rate = container.PIXEL_RATE_VAL
+    h_min = ctrls['horizontal_blanking']['min']
+    v_min = ctrls['vertical_blanking']['min']
+    v_max = ctrls['vertical_blanking']['max']
+
+    total_clocks = (target_us * p_rate) / 1000000.0
+
+    v_blank = int(np.clip((total_clocks / (WIDTH + h_min)) - HEIGHT + EXP_OFFSET, v_min, v_max))
+
+    safe_exp = int(np.clip(total_clocks / (WIDTH + h_min), 1, (HEIGHT + v_blank - EXP_OFFSET)))
+
+    for cid, val in [
+        (ctrls['horizontal_blanking']['id'], h_min),
+        (ctrls['vertical_blanking']['id'], v_blank),
+        (ctrls['exposure']['id'], safe_exp),
+        (ctrls['analogue_gain']['id'], int(gain))
+    ]:
+        c = v4l2.v4l2_control(id=cid, value=int(val))
+        fcntl.ioctl(fd, v4l2.VIDIOC_S_CTRL, c)

@@ -6,13 +6,11 @@ import math
 import os
 from snippets.config import AE_TARGET_LUMA
 
-
 MAX_LUMA_JUMP_RATIO = 0.5
 DELAY_FRAMES_COUNT = 1
 MAX_HW_EV = 12.0
 GAIN_DB_MIN_VAL = 30.3
 GAIN_DB_MAX_VAL = 72.0
-
 
 class AdaptiveExposureEngine:
     def __init__(self, reg_min, reg_max):
@@ -82,12 +80,12 @@ class AdaptiveExposureEngine:
             return -(dist ** 0.5) * MAX_HW_EV
 
     def _update_controller(self, remaining_ev):
-        base_pull = (remaining_ev ** 2) * np.sign(remaining_ev) * 1e-5
+        base_pull = (abs(remaining_ev) ** 1.5) * np.sign(remaining_ev) * 1e-4
 
         alignment = np.sign(self.velocity * remaining_ev + 1e-9)
         is_same_dir = 0.5 * alignment + 0.5
 
-        brake_force = math.tanh((abs(remaining_ev) / 12.0) ** 0.8)
+        brake_force = math.tanh((abs(remaining_ev) / 12.0) ** 1.2)
         soft_damping = 1.0 - math.exp(-(abs(remaining_ev) / 2.0) ** 2.0)
 
         self.accel_factor = (
@@ -152,39 +150,54 @@ class AdaptiveExposureEngine:
                 raw_bits
             )
 
-        if self.delay_frames > 0:
-            actual_us, actual_reg = self.history.pop(0)
-        else:
-            actual_us, actual_reg = current_us, current_reg_gain
+        backup_velocity = self.velocity
+        backup_accel = self.accel_factor
+        backup_history = list(self.history)
+        backup_ev = self.ev
 
-        luma = self._measure_luma(raw_path, width, height, raw_bits)
+        try:
+            if self.delay_frames > 0:
+                actual_us, actual_reg = self.history.pop(0)
+            else:
+                actual_us, actual_reg = current_us, current_reg_gain
 
-        actual_gain = self._phys_to_virt_gain(actual_reg)
-        actual_ev = self._compute_ev(actual_us, actual_gain)
+            luma = self._measure_luma(raw_path, width, height, raw_bits)
 
-        ev_step = self._compute_ev_step(luma)
-        ideal_ev = actual_ev + ev_step
+            actual_gain = self._phys_to_virt_gain(actual_reg)
+            actual_ev = self._compute_ev(actual_us, actual_gain)
 
-        latest_gain = self._phys_to_virt_gain(current_reg_gain)
-        latest_ev = self._compute_ev(current_us, latest_gain)
+            ev_step = self._compute_ev_step(luma)
+            ideal_ev = actual_ev + ev_step
 
-        remaining = ideal_ev - latest_ev
+            latest_gain = self._phys_to_virt_gain(current_reg_gain)
+            latest_ev = self._compute_ev(current_us, latest_gain)
 
-        delta = self._update_controller(remaining)
-        target_ev = latest_ev + delta
-        self.ev = target_ev
+            remaining = ideal_ev - latest_ev
 
-        next_us, next_reg = self._allocate_energy(
-            target_ev, max_us, min_us, max_reg_gain)
+            delta = self._update_controller(remaining)
+            target_ev = latest_ev + delta
+            self.ev = target_ev
 
-        if self.delay_frames > 0:
-            self.history.append((next_us, next_reg))
+            next_us, next_reg = self._allocate_energy(
+                target_ev, max_us, min_us, max_reg_gain)
 
-        return int(next_us), float(next_reg), float(luma), float(ev_step)
+            if math.isnan(next_us) or math.isnan(next_reg):
+                raise ValueError("NaN detected during exposure calculation")
 
+            if self.delay_frames > 0:
+                self.history.append((next_us, next_reg))
+
+            return int(next_us), float(next_reg), float(luma), float(ev_step)
+
+        except Exception as e:
+            self.velocity = backup_velocity
+            self.accel_factor = backup_accel
+            self.history = backup_history
+            self.ev = backup_ev
+
+            return int(current_us), float(current_reg_gain), float(self.target), 0.0
 
 _engine = None
-
 
 def process_ae_logic(raw_path, width, height, current_us, current_reg_gain, max_us_limit, min_us_limit, max_reg_gain, reg_min, raw_bits):
     global _engine

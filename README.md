@@ -139,7 +139,7 @@ Change `UPLOAD_SRV_BASE` to your upload server address.
 
 ```bash
 sudo apt update
-sudo apt install python3-numpy python3-opencv -y
+sudo apt install python3-numpy python3-opencv python3-videodev2 -y
 ```
 Auto-start at boot via systemd
 ```bash
