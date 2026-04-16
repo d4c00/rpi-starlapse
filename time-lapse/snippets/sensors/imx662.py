@@ -79,9 +79,10 @@ def _calculate_phys_exposure(exp_lines, mode="min"):
     os.close(fd)
     
     h_blank = ctrls['horizontal_blanking'][mode]
-    pixel_rate = ctrls.get('pixel_rate', {}).get('val', 0)
-    if not pixel_rate:
-        pixel_rate = 112000000 
+    pixel_rate = ctrls['pixel_rate']['val']
+    
+    if pixel_rate <= 0:
+        raise ValueError(f"Sensor driver reported invalid pixel_rate: {pixel_rate}")
         
     return (exp_lines * (WIDTH + h_blank)) / float(pixel_rate)
 
@@ -120,10 +121,9 @@ def apply_init(container):
 
 def apply_runtime(target_us, gain, container):
     ctrls = get_v4l2_ctrls(container.s_fd)
-    
-    pixel_rate = ctrls.get('pixel_rate', {}).get('val', 0)
-    if not pixel_rate:
-        pixel_rate = 112000000
+    pixel_rate = ctrls['pixel_rate']['val']
+    if pixel_rate <= 0:
+        return
 
     h_min, h_max = ctrls['horizontal_blanking']['min'], ctrls['horizontal_blanking']['max']
     v_min, v_max = ctrls['vertical_blanking']['min'], ctrls['vertical_blanking']['max']
