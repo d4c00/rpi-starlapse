@@ -53,7 +53,7 @@ def apply_init(self):
     fcntl.ioctl(self.v_fd, v4l2.VIDIOC_S_FMT, fmt)
 
     try:
-        HCG_ID = 0x00986f20  # from v4l2-ctl
+        HCG_ID = 0x00986f20
         ctrl = v4l2.v4l2_control(id=HCG_ID, value=1)
         fcntl.ioctl(self.s_fd, v4l2.VIDIOC_S_CTRL, ctrl)
     except Exception:
