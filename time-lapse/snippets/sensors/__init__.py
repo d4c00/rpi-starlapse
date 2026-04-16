@@ -12,7 +12,7 @@ class BaseSensor:
             if not name.startswith("__"):
                 setattr(self, name, getattr(mod, name))
         if hasattr(self, "WIDTH") and hasattr(self, "HEIGHT") and hasattr(self, "BIT"):
-            self.RAW_BPP = 2
+            self.RAW_BPP = 2 # 12bit usually packed in 16bit 
             self.EXACT_RAW_SIZE = self.WIDTH * self.HEIGHT * self.RAW_BPP
         self.v_node, self.s_node = self.find_nodes()
         self.s_fd = os.open(self.s_node, os.O_RDWR | os.O_NONBLOCK)
@@ -31,6 +31,12 @@ class BaseSensor:
             if 'analogue_gain' in ctrls:
                 self.MIN_GAIN = ctrls['analogue_gain']['min']
                 self.MAX_GAIN = ctrls['analogue_gain']['max']
+
+            print(f"[*] Hardware Limits Loaded for {getattr(self, 'SENSOR_NAME', 'Unknown')}:")
+            if hasattr(self, 'HW_MIN_LINES'):
+                print(f"    - Exposure (Lines): min={self.HW_MIN_LINES}, max={self.HW_MAX_LINES}")
+            if hasattr(self, 'MIN_GAIN'):
+                print(f"    - Analogue Gain: min={self.MIN_GAIN}, max={self.MAX_GAIN}")
 
 def _init_factory():
     pkg_path = os.path.dirname(__file__)
