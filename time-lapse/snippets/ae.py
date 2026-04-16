@@ -82,12 +82,12 @@ class AdaptiveExposureEngine:
             return -(dist ** 0.5) * MAX_HW_EV
 
     def _update_controller(self, remaining_ev):
-        base_pull = (remaining_ev ** 2) * np.sign(remaining_ev) * 1e-5
+        base_pull = (remaining_ev ** 2) * np.sign(remaining_ev) * 5e-5
 
         alignment = np.sign(self.velocity * remaining_ev + 1e-9)
         is_same_dir = 0.5 * alignment + 0.5
 
-        brake_force = math.tanh((abs(remaining_ev) / 12.0) ** 0.8)
+        brake_force = math.tanh((abs(remaining_ev) / 12.0) ** 1.2)
         soft_damping = 1.0 - math.exp(-(abs(remaining_ev) / 2.0) ** 2.0)
 
         self.accel_factor = (
