@@ -2,12 +2,7 @@
 # Licensed under the MIT License.
 
 import os
-import importlib
 import importlib.util
-import inspect
-import subprocess
-import re
-from functools import partial
 from snippets.config import SENSOR_INDEX
 
 class BaseSensor:
@@ -16,21 +11,26 @@ class BaseSensor:
         for name in dir(mod):
             if not name.startswith("__"):
                 setattr(self, name, getattr(mod, name))
-
-        if hasattr(self, "WIDTH") and hasattr(self, "HEIGHT") and hasattr(self, "RAW_BPP"):
+        if hasattr(self, "WIDTH") and hasattr(self, "HEIGHT") and hasattr(self, "BIT"):
+            self.RAW_BPP = 2
             self.EXACT_RAW_SIZE = self.WIDTH * self.HEIGHT * self.RAW_BPP
         self.v_node, self.s_node = self.find_nodes()
+        self.s_fd = os.open(self.s_node, os.O_RDWR | os.O_NONBLOCK)
+        self.v_fd = None 
         self._refresh_hardware_limits()
 
+    def __del__(self):
+        if hasattr(self, 's_fd'): os.close(self.s_fd)
+
     def _refresh_hardware_limits(self):
-        try:
-            out = subprocess.check_output(f"v4l2-ctl -d {self.s_node} --list-ctrls", shell=True, text=True)
-            self.HW_MIN_LINES = int(re.search(r"exposure.*?min=(\d+)", out).group(1))
-            self.HW_MAX_LINES = int(re.search(r"exposure.*?max=(\d+)", out).group(1))
-            self.MIN_GAIN = int(re.search(r"analogue_gain.*?min=(\d+)", out).group(1))
-            self.MAX_GAIN = int(re.search(r"analogue_gain.*?max=(\d+)", out).group(1)) 
-        except:
-            pass
+        if hasattr(self, "get_v4l2_ctrls"):
+            ctrls = self.get_v4l2_ctrls(self.s_fd)
+            if 'exposure' in ctrls:
+                self.HW_MIN_LINES = ctrls['exposure']['min']
+                self.HW_MAX_LINES = ctrls['exposure']['max']
+            if 'analogue_gain' in ctrls:
+                self.MIN_GAIN = ctrls['analogue_gain']['min']
+                self.MAX_GAIN = ctrls['analogue_gain']['max']
 
 def _init_factory():
     pkg_path = os.path.dirname(__file__)
