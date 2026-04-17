@@ -1,10 +1,11 @@
 # Copyright (c) 2026 length <me@length.cc> (https://github.com/d4c00)
 # Licensed under the MIT License.
 
-import os, time, sys, logging, subprocess, random, shutil, socket
+import os, time, sys, logging, subprocess, random, shutil, socket, select, fcntl
 from datetime import datetime, UTC
 from snippets.config import *
 from snippets.sensors import sensor
+import videodev2 as v4l2
 
 def handle_net_failure(is_online_val, logger, filename=None):
     if is_online_val.value:
@@ -276,3 +277,24 @@ def get_optimal_queue_size() -> int:
         raise MemoryError(f"SHM Space Exhausted! Free: {usage.free//1024}KB")
     print(f"[SHM-DYNAMIC] Queue size set to {num_frames} based on physical memory.")
     return num_frames
+
+def flush_old_frames(camera):
+    flushed = 0
+    buf = v4l2.v4l2_buffer()
+    buf.type = v4l2.V4L2_BUF_TYPE_VIDEO_CAPTURE
+    buf.memory = v4l2.V4L2_MEMORY_MMAP
+
+    for _ in range(3):
+        if not select.select([camera.v_fd], [], [], 0.001)[0]:
+            break
+        try:
+            fcntl.ioctl(camera.v_fd, v4l2.VIDIOC_DQBUF, buf)
+            fcntl.ioctl(camera.v_fd, v4l2.VIDIOC_QBUF, buf)
+            flushed += 1
+        except:
+            break
+
+    if flushed > 0:
+        print(f"[FLUSH] Discarded {flushed} old frame(s)")
+    
+    return flushed
