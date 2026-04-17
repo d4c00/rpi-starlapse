@@ -8,7 +8,7 @@ from snippets.ae import process_ae_logic
 from snippets.sensors import sensor
 from snippets.utils import (pet_watchdog, setup_logger, set_led, flash_led, blink_loop, get_shm_paths, is_valid_raw, advance_frame, cleanup_shm, 
     upload_with_retry, log_pic, get_local_photos, disable_config_cam, dispatch_to_manager, move_to_local_storage, handle_net_failure, unpack_snap, 
-    pack_snap
+    pack_snap, flush_old_frames
 )
 
 logger = setup_logger("WORKER")
@@ -58,6 +58,7 @@ def camera_worker(sh_frame_id, sh_last_ae_id, data_q, stop_ev, trigger_ev, sh_sn
 
     try:
         cam = V4L2Camera()
+        flush_old_frames(cam)
     except Exception as e:
         logger.error(f"Hardware initialization failed: {e}"); return
 
@@ -73,7 +74,8 @@ def camera_worker(sh_frame_id, sh_last_ae_id, data_q, stop_ev, trigger_ev, sh_sn
             
             logger.info(">>> [CALIBRATION] Starting calibration frames. Please cover the lens cap <<<")
             blink_loop(30, 0.2, 0.2) 
-
+ 
+            flush_old_frames(cam)
             logger.info(f">>> [1/2] Capturing Darks (Count:{DARK_FRAME_COUNT})")
             for _ in range(DARK_FRAME_COUNT):
                 if stop_ev.is_set(): break
@@ -87,6 +89,7 @@ def camera_worker(sh_frame_id, sh_last_ae_id, data_q, stop_ev, trigger_ev, sh_sn
                 capture_frame(cam, "darks", f"{w_path}.darks_tmp", r_path, 
                               sh_frame_id, sh_last_ae_id, is_online, sh_dev_id, sh_snap, data_q)
 
+            flush_old_frames(cam)
             if CAPTURE_BIAS_FRAMES:
                 logger.info(f">>> [2/2] Capturing Biases (Count: {BIAS_FRAME_COUNT})")
                 bias_cfg = {"t_us": int(sensor.MIN_EXPOSURE * 1e6), "g": sensor.MIN_GAIN}
