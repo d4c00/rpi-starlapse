@@ -285,7 +285,7 @@ def flush_old_frames(cam):
     buf.memory = v4l2.V4L2_MEMORY_MMAP
 
     for _ in range(3):
-        if not select.select([camera.v_fd], [], [], 0.001)[0]:
+        if not select.select([cam.v_fd], [], [], 0.001)[0]:
             break
         try:
             fcntl.ioctl(camera.v_fd, v4l2.VIDIOC_DQBUF, buf)
