@@ -2,7 +2,7 @@
 # Licensed under the MIT License.
 
 import sys, os, time, multiprocessing, signal
-from snippets.utils import set_led, blink_loop, check_time_server, setup_logger, cleanup_shm_env, get_optimal_queue_size, flush_old_frames
+from snippets.utils import set_led, blink_loop, check_time_server, setup_logger, cleanup_shm_env, get_optimal_queue_size
 from snippets.workers import (ae_worker, camera_worker, memory_manager_worker,
                               background_sync_worker, sync_scheduler_worker, timer_worker)
 from snippets.config import (DEVICE_ID, SAVE_DIR, CAMERA_ENABLED)
@@ -14,7 +14,7 @@ def run_core():
     logger.info(f"=== Starting Device {DEVICE_ID} ===")
     os.makedirs(SAVE_DIR, exist_ok=True)
     cleanup_shm_env()
-  
+
     init_snap_str = sensor.INIT_SNAP_STR
 
     sh_snap = multiprocessing.Array('c', 128)
