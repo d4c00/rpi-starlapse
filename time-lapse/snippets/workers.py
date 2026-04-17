@@ -8,7 +8,7 @@ from snippets.ae import process_ae_logic
 from snippets.sensors import sensor
 from snippets.utils import (pet_watchdog, setup_logger, set_led, flash_led, blink_loop, get_shm_paths, is_valid_raw, advance_frame, cleanup_shm, 
     upload_with_retry, log_pic, get_local_photos, disable_config_cam, dispatch_to_manager, move_to_local_storage, handle_net_failure, unpack_snap, 
-    pack_snap
+    pack_snap, flush_old_frames
 )
 
 logger = setup_logger("WORKER")
