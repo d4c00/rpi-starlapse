@@ -19,7 +19,7 @@ Although it will affect heat dissipation, I made a simple waterproof cover using
 </div>
 
 > **Video:** [Watch the Full Time-lapse on YouTube](https://youtu.be/lMUVIBRKp7k) <br>
-> **Star Field Identification:** [Astrometry Results](https://nova.astrometry.net/user_images/15072646)
+> **Star Field Identification:** [Astrometry Results](https://nova.astrometry.net/user_images/15072684)
 
 ---
 
