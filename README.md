@@ -302,7 +302,7 @@ In actual shooting, to save on mobile data costs, I usually disconnect from the 
 
 When shooting is finished, I go back near the device, turn on the hotspot again so the Pi can connect, SSH in and run.
 ```bash
-touch /dev/shm/time-lapse/calibration
+touch /dev/shm/time-lapse/01/calibration
 ```
 While the LED is flashing quickly, I cover the lens with the lens cap on-site. After a short wait, it will automatically start shooting dark frames. Except for flat-field shooting, I usually disable bias-frame shooting.
 
