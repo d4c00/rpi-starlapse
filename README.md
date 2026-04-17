@@ -15,7 +15,7 @@ Bortle Class 8 city, 9.9s exposure, 85 gain. Captured the Milky Way core using 1
 Although it will affect heat dissipation, I made a simple waterproof cover using plastic wrap and rubber bands.<br>
 <div align="center">
   <img src="https://github.com/user-attachments/assets/1f644288-32f0-4d52-a18b-33de4bfa7503" width="37.85%" />
-  <img src="https://github.com/user-attachments/assets/1202cc00-3812-431e-942c-58265c815fa5" width="50%" />
+  <img src="https://github.com/user-attachments/assets/7af14235-8b05-4a68-b81f-84e4c9ad741f" width="50%" />
 </div>
 
 > **Video:** [Watch the Full Time-lapse on YouTube](https://youtu.be/lMUVIBRKp7k) <br>
