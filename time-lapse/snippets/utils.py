@@ -278,7 +278,7 @@ def get_optimal_queue_size() -> int:
     print(f"[SHM-DYNAMIC] Queue size set to {num_frames} based on physical memory.")
     return num_frames
 
-def flush_old_frames(camera):
+def flush_old_frames(cam):
     flushed = 0
     buf = v4l2.v4l2_buffer()
     buf.type = v4l2.V4L2_BUF_TYPE_VIDEO_CAPTURE
