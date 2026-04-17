@@ -14,8 +14,7 @@ def run_core():
     logger.info(f"=== Starting Device {DEVICE_ID} ===")
     os.makedirs(SAVE_DIR, exist_ok=True)
     cleanup_shm_env()
-    flush_old_frames(cam)
-
+  
     init_snap_str = sensor.INIT_SNAP_STR
 
     sh_snap = multiprocessing.Array('c', 128)
