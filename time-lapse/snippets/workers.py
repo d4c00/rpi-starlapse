@@ -56,9 +56,9 @@ def camera_worker(sh_frame_id, sh_last_ae_id, data_q, stop_ev, trigger_ev, sh_sn
     dev_id_str = sh_dev_id.value.decode().rstrip('\x00')
     w_path, r_path = get_shm_paths(dev_id_str)
 
-    flush_old_frames(cam)
     try:
         cam = V4L2Camera()
+        flush_old_frames(cam)
     except Exception as e:
         logger.error(f"Hardware initialization failed: {e}"); return
 
