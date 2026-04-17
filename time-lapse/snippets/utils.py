@@ -237,12 +237,9 @@ def log_pic(mode, filename, status, info):
 def upload_with_retry(sess, filename, path, mode_label, info_prefix, is_online_val, stop_ev, sh_retry_count, r_limit=5):
     if not os.path.exists(path): return False
     if not is_valid_raw(path): return True
-
     actual_limit = r_limit if is_online_val.value else 0
-
     for r in range(actual_limit + 1):
         if stop_ev.is_set(): return False
-
         resp = api_upload(sess, filename, path)
         if resp and resp.status_code == 200:
             is_online_val.value = True
@@ -250,17 +247,12 @@ def upload_with_retry(sess, filename, path, mode_label, info_prefix, is_online_v
             log_pic(mode_label, filename, "OK", f"{info_prefix} | R:{r}")
             cleanup_shm(path)
             return True
-
         err_msg = f"HTTP:{resp.status_code}" if resp else "TIMEOUT"
         wait_sec = 0.1 * (3 ** r) if (r < actual_limit and is_online_val.value) else 0
-
         print(f"[{mode_label}] {filename} | FAIL ({err_msg}) | Retry:{r}/{actual_limit} | NextWait:{wait_sec:.1f}s", flush=True)
-
         if not is_online_val.value: return False
-
         if r < actual_limit:
             time.sleep(0.1 * (3 ** r))
-
     if is_online_val.value:
         handle_net_failure(is_online_val, setup_logger("NET"), filename)
     return False
@@ -283,18 +275,15 @@ def flush_old_frames(cam):
     buf = v4l2.v4l2_buffer()
     buf.type = v4l2.V4L2_BUF_TYPE_VIDEO_CAPTURE
     buf.memory = v4l2.V4L2_MEMORY_MMAP
-
     for _ in range(3):
         if not select.select([cam.v_fd], [], [], 0.001)[0]:
             break
         try:
-            fcntl.ioctl(camera.v_fd, v4l2.VIDIOC_DQBUF, buf)
-            fcntl.ioctl(camera.v_fd, v4l2.VIDIOC_QBUF, buf)
+            fcntl.ioctl(cam.v_fd, v4l2.VIDIOC_DQBUF, buf)
+            fcntl.ioctl(cam.v_fd, v4l2.VIDIOC_QBUF, buf)
             flushed += 1
         except:
             break
-
     if flushed > 0:
         print(f"[FLUSH] Discarded {flushed} old frame(s)")
-    
     return flushed
