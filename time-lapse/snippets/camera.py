@@ -25,7 +25,7 @@ class V4L2Camera:
         sensor.v_fd = self.v_fd
 
         req = v4l2.v4l2_requestbuffers()
-        req.count = 2
+        req.count = 1
         req.type = v4l2.V4L2_BUF_TYPE_VIDEO_CAPTURE
         req.memory = v4l2.V4L2_MEMORY_MMAP
         fcntl.ioctl(self.v_fd, v4l2.VIDIOC_REQBUFS, req)
