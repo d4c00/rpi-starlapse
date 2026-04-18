@@ -23,7 +23,7 @@ class AdaptiveExposureEngine:
         self.MIN_VIRT_GAIN = 10 ** (self.GAIN_DB_MIN / 20.0)
         self.MAX_VIRT_GAIN = 10 ** (self.GAIN_DB_MAX / 20.0)
 
-        self.MAX_HW_EV = ((self.GAIN_DB_MAX - self.GAIN_DB_MIN) / (20.0 * math.log10(2.0))) * 0.5
+        self.MAX_HW_EV = ((self.GAIN_DB_MAX - self.GAIN_DB_MIN) / (20.0 * math.log10(2.0)))
 
         self.MIN_EV = math.log2((self.MIN_US * self.MIN_VIRT_GAIN / 1e6) + 1e-9)
         self.MAX_EV = math.log2((self.MAX_US * self.MAX_VIRT_GAIN / 1e6) + 1e-9)
@@ -80,7 +80,7 @@ class AdaptiveExposureEngine:
         ratio = min(abs(remaining_ev) / self.MAX_HW_EV, 1.0)
         curve_gain = ratio ** 4.0 
         move = remaining_ev * curve_gain
-        soft_damping = 1.0 - math.exp(-(abs(remaining_ev) / 0.5) ** 2.0)
+        soft_damping = 1.0 - math.exp(-(abs(remaining_ev) / 1.0) ** 2.0)
         final_move = move * soft_damping
         return np.clip(final_move, self.LIMIT_DN, self.LIMIT_UP)
 
