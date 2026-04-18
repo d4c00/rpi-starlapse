@@ -93,6 +93,7 @@ class BaseSensor:
         if hasattr(self, "MIN_EXPOSURE"):
             print(f"    Exposure: {self.MIN_EXPOSURE*1000:.3f} ~ {self.MAX_EXPOSURE*1000:.3f} ms")
             print(f"    Gain: {self.MIN_GAIN} ~ {self.MAX_GAIN}")
+            print(f"    Gain dB : {self.GAIN_DB_MIN} ~ {self.GAIN_DB_MAX} dB (Total: {self.GAIN_DB_MAX - self.GAIN_DB_MIN:.2f} dB)")
 
     def __del__(self):
         for fd in ("s_fd", "v_fd"):
