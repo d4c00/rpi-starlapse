@@ -57,7 +57,7 @@ class AdaptiveExposureEngine:
     def _update_controller(self, remaining_ev):
         ratio = min(abs(remaining_ev) / MAX_HW_EV, 1.0)
         
-        curve_gain = ratio ** 3.0 
+        curve_gain = ratio ** 4.0 
         
         move = remaining_ev * curve_gain
 
