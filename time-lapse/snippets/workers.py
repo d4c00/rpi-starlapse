@@ -164,8 +164,10 @@ def ae_worker(stop_ev, sh_frame_id, sh_last_ae_id, sh_snap, sh_dev_id, data_q, r
                     target_raw, W, H, p["t_us"], p["g"], 
                     limit_us,
                     sensor.AE_MIN_US,
-                    sensor.MAX_GAIN, 
-                    sensor.MIN_GAIN, 
+                    sensor.MAX_GAIN,
+                    sensor.MIN_GAIN,
+                    sensor.GAIN_DB_MIN,
+                    sensor.GAIN_DB_MAX,
                     sensor.BIT
                 )
 
