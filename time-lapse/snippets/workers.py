@@ -158,7 +158,7 @@ def ae_worker(stop_ev, sh_frame_id, sh_last_ae_id, sh_snap, sh_dev_id, data_q, r
 
                 p = unpack_snap(sh_snap.value)
                 p["id"] = curr_id
-                limit_us = min((CAPTURE_INTERVAL - 0.1), sensor.MAX_EXPOSURE) * 1e6
+                limit_us = min((CAPTURE_INTERVAL - 0.01), sensor.MAX_EXPOSURE) * 1e6
 
                 new_s, new_g, m_val, new_ev = process_ae_logic(
                     target_raw, W, H, p["t_us"], p["g"], 
