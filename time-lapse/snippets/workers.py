@@ -19,19 +19,18 @@ MODE_MAP = {
     "biases_tmp": {"mode": "biases", "use_ae": False},
 }
 
-def capture_frame(cam, mode, target, r_path, sh_frame_id, sh_last_ae_id, is_online, sh_dev_id, sh_snap, data_q, bias_params=None):
+def capture_frame(cam, mode, target, r_path, sh_frame_id, sh_last_ae_id, is_online, sh_dev_id, sh_snap, data_q, hist_q, bias_params=None):
     dev_id_str = sh_dev_id.value.decode().rstrip('\x00')
 
-    if bias_params:
-        s_us, g = bias_params["t_us"], bias_params["g"]
-        p = {"ev": 0, "y": 0, "t_us": s_us, "g": g}
-    else:
-        p = unpack_snap(sh_snap.value)
-        s_us, g = p["t_us"], p["g"]
+    target_snap = bias_params if bias_params else unpack_snap(sh_snap.value)
+
+    hist_q.append(target_snap)
+    p = hist_q.pop(0) 
+    s_us, g = p["t_us"], p["g"]
 
     set_led(1)
 
-    success, cap_dur = cam.capture_to_path(s_us, g, target)
+    success, cap_dur = cam.capture_to_path(target_snap["t_us"], target_snap["g"], target)
 
     if success and is_valid_raw(target):
         curr_id = sh_frame_id.value + 1
@@ -41,7 +40,7 @@ def capture_frame(cam, mode, target, r_path, sh_frame_id, sh_last_ae_id, is_onli
         final_ready_path = f"{r_path}.{tag}.{curr_id}"
         os.replace(target, final_ready_path)
 
-        logger.info(f"[{mode.upper()} OK] ID:{curr_id} | Read:{cap_dur:.1f}ms")
+        logger.info(f"[{mode.upper()} OK] ID:{curr_id} | Read:{cap_dur:.1f}ms | Meta_T:{s_us/1000:.1f}ms")
         status = True
     else:
         logger.error(f"[{mode.upper()} FAIL] {mode} capture failed.")
@@ -49,12 +48,12 @@ def capture_frame(cam, mode, target, r_path, sh_frame_id, sh_last_ae_id, is_onli
         status = False
 
     set_led(0)
-
     return status
 
 def camera_worker(sh_frame_id, sh_last_ae_id, data_q, stop_ev, trigger_ev, sh_snap, is_online, ready_ev, sh_dev_id, pause_ev, sh_cam_en):
     dev_id_str = sh_dev_id.value.decode().rstrip('\x00')
     w_path, r_path = get_shm_paths(dev_id_str)
+    hist_q = [unpack_snap(sh_snap.value)] * 2
 
     try:
         cam = V4L2Camera()
@@ -76,6 +75,7 @@ def camera_worker(sh_frame_id, sh_last_ae_id, data_q, stop_ev, trigger_ev, sh_sn
             blink_loop(30, 0.2, 0.2) 
  
             flush_old_frames(cam)
+            hist_q = [unpack_snap(sh_snap.value)] * 2
             logger.info(f">>> [1/2] Capturing Darks (Count:{DARK_FRAME_COUNT})")
             for _ in range(DARK_FRAME_COUNT):
                 if stop_ev.is_set(): break
@@ -87,9 +87,10 @@ def camera_worker(sh_frame_id, sh_last_ae_id, data_q, stop_ev, trigger_ev, sh_sn
                     continue
 
                 capture_frame(cam, "darks", f"{w_path}.darks_tmp", r_path, 
-                              sh_frame_id, sh_last_ae_id, is_online, sh_dev_id, sh_snap, data_q)
+                              sh_frame_id, sh_last_ae_id, is_online, sh_dev_id, sh_snap, data_q, hist_q)
 
             flush_old_frames(cam)
+            hist_q = [unpack_snap(sh_snap.value)] * 2
             if CAPTURE_BIAS_FRAMES:
                 logger.info(f">>> [2/2] Capturing Biases (Count: {BIAS_FRAME_COUNT})")
                 bias_cfg = {"t_us": int(sensor.MIN_EXPOSURE * 1e6), "g": sensor.MIN_GAIN}
@@ -103,7 +104,7 @@ def camera_worker(sh_frame_id, sh_last_ae_id, data_q, stop_ev, trigger_ev, sh_sn
                         continue
 
                     capture_frame(cam, "biases", f"{w_path}.biases_tmp", r_path, 
-                                  sh_frame_id, sh_last_ae_id, is_online, sh_dev_id, sh_snap, data_q, 
+                                  sh_frame_id, sh_last_ae_id, is_online, sh_dev_id, sh_snap, data_q, hist_q, 
                                   bias_params=bias_cfg)
             else:
                 logger.info(">>> [2/2] Skipping Biases (Disabled in config)")
@@ -121,7 +122,7 @@ def camera_worker(sh_frame_id, sh_last_ae_id, data_q, stop_ev, trigger_ev, sh_sn
 
         try:
             capture_frame(cam, "lights", f"{w_path}.lights_tmp", r_path, 
-                          sh_frame_id, sh_last_ae_id, is_online, sh_dev_id, sh_snap, data_q)
+                          sh_frame_id, sh_last_ae_id, is_online, sh_dev_id, sh_snap, data_q, hist_q)
         except Exception as e:
             logger.error(f"camera_worker error: {e}")
             advance_frame(sh_frame_id, sh_last_ae_id) 
@@ -182,7 +183,13 @@ def ae_worker(stop_ev, sh_frame_id, sh_last_ae_id, sh_snap, sh_dev_id, data_q, r
                     p["ev"] = new_ev
                     snap_data = pack_snap(curr_id, new_s, new_g, new_ev, m_val)
 
-                dispatch_to_manager(data_q, mode, dev_id_str, p, target_raw, logger)
+                if mode == "lights" and curr_id <= 2:
+                    logger.info(f"[DROP] Dropping initial light frame ID:{curr_id}")
+                    if os.path.exists(target_raw):
+                        os.remove(target_raw)
+                else:
+                    dispatch_to_manager(data_q, mode, dev_id_str, p, target_raw, logger)
+
                 sh_snap.value = snap_data.encode()
 
                 cost_ms = (time.perf_counter() - t0) * 1000
