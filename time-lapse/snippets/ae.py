@@ -77,7 +77,7 @@ class AdaptiveExposureEngine:
 
     def _update_controller(self, remaining_ev):
         ratio = min(abs(remaining_ev) / self.MAX_HW_EV, 1.0)
-        curve_gain = ratio ** 1.8 
+        curve_gain = ratio ** 0.6 
         move = remaining_ev * curve_gain
 
         soft_damping = 1.0 - math.exp(-(abs(remaining_ev) / 1.0) ** 2.0)
