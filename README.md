@@ -18,7 +18,7 @@ Although it will affect heat dissipation, I made a simple waterproof cover using
   <img src="https://github.com/user-attachments/assets/7af14235-8b05-4a68-b81f-84e4c9ad741f" width="50%" />
 </div>
 
-> **Video:** [Watch the Full Time-lapse on YouTube](https://youtu.be/lMUVIBRKp7k) <br>
+> **Video:** [Watch the Time-lapse on YouTube](https://youtu.be/h3G4BeXtmxc) <br>
 
 ---
 
