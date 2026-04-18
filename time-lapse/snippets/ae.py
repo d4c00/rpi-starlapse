@@ -6,8 +6,8 @@ import math
 import os
 from snippets.config import AE_TARGET_LUMA
 
-MAX_LUMA_JUMP_RATIO = 0.5
-DELAY_FRAMES_COUNT = 2
+MAX_LUMA_JUMP_RATIO = 0.33333
+DELAY_FRAMES_COUNT = 3
 MAX_HW_EV = 12.0
 GAIN_DB_MIN_VAL = 30.3
 GAIN_DB_MAX_VAL = 72.0
@@ -25,13 +25,9 @@ class AdaptiveExposureEngine:
         self.LIMIT_DN = math.log2(1.0 - MAX_LUMA_JUMP_RATIO)
         self.LIMIT_UP = math.log2(1.0 + MAX_LUMA_JUMP_RATIO)
 
-        self.velocity = 0.0
-        self.accel_factor = 1.0
         self.ev = None
-
         self.delay_frames = DELAY_FRAMES_COUNT
         self.history = []
-
 
     def _phys_to_virt_gain(self, reg_val):
         if self.REG_MAX == self.REG_MIN:
@@ -79,36 +75,20 @@ class AdaptiveExposureEngine:
             dist = (luma - self.target) / max(1.0 - self.target, 1e-9)
             return -(dist ** 0.5) * MAX_HW_EV
 
-    def _update_controller(self, remaining_ev):
-        base_pull = (abs(remaining_ev) ** 1.5) * np.sign(remaining_ev) * 1e-4
+    def _compute_delta(self, remaining_ev):
+        # 基于当前EV差的初始拉力
+        base_pull = (abs(remaining_ev) ** 1.5) * np.sign(remaining_ev) * self.LIMIT_UP
 
-        alignment = np.sign(self.velocity * remaining_ev + 1e-9)
-        is_same_dir = 0.5 * alignment + 0.5
-
+        # 你保留的非线性阻尼公式
         brake_force = math.tanh((abs(remaining_ev) / 12.0) ** 1.2)
         soft_damping = 1.0 - math.exp(-(abs(remaining_ev) / 2.0) ** 2.0)
 
-        self.accel_factor = (
-            self.accel_factor * 2.0 * is_same_dir
-            + 4.0 * (1.0 - is_same_dir)
-        )
-        self.accel_factor = min(self.accel_factor, 256.0)
+        # 既然没有了累积能量，我们将阻尼直接作用于当前的 base_pull 上
+        raw_move = base_pull * soft_damping
+        delta = raw_move * brake_force
 
-        raw_move = (
-            self.velocity * is_same_dir * soft_damping
-            + base_pull * self.accel_factor
-        )
-
-        self.velocity = raw_move * brake_force
-
-        scale = self.LIMIT_UP if self.velocity > 0 else abs(self.LIMIT_DN)
-        self.velocity = np.clip(self.velocity * scale, self.LIMIT_DN, self.LIMIT_UP)
-
-        return self.velocity
-
-    def _reset_controller(self):
-        self.velocity = 0.0
-        self.accel_factor = 1.0
+        scale = self.LIMIT_UP if delta > 0 else abs(self.LIMIT_DN)
+        return np.clip(delta * scale, self.LIMIT_DN, self.LIMIT_UP)
 
     def _allocate_energy(self, target_ev, max_us, min_us, max_reg_gain):
         total_energy = (2.0 ** target_ev) * 1e6
@@ -137,8 +117,6 @@ class AdaptiveExposureEngine:
 
         step = self._compute_ev_step(luma)
 
-        self._reset_controller()
-
         return current_us, current_reg_gain, luma, step
 
     def process_raw_frame(self, raw_path, width, height, current_us, current_reg_gain, max_us, min_us, max_reg_gain, raw_bits):
@@ -150,8 +128,6 @@ class AdaptiveExposureEngine:
                 raw_bits
             )
 
-        backup_velocity = self.velocity
-        backup_accel = self.accel_factor
         backup_history = list(self.history)
         backup_ev = self.ev
 
@@ -174,8 +150,10 @@ class AdaptiveExposureEngine:
 
             remaining = ideal_ev - latest_ev
 
-            delta = self._update_controller(remaining)
+            # 引入计算 delta 的方法，包含你指定的阻尼公式
+            delta = self._compute_delta(remaining)
             target_ev = latest_ev + delta
+            
             self.ev = target_ev
 
             next_us, next_reg = self._allocate_energy(
@@ -190,8 +168,6 @@ class AdaptiveExposureEngine:
             return int(next_us), float(next_reg), float(luma), float(ev_step)
 
         except Exception as e:
-            self.velocity = backup_velocity
-            self.accel_factor = backup_accel
             self.history = backup_history
             self.ev = backup_ev
 
