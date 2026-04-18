@@ -22,15 +22,15 @@ MODE_MAP = {
 def capture_frame(cam, mode, target, r_path, sh_frame_id, sh_last_ae_id, is_online, sh_dev_id, sh_snap, data_q, hist_q, bias_params=None):
     dev_id_str = sh_dev_id.value.decode().rstrip('\x00')
 
-    latest_snap = unpack_snap(sh_snap.value)
-    
-    hist_q.append(latest_snap)
+    target_snap = bias_params if bias_params else unpack_snap(sh_snap.value)
+
+    hist_q.append(target_snap)
     p = hist_q.pop(0) 
     s_us, g = p["t_us"], p["g"]
 
     set_led(1)
 
-    success, cap_dur = cam.capture_to_path(latest_snap["t_us"], latest_snap["g"], target)
+    success, cap_dur = cam.capture_to_path(target_snap["t_us"], target_snap["g"], target)
 
     if success and is_valid_raw(target):
         curr_id = sh_frame_id.value + 1
