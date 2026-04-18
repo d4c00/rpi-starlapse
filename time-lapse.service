@@ -1,0 +1,28 @@
+# Copyright (c) 2026 length <me@length.cc> (https://github.com/d4c00)
+# Licensed under the MIT License.
+
+[Unit]
+Description=Time-lapse Super Manager
+
+[Service]
+Type=simple
+Environment=PYTHONIOENCODING=utf-8
+Environment=LANG=en_US.UTF-8
+WorkingDirectory=/home/pi/time-lapse
+
+ExecStartPre=/usr/bin/sudo /bin/bash -c "echo none > /sys/class/leds/ACT/trigger"
+ExecStartPre=/usr/bin/sudo /bin/chown :video /sys/class/leds/ACT/brightness
+ExecStartPre=/usr/bin/sudo /bin/chmod g+w /sys/class/leds/ACT/brightness
+
+ExecStart=/usr/bin/python3 /home/pi/time-lapse/main.py
+ExecStopPost=/usr/bin/sudo /bin/bash -c "sync; echo mmc0 > /sys/class/leds/ACT/trigger"
+
+Restart=always
+RestartSec=10
+TimeoutStopSec=5
+
+WatchdogSec=600
+NotifyAccess=all
+
+[Install]
+WantedBy=default.target
