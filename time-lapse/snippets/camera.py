@@ -31,41 +31,29 @@ class V4L2Camera:
         fcntl.ioctl(self.v_fd, v4l2.VIDIOC_REQBUFS, req)
 
         self.buffers = []
-        for i in range(req.count):
-            buf = v4l2.v4l2_buffer()
-            buf.type = req.type
-            buf.memory = req.memory
-            buf.index = i
-
-            fcntl.ioctl(self.v_fd, v4l2.VIDIOC_QUERYBUF, buf)
-
-            mm = mmap.mmap(
-                self.v_fd, buf.length,
-                mmap.MAP_SHARED,
-                mmap.PROT_READ | mmap.PROT_WRITE,
-                offset=buf.m.offset
-            )
-
-            self.buffers.append(mm)
-            fcntl.ioctl(self.v_fd, v4l2.VIDIOC_QBUF, buf)
-
-        fcntl.ioctl(
-            self.v_fd,
-            v4l2.VIDIOC_STREAMON,
-            ctypes.c_int(req.type)
+        buf = v4l2.v4l2_buffer()
+        buf.type = req.type
+        buf.memory = req.memory
+        buf.index = 0
+        fcntl.ioctl(self.v_fd, v4l2.VIDIOC_QUERYBUF, buf)
+        
+        mm = mmap.mmap(
+            self.v_fd, buf.length,
+            mmap.MAP_SHARED,
+            mmap.PROT_READ | mmap.PROT_WRITE,
+            offset=buf.m.offset
         )
-
+        self.buffers.append(mm)
+        
         self.running = True
+        logger.info("V4L2 Hybrid-Snapshot Mode Initialized.")
 
     def __del__(self):
-        if getattr(self, "running", False):
-            fcntl.ioctl(
-                self.v_fd,
-                v4l2.VIDIOC_STREAMOFF,
-                ctypes.c_int(v4l2.V4L2_BUF_TYPE_VIDEO_CAPTURE)
-            )
-            for b in self.buffers:
-                b.close()
+        if hasattr(self, "v_fd"):
+            try:
+                fcntl.ioctl(self.v_fd, v4l2.VIDIOC_STREAMOFF, ctypes.c_int(v4l2.V4L2_BUF_TYPE_VIDEO_CAPTURE))
+            except: pass
+            for b in self.buffers: b.close()
             os.close(self.v_fd)
 
     def capture_to_path(self, target_us, gain, out_path):
@@ -74,32 +62,46 @@ class V4L2Camera:
 
         t0 = time.perf_counter()
 
-        if not select.select([self.v_fd], [], [], 2.0)[0]:
-            logger.error("Timeout")
-            return False, 0
-
+        buf_type = ctypes.c_int(v4l2.V4L2_BUF_TYPE_VIDEO_CAPTURE)
         buf = v4l2.v4l2_buffer()
         buf.type = v4l2.V4L2_BUF_TYPE_VIDEO_CAPTURE
         buf.memory = v4l2.V4L2_MEMORY_MMAP
+        buf.index = 0
+
+        try:
+            fcntl.ioctl(self.v_fd, v4l2.VIDIOC_QBUF, buf)
+            fcntl.ioctl(self.v_fd, v4l2.VIDIOC_STREAMON, buf_type)
+        except Exception as e:
+            logger.error(f"Failed to start snapshot: {e}")
+            return False, 0
+
+        timeout_sec = (target_us / 1e6) + 0.5
+        ready = select.select([self.v_fd], [], [], timeout_sec)[0]
+
+        if not ready:
+            logger.error(f"Capture Timeout ({timeout_sec}s)")
+            fcntl.ioctl(self.v_fd, v4l2.VIDIOC_STREAMOFF, buf_type)
+            return False, 0
 
         try:
             fcntl.ioctl(self.v_fd, v4l2.VIDIOC_DQBUF, buf)
+
+            fcntl.ioctl(self.v_fd, v4l2.VIDIOC_STREAMOFF, buf_type)
         except OSError as e:
-            logger.error(f"DQBUF failed: {e}")
+            logger.error(f"Capture failed during DQBUF: {e}")
             return False, 0
 
         elapsed = (time.perf_counter() - t0) * 1000
 
-        mm = self.buffers[buf.index]
+        mm = self.buffers[0]
         mm.seek(0)
         data = mm.read(sensor.EXACT_RAW_SIZE)
 
         ok = len(data) >= sensor.EXACT_RAW_SIZE
         if ok:
             with open(out_path, "wb") as f:
-                f.write(data[:sensor.EXACT_RAW_SIZE])
+                f.write(data)
         else:
-            logger.error("Incomplete frame")
+            logger.error("Incomplete data")
 
-        fcntl.ioctl(self.v_fd, v4l2.VIDIOC_QBUF, buf)
         return ok, elapsed

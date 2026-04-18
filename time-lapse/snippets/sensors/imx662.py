@@ -8,6 +8,9 @@ import videodev2 as v4l2
 
 SENSOR_NAME = "imx662"
 
+GAIN_DB_MIN = 30.3
+GAIN_DB_MAX = 72.0
+
 WIDTH, HEIGHT = 1936, 1096
 BIT = 12
 
