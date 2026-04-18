@@ -28,7 +28,6 @@ class AdaptiveExposureEngine:
         self.MIN_EV = math.log2((self.MIN_US * self.MIN_VIRT_GAIN / 1e6) + 1e-9)
         self.MAX_EV = math.log2((self.MAX_US * self.MAX_VIRT_GAIN / 1e6) + 1e-9)
 
-        # 步长硬限制 (根据 MAX_LUMA_JUMP_RATIO 计算)
         self.LIMIT_DN = math.log2(1.0 - MAX_LUMA_JUMP_RATIO)
         self.LIMIT_UP = math.log2(1.0 + MAX_LUMA_JUMP_RATIO)
 
@@ -77,20 +76,15 @@ class AdaptiveExposureEngine:
             return -(dist ** 0.5) * self.MAX_HW_EV
 
     def _update_controller(self, remaining_ev):
-        # 1. 计算响应曲线
         ratio = min(abs(remaining_ev) / self.MAX_HW_EV, 1.0)
         curve_gain = ratio ** 1.8 
         move = remaining_ev * curve_gain
-        
-        # 2. 软阻尼（在小误差范围内平滑）
+
         soft_damping = 1.0 - math.exp(-(abs(remaining_ev) / 1.0) ** 2.0)
         move *= soft_damping
 
-        # 3. 先执行硬限制（LIMIT_DN/UP），确保基准不超过设定范围
         limited_move = np.clip(move, self.LIMIT_DN, self.LIMIT_UP)
 
-        # 4. 最后应用非对称力度削减
-        # 无论是否达到 LIMIT 限制，只要是变亮/快门变快方向(remaining_ev < 0)，一律打 2/3 折
         strength = (2.0 / 3.0) if remaining_ev < 0 else 1.0
         
         return limited_move * strength
