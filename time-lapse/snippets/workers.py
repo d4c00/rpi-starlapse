@@ -75,6 +75,7 @@ def camera_worker(sh_frame_id, sh_last_ae_id, data_q, stop_ev, trigger_ev, sh_sn
             blink_loop(30, 0.2, 0.2) 
  
             flush_old_frames(cam)
+            hist_q = [unpack_snap(sh_snap.value)] * 2
             logger.info(f">>> [1/2] Capturing Darks (Count:{DARK_FRAME_COUNT})")
             for _ in range(DARK_FRAME_COUNT):
                 if stop_ev.is_set(): break
@@ -89,6 +90,7 @@ def camera_worker(sh_frame_id, sh_last_ae_id, data_q, stop_ev, trigger_ev, sh_sn
                               sh_frame_id, sh_last_ae_id, is_online, sh_dev_id, sh_snap, data_q, hist_q)
 
             flush_old_frames(cam)
+            hist_q = [unpack_snap(sh_snap.value)] * 2
             if CAPTURE_BIAS_FRAMES:
                 logger.info(f">>> [2/2] Capturing Biases (Count: {BIAS_FRAME_COUNT})")
                 bias_cfg = {"t_us": int(sensor.MIN_EXPOSURE * 1e6), "g": sensor.MIN_GAIN}
