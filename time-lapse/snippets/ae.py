@@ -20,8 +20,8 @@ class AdaptiveExposureEngine:
         self.GAIN_DB_MIN = gain_db_min
         self.GAIN_DB_MAX = gain_db_max
 
-        self.MIN_VIRT_GAIN = 10 ** (self.GAIN_DB_MIN / 20.0)
-        self.MAX_VIRT_GAIN = 10 ** (self.GAIN_DB_MAX / 20.0)
+        self.MIN_VIRT_GAIN = 1.0
+        self.MAX_VIRT_GAIN = 10 ** ((self.GAIN_DB_MAX - self.GAIN_DB_MIN) / 20.0)
 
         self.MAX_HW_EV = ((self.GAIN_DB_MAX - self.GAIN_DB_MIN) / (20.0 * math.log10(2.0)))
 
