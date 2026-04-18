@@ -28,7 +28,7 @@ def capture_frame(cam, mode, target, r_path, sh_frame_id, sh_last_ae_id, is_onli
     p = hist_q.pop(0) 
     s_us, g = p["t_us"], p["g"]
 
-    set_led(1)
+    set_led(1) if is_online.value else blink_loop(2, 0.03, 0.1)
 
     success, cap_dur = cam.capture_to_path(target_snap["t_us"], target_snap["g"], target)
 
@@ -47,7 +47,7 @@ def capture_frame(cam, mode, target, r_path, sh_frame_id, sh_last_ae_id, is_onli
         advance_frame(sh_frame_id, sh_last_ae_id)
         status = False
 
-    set_led(0)
+    set_led(0) if is_online.value else flash_led(0.03)
     return status
 
 def camera_worker(sh_frame_id, sh_last_ae_id, data_q, stop_ev, trigger_ev, sh_snap, is_online, ready_ev, sh_dev_id, pause_ev, sh_cam_en):

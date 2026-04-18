@@ -1,7 +1,7 @@
 # Copyright (c) 2026 length <me@length.cc> (https://github.com/d4c00)
 # Licensed under the MIT License.
 
-import os, time, sys, logging, subprocess, random, shutil, socket, select, fcntl
+import os, time, sys, logging, subprocess, random, shutil, socket, select, fcntl, threading
 from datetime import datetime, UTC
 from snippets.config import *
 from snippets.sensors import sensor
@@ -204,14 +204,21 @@ def check_and_clean_disk():
 
 def set_led(state):
     try:
-        with open(LED_PATH, 'w') as f: f.write(str(state))
-    except: pass
+        with open(LED_PATH, 'w') as f:
+            f.write(str(state))
+    except:
+        pass
 
 def flash_led(d=0.05):
-    set_led(1); time.sleep(d); set_led(0); time.sleep(d)
+    def _run():
+        set_led(1); time.sleep(d); set_led(0); time.sleep(d)
+    threading.Thread(target=_run, daemon=True).start()
 
 def blink_loop(t, on, off):
-    for _ in range(t): set_led(1); time.sleep(on); set_led(0); time.sleep(off)
+    def _run():
+        for _ in range(t): 
+            set_led(1); time.sleep(on); set_led(0); time.sleep(off)
+    threading.Thread(target=_run, daemon=True).start()
 
 def check_time_server():
     return subprocess.run(f"curl -I -s --connect-timeout 5 {TIME_SOURCE} | grep -i 'date:'", shell=True).returncode == 0
