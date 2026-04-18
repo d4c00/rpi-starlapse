@@ -38,8 +38,9 @@ class AdaptiveExposureEngine:
         print(f"[*] Shutter Limits (us)  : Min = {self.MIN_US}, Max = {self.MAX_US}")
         print(f"[*] Physical Gain (Reg)  : Min = {self.REG_MIN}, Max = {self.REG_MAX}")
         print(f"[*] Virtual Gain (Norm)  : Min = {self.MIN_VIRT_GAIN:.4f}, Max = {self.MAX_VIRT_GAIN:.4f}")
+        print(f"[*] Dynamic MAX_HW_EV    : {self.MAX_HW_EV:.4f} EV")
         print(f"[*] Absolute EV Range    : Min = {self.MIN_EV:.4f} EV, Max = {self.MAX_EV:.4f} EV")
-        print(f"[*] Step Limit (Hard)    : Up: +{self.LIMIT_UP:.2f} EV, Dn: {self.LIMIT_DN:.2f} EV")
+        print(f"[*] Step Limit (Ratio)   : {MAX_LUMA_JUMP_RATIO*100}% (Up: +{self.LIMIT_UP:.2f} EV, Dn: {self.LIMIT_DN:.2f} EV)")
         print("============================================\n")
 
     def _phys_to_virt_gain(self, reg_val):
@@ -69,10 +70,10 @@ class AdaptiveExposureEngine:
     def _compute_ev_step(self, luma):
         if luma <= self.target:
             dist = (self.target - luma) / max(self.target, 1e-9)
-            return dist * 2.0  
+            return (dist ** 0.5) * self.MAX_HW_EV
         else:
             dist = (luma - self.target) / max(1.0 - self.target, 1e-9)
-            return -dist * 2.0
+            return -(dist ** 0.5) * self.MAX_HW_EV
 
     def _update_controller(self, remaining_ev):
         current_limit = self.LIMIT_UP if remaining_ev > 0 else abs(self.LIMIT_DN)
@@ -81,17 +82,19 @@ class AdaptiveExposureEngine:
         curve_gain = ratio ** 1.8 
         move = remaining_ev * curve_gain
 
-        soft_damping = 1.0 - math.exp(-(abs(remaining_ev) / 0.5) ** 2.0)
+        soft_damping = 1.0 - math.exp(-(abs(remaining_ev) / 1.0) ** 2.0)
         move *= soft_damping
 
-        limited_move = np.clip(move, self.LIMIT_DN, self.LIMIT_UP)
+        base_strength = 0.585 if remaining_ev > 0 else 1.0 
+        move *= base_strength
 
-        strength = (0.8) if remaining_ev < 0 else 1.0
+        limited_move = np.clip(move, self.LIMIT_DN, self.LIMIT_UP)
         
-        return limited_move * strength
+        return limited_move
 
     def _allocate_energy(self, target_ev):
         total_energy = (2.0 ** target_ev) * 1e6
+
         min_energy = self.MIN_US * self.MIN_VIRT_GAIN
         max_energy = self.MAX_US * self.MAX_VIRT_GAIN
         total_energy = np.clip(total_energy, min_energy, max_energy)
@@ -117,7 +120,6 @@ class AdaptiveExposureEngine:
         else:
             actual_us, actual_reg = current_us, current_reg_gain
 
-
         actual_ev = math.log2((actual_us * self._phys_to_virt_gain(actual_reg) / 1e6) + 1e-9)
 
         ev_step = self._compute_ev_step(luma)
@@ -129,6 +131,7 @@ class AdaptiveExposureEngine:
         delta = self._update_controller(remaining)
 
         target_ev = np.clip(latest_ev + delta, self.MIN_EV, self.MAX_EV)
+        
         next_us, next_reg = self._allocate_energy(target_ev)
         
         if self.delay_frames > 0:
