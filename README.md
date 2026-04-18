@@ -202,6 +202,12 @@ systemctl --user restart rpi-upload-srv-2
 ```bash
 sudo nano /mnt/ssd_data/podman/rpi-upload-srv/conf/rpi-upload-srv.ini
 ```
+```bash
+sudo nano /mnt/ssd_data/podman/rpi-upload-srv/conf/convert-tif.ini
+```
+```bash
+sudo nano /mnt/ssd_data/podman/rpi-upload-srv/conf/time-lapse-maker.ini
+```
 
 It is now ready for use.
 The server has three modes, Start them respectively with:  
