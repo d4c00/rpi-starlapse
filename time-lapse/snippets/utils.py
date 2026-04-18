@@ -208,12 +208,14 @@ def _led_worker():
     while True:
         try:
             func, args = _led_queue.get()
-            func(*args)
+            if func:
+                func(*args)
             _led_queue.task_done()
-        except Exception:
+        except Exception as e:
             pass
 
-threading.Thread(target=_led_worker, daemon=True).start()
+t_led = threading.Thread(target=_led_worker, daemon=True)
+t_led.start()
 
 def set_led(state):
     try:
@@ -222,20 +224,22 @@ def set_led(state):
     except:
         pass
 
+def _exec_flash(d):
+    set_led(1); time.sleep(d); set_led(0); time.sleep(d)
+
+def _exec_blink(t, on, off):
+    for _ in range(t):
+        set_led(1); time.sleep(on); set_led(0); time.sleep(off)
+
 def flash_led(d=0.05):
-    def _action(delay):
-        set_led(1); time.sleep(delay); set_led(0); time.sleep(delay)
     try:
-        _led_queue.put_nowait((_action, (d,)))
+        _led_queue.put_nowait((_exec_flash, (d,)))
     except queue.Full:
         pass
 
 def blink_loop(t, on, off):
-    def _action(times, t_on, t_off):
-        for _ in range(times):
-            set_led(1); time.sleep(t_on); set_led(0); time.sleep(t_off)
     try:
-        _led_queue.put_nowait((_action, (t, on, off)))
+        _led_queue.put_nowait((_exec_blink, (t, on, off)))
     except queue.Full:
         pass
 
