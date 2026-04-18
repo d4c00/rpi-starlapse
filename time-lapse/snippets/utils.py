@@ -202,21 +202,42 @@ def check_and_clean_disk():
     except Exception as e:
         print(f"[DISK] Cleanup error: {e}")
 
+_led_queue = queue.Queue(maxsize=10)
+
+def _led_worker():
+    while True:
+        try:
+            func, args = _led_queue.get()
+            func(*args)
+            _led_queue.task_done()
+        except Exception:
+            pass
+
+threading.Thread(target=_led_worker, daemon=True).start()
+
 def set_led(state):
     try:
-        with open(LED_PATH, 'w') as f: f.write(str(state))
-    except: pass
+        with open(LED_PATH, 'w') as f:
+            f.write(str(state))
+    except:
+        pass
 
 def flash_led(d=0.05):
-    def _run():
-        set_led(1); time.sleep(d); set_led(0); time.sleep(d)
-    threading.Thread(target=_run, daemon=True).start()
+    def _action(delay):
+        set_led(1); time.sleep(delay); set_led(0); time.sleep(delay)
+    try:
+        _led_queue.put_nowait((_action, (d,)))
+    except queue.Full:
+        pass
 
 def blink_loop(t, on, off):
-    def _run():
-        for _ in range(t): 
-            set_led(1); time.sleep(on); set_led(0); time.sleep(off)
-    threading.Thread(target=_run, daemon=True).start()
+    def _action(times, t_on, t_off):
+        for _ in range(times):
+            set_led(1); time.sleep(t_on); set_led(0); time.sleep(t_off)
+    try:
+        _led_queue.put_nowait((_action, (t, on, off)))
+    except queue.Full:
+        pass
 
 def check_time_server():
     return subprocess.run(f"curl -I -s --connect-timeout 5 {TIME_SOURCE} | grep -i 'date:'", shell=True).returncode == 0
