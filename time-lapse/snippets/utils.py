@@ -1,7 +1,7 @@
 # Copyright (c) 2026 length <me@length.cc> (https://github.com/d4c00)
 # Licensed under the MIT License.
 
-import os, time, sys, logging, subprocess, random, shutil, socket, select, fcntl, threading
+import os, time, sys, logging, subprocess, random, shutil, socket, select, fcntl, threading, queue
 from datetime import datetime, UTC
 from snippets.config import *
 from snippets.sensors import sensor
