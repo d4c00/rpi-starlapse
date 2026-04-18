@@ -61,7 +61,7 @@ class AdaptiveExposureEngine:
         
         move = remaining_ev * curve_gain
 
-        soft_damping = 1.0 - math.exp(-(abs(remaining_ev) / 1.5) ** 2.0)
+        soft_damping = 1.0 - math.exp(-(abs(remaining_ev) / 1) ** 2.0)
         
         final_move = move * soft_damping
 
