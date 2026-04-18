@@ -79,11 +79,14 @@ class AdaptiveExposureEngine:
 
     def process_raw_frame(self, raw_path, width, height, current_us, current_reg_gain, max_us, min_us, max_reg_gain, raw_bits):
         luma = self._measure_luma(raw_path, width, height, raw_bits)
-        if len(self.history) < self.delay_frames:
-            self.history.append((current_us, current_reg_gain))
-            return current_us, float(current_reg_gain), float(luma), 0.0
+        if self.delay_frames > 0:
+            if len(self.history) < self.delay_frames:
+                self.history.append((current_us, current_reg_gain))
+                return current_us, float(current_reg_gain), float(luma), 0.0
+            actual_us, actual_reg = self.history.pop(0)
+        else:
+            actual_us, actual_reg = current_us, current_reg_gain
 
-        actual_us, actual_reg = self.history.pop(0)
         actual_ev = math.log2((actual_us * self._phys_to_virt_gain(actual_reg) / 1e6) + 1e-9)
         ev_step = self._compute_ev_step(luma)
         ideal_ev = actual_ev + ev_step
@@ -94,7 +97,8 @@ class AdaptiveExposureEngine:
         
         target_ev = latest_ev + delta
         next_us, next_reg = self._allocate_energy(target_ev, max_us, min_us, max_reg_gain)
-        self.history.append((next_us, next_reg))
+        if self.delay_frames > 0:
+            self.history.append((next_us, next_reg))
         return int(next_us), float(next_reg), float(luma), float(ev_step)
 
 _engine = None
