@@ -122,18 +122,13 @@ class AdaptiveExposureEngine:
             actual_us, actual_reg = current_us, current_reg_gain
 
         actual_ev = math.log2((actual_us * self._phys_to_virt_gain(actual_reg) / 1e6) + 1e-9)
+        ev_step = self._compute_ev_step(luma) 
 
-        ev_step = self._compute_ev_step(luma)
-        ideal_ev = np.clip(actual_ev + ev_step, self.MIN_EV, self.MAX_EV)
-
-        remaining = ideal_ev - actual_ev 
-        delta = self._update_controller(remaining)
+        delta = self._update_controller(ev_step)
 
         latest_virt_gain = self._phys_to_virt_gain(current_reg_gain)
         latest_ev = math.log2((current_us * latest_virt_gain / 1e6) + 1e-9)
-
         target_ev = np.clip(latest_ev + delta, self.MIN_EV, self.MAX_EV)
-
         next_us, next_reg = self._allocate_energy(target_ev)
         
         if self.delay_frames > 0:
