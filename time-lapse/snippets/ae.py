@@ -40,7 +40,7 @@ class AdaptiveExposureEngine:
         print(f"[*] Virtual Gain (Norm)  : Min = {self.MIN_VIRT_GAIN:.4f}, Max = {self.MAX_VIRT_GAIN:.4f}")
         print(f"[*] Dynamic MAX_HW_EV    : {self.MAX_HW_EV:.4f} EV")
         print(f"[*] Absolute EV Range    : Min = {self.MIN_EV:.4f} EV, Max = {self.MAX_EV:.4f} EV")
-        print(f"[*] Step Limit (Ratio)   : {MAX_LUMA_JUMP_RATIO*100}% (Up: +{self.LIMIT_UP:.2f} EV, Dn: {self.LIMIT_DN:.2f} EV)")
+        print(f"[*] Step Limit (Ratio)   : {MAX_LUMA_JUMP_RATIO*100}% (Up: +{self.LIMIT_UP:.2f} EV, Dn: {-self.LIMIT_UP:.2f} EV)")
         print(f"[*] Soft Damping Range   : {self.MAX_HW_EV / 5.0:.4f} EV (1/5 of Max HW EV)")
         print("============================================\n")
 
