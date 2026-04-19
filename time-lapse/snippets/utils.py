@@ -17,18 +17,15 @@ def pack_snap(id_val, t_us, g, ev, y):
     return f"{id_val}|{int(t_us)}|{float(g):.1f}|{float(ev):.2f}|{float(y):.3f}"
 
 def unpack_snap(snap_str):
-    try:
-        s = snap_str.decode() if isinstance(snap_str, bytes) else snap_str
-        parts = s.split('|')
-        return {
-            "id": int(parts[0]),
-            "t_us": int(parts[1]),
-            "g": float(parts[2]),
-            "ev": float(parts[3]),
-            "y": float(parts[4])
-        }
-    except:
-        return {"id":0, "t_us":666666, "g":34.0, "ev":0.0, "y":0.0}
+    s = snap_str.decode() if isinstance(snap_str, bytes) else snap_str
+    parts = s.split('|')
+    return {
+        "id": int(parts[0]),
+        "t_us": int(parts[1]),
+        "g": float(parts[2]),
+        "ev": float(parts[3]),
+        "y": float(parts[4])
+    }
 
 def safe_put_queue(q, item, logger=None):
     try:
