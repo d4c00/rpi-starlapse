@@ -223,8 +223,8 @@ def create_timelapse():
                 info_text = [
                     (0,   local_dt.strftime('%Y-%m-%d %H:%M:%S')),
                     (390, f"T:{match.group(4)}ms"),
-                    (220, f"G:{match.group(5)}"),
-                    (145, f"E:{e_sign}{abs(e_val):.1f}"),
+                    (220, f"G:{int(float(match.group(5)))}"),
+                    (135, f"E:{e_sign}{abs(e_val):.1f}"),
                     (135, f"Y:{match.group(7)}"),
                     (150, f"CPU:{match.group(8)}°C")
                 ]
