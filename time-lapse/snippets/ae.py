@@ -122,25 +122,22 @@ class AdaptiveExposureEngine:
 
         actual_ev = math.log2((actual_us * self._phys_to_virt_gain(actual_reg) / 1e6) + 1e-9)
 
-        err = (self.target - luma) / max(self.target, 1e-9)
-        err = np.clip(err, -1.0, 1.0)
-
-        target_ev = actual_ev + err * self.MAX_HW_EV
-        target_ev = np.clip(target_ev, self.MIN_EV, self.MAX_EV)
+        ev_step = self._compute_ev_step(luma)
+        ideal_ev = np.clip(actual_ev + ev_step, self.MIN_EV, self.MAX_EV)
 
         latest_ev = math.log2((current_us * self._phys_to_virt_gain(current_reg_gain) / 1e6) + 1e-9)
+        remaining = ideal_ev - latest_ev
 
-        step_limit = self.MAX_HW_EV * MAX_LUMA_JUMP_RATIO
-        delta_ev = np.clip(target_ev - latest_ev, -step_limit, step_limit)
+        delta = self._update_controller(remaining)
 
-        next_ev = np.clip(latest_ev + delta_ev, self.MIN_EV, self.MAX_EV)
-
-        next_us, next_reg = self._allocate_energy(next_ev)
-
+        target_ev = np.clip(latest_ev + delta, self.MIN_EV, self.MAX_EV)
+        
+        next_us, next_reg = self._allocate_energy(target_ev)
+        
         if self.delay_frames > 0:
             self.history.append((next_us, next_reg))
-
-        return int(next_us), int(round(next_reg)), float(luma), float(delta_ev)
+            
+        return int(next_us), int(round(next_reg)), float(luma), float(ev_step)
 
 _engine = None
 
