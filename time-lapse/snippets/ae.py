@@ -40,7 +40,7 @@ class AdaptiveExposureEngine:
         print(f"[*] Virtual Gain (Norm)  : Min = {self.MIN_VIRT_GAIN:.4f}, Max = {self.MAX_VIRT_GAIN:.4f}")
         print(f"[*] Dynamic MAX_HW_EV    : {self.MAX_HW_EV:.4f} EV")
         print(f"[*] Absolute EV Range    : Min = {self.MIN_EV:.4f} EV, Max = {self.MAX_EV:.4f} EV")
-        print(f"[*] Step Limit (Ratio)   : {MAX_LUMA_JUMP_RATIO*100}% (Up: +{self.LIMIT_UP:.2f} EV, Dn: {self.LIMIT_DN:.2f} EV)")
+        print(f"[*] Step Limit (Ratio)   : {MAX_LUMA_JUMP_RATIO*100}% (Up: +{self.LIMIT_UP:.2f} EV, Dn: {-self.LIMIT_UP:.2f} EV)")
         print(f"[*] Soft Damping Range   : {self.MAX_HW_EV / 5.0:.4f} EV (1/5 of Max HW EV)")
         print("============================================\n")
 
@@ -77,17 +77,21 @@ class AdaptiveExposureEngine:
             return -(dist ** 0.5) * self.MAX_HW_EV
 
     def _update_controller(self, remaining_ev):
+        is_downward = remaining_ev < 0
+        strength_multiplier = 0.585 if is_downward else 1.0
+
         ratio = min(abs(remaining_ev) / self.MAX_HW_EV, 1.0)
         curve_gain = ratio ** 0.8
-        move = remaining_ev * curve_gain
+
+        move = remaining_ev * curve_gain * strength_multiplier
 
         soft_damping = 1.0 - math.exp(-(abs(remaining_ev) / (self.MAX_HW_EV / 5.0)) ** 2.0)
         move *= soft_damping
 
-        factor = self.LIMIT_UP if remaining_ev > 0 else abs(self.LIMIT_DN)
-        move *= (factor / self.MAX_HW_EV) 
+        upper_bound = self.LIMIT_UP
+        lower_bound = self.LIMIT_DN * 0.585 if is_downward else self.LIMIT_DN
 
-        return np.clip(move, self.LIMIT_DN, self.LIMIT_UP)
+        return np.clip(move, lower_bound, upper_bound)
 
     def _allocate_energy(self, target_ev):
         total_energy = (2.0 ** target_ev) * 1e6
