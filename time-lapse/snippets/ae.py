@@ -134,7 +134,7 @@ class AdaptiveExposureEngine:
         if self.delay_frames > 0:
             self.history.append((next_us, next_reg))
             
-        return int(next_us), float(next_reg), float(luma), float(ev_step)
+        return int(next_us), int(round(next_reg)), float(luma), float(ev_step)
 
 _engine = None
 
