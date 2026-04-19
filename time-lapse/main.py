@@ -3,7 +3,7 @@
 
 import sys, os, time, multiprocessing, signal
 from snippets.utils import set_led, blink_loop, check_time_server, setup_logger, cleanup_shm_env, get_optimal_queue_size
-from snippets.workers import (ae_worker, camera_worker, memory_manager_worker,
+from snippets.workers import (switch_worker, ae_worker, camera_worker, memory_manager_worker,
                               background_sync_worker, sync_scheduler_worker, timer_worker)
 from snippets.config import (DEVICE_ID, SAVE_DIR, CAMERA_ENABLED)
 from snippets.sensors import sensor
@@ -44,6 +44,7 @@ def run_core():
 
         tasks = [
             (timer_worker, (trigger_ev, stop)),
+            (switch_worker, (stop, sh_cam_en)),
             (camera_worker, (sh_frame_id, sh_last_ae_id, data_q, stop, trigger_ev, sh_snap, online, rdy, sh_dev_id, pause, sh_cam_en)),
             (ae_worker, (stop, sh_frame_id, sh_last_ae_id, sh_snap, sh_dev_id, data_q, rdy)),
             (memory_manager_worker, (data_q, online, stop, sh_dev_id, sh_frame_id, always_set_ev, sh_retry_count)),

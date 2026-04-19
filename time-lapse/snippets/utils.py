@@ -94,17 +94,27 @@ def move_to_local_storage(it, logger=None):
         if logger: logger.error(f"Storage move failed: {e}")
         return False
 
-def disable_config_cam(sh_cam_en=None, path="snippets/config.py"):
-    if sh_cam_en is not None:
-        sh_cam_en.value = False
+def toggle_config_cam(sh_cam_en, target_state=None, path="snippets/config.py"):
+    new_state = not sh_cam_en.value if target_state is None else target_state
+    sh_cam_en.value = new_state
+    
+    state_str = "True" if new_state else "False"
+    old_state_str = "False" if new_state else "True"
 
     try:
         if not os.path.exists(path): return
-        with open(path, "r") as f: content = f.read()
-        if "CAMERA_ENABLED = True" in content:
-            with open(path, "w") as f: 
-                f.write(content.replace("CAMERA_ENABLED = True", "CAMERA_ENABLED = False"))
-    except: pass
+        with open(path, "r") as f: 
+            content = f.read()
+        
+        target_line = f"CAMERA_ENABLED = {old_state_str}"
+        new_line = f"CAMERA_ENABLED = {state_str}"
+        
+        if target_line in content:
+            with open(path, "w") as f:
+                f.write(content.replace(target_line, new_line))
+            print(f"[CONFIG] CAMERA_ENABLED updated to {state_str}")
+    except Exception as e:
+        print(f"[ERROR] Failed to update config.py: {e}")
 
 def setup_logger(name):
     logger = logging.getLogger(name)

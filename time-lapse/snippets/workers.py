@@ -7,11 +7,29 @@ from snippets.config import *
 from snippets.ae import process_ae_logic
 from snippets.sensors import sensor
 from snippets.utils import (pet_watchdog, setup_logger, set_led, flash_led, blink_loop, get_shm_paths, is_valid_raw, advance_frame, cleanup_shm, 
-    upload_with_retry, log_pic, get_local_photos, disable_config_cam, dispatch_to_manager, move_to_local_storage, handle_net_failure, unpack_snap, 
+    upload_with_retry, log_pic, get_local_photos, toggle_config_cam, dispatch_to_manager, move_to_local_storage, handle_net_failure, unpack_snap, 
     pack_snap, flush_old_frames
 )
 
 logger = setup_logger("WORKER")
+
+def switch_worker(stop_ev, sh_cam_en):
+    logger = setup_logger("SWITCH")
+    logger.info("Switch worker started.")
+    while not stop_ev.is_set():
+        if os.path.exists(CAMERA_SWITCH_FILE):
+            try:
+                os.remove(CAMERA_SWITCH_FILE)
+                toggle_config_cam(sh_cam_en)
+                status_text = "ENABLED" if sh_cam_en.value else "DISABLED"
+                logger.info(f">>> [MANUAL] Camera state changed to: {status_text} <<<")
+                if sh_cam_en.value:
+                    blink_loop(8, 0.05, 0.05)
+                else:
+                    blink_loop(2, 0.2, 0.2)
+            except Exception as e:
+                logger.error(f"Switch worker error: {e}")
+        time.sleep(1.0)
 
 MODE_MAP = {
     "lights_tmp": {"mode": "lights", "use_ae": True},
@@ -19,14 +37,12 @@ MODE_MAP = {
     "biases_tmp": {"mode": "biases", "use_ae": False},
 }
 
-def capture_frame(cam, mode, target, r_path, sh_frame_id, sh_last_ae_id, is_online, sh_dev_id, sh_snap, data_q, hist_q, bias_params=None):
+def capture_frame(cam, mode, target, r_path, sh_frame_id, sh_last_ae_id, is_online, sh_dev_id, sh_snap, data_q, bias_params=None):
     dev_id_str = sh_dev_id.value.decode().rstrip('\x00')
 
     target_snap = bias_params if bias_params else unpack_snap(sh_snap.value)
 
-    hist_q.append(target_snap)
-    p = hist_q.pop(0) 
-    s_us, g = p["t_us"], p["g"]
+    s_us, g = target_snap["t_us"], target_snap["g"]
 
     set_led(1) if is_online.value else blink_loop(2, 0.03, 0.1)
 
@@ -53,7 +69,6 @@ def capture_frame(cam, mode, target, r_path, sh_frame_id, sh_last_ae_id, is_onli
 def camera_worker(sh_frame_id, sh_last_ae_id, data_q, stop_ev, trigger_ev, sh_snap, is_online, ready_ev, sh_dev_id, pause_ev, sh_cam_en):
     dev_id_str = sh_dev_id.value.decode().rstrip('\x00')
     w_path, r_path = get_shm_paths(dev_id_str)
-    hist_q = [unpack_snap(sh_snap.value)] * 0
 
     try:
         cam = V4L2Camera()
@@ -75,7 +90,6 @@ def camera_worker(sh_frame_id, sh_last_ae_id, data_q, stop_ev, trigger_ev, sh_sn
             blink_loop(30, 0.2, 0.2) 
  
             flush_old_frames(cam)
-            hist_q = [unpack_snap(sh_snap.value)] * 0
             logger.info(f">>> [1/2] Capturing Darks (Count:{DARK_FRAME_COUNT})")
             for _ in range(DARK_FRAME_COUNT):
                 if stop_ev.is_set(): break
@@ -87,10 +101,9 @@ def camera_worker(sh_frame_id, sh_last_ae_id, data_q, stop_ev, trigger_ev, sh_sn
                     continue
 
                 capture_frame(cam, "darks", f"{w_path}.darks_tmp", r_path, 
-                              sh_frame_id, sh_last_ae_id, is_online, sh_dev_id, sh_snap, data_q, hist_q)
+                              sh_frame_id, sh_last_ae_id, is_online, sh_dev_id, sh_snap, data_q)
 
             flush_old_frames(cam)
-            hist_q = [unpack_snap(sh_snap.value)] * 0
             if CAPTURE_BIAS_FRAMES:
                 logger.info(f">>> [2/2] Capturing Biases (Count: {BIAS_FRAME_COUNT})")
                 bias_cfg = {"t_us": int(sensor.MIN_EXPOSURE * 1e6), "g": sensor.MIN_GAIN}
@@ -104,13 +117,13 @@ def camera_worker(sh_frame_id, sh_last_ae_id, data_q, stop_ev, trigger_ev, sh_sn
                         continue
 
                     capture_frame(cam, "biases", f"{w_path}.biases_tmp", r_path, 
-                                  sh_frame_id, sh_last_ae_id, is_online, sh_dev_id, sh_snap, data_q, hist_q, 
+                                  sh_frame_id, sh_last_ae_id, is_online, sh_dev_id, sh_snap, data_q, 
                                   bias_params=bias_cfg)
             else:
                 logger.info(">>> [2/2] Skipping Biases (Disabled in config)")
 
             logger.info(">>> Calibration complete. CAMERA_ENABLED in config.py has been set to False <<<")
-            disable_config_cam(sh_cam_en)
+            toggle_config_cam(sh_cam_en, target_state=False)
             continue
 
         if not sh_cam_en.value or pause_ev.is_set():
@@ -122,7 +135,7 @@ def camera_worker(sh_frame_id, sh_last_ae_id, data_q, stop_ev, trigger_ev, sh_sn
 
         try:
             capture_frame(cam, "lights", f"{w_path}.lights_tmp", r_path, 
-                          sh_frame_id, sh_last_ae_id, is_online, sh_dev_id, sh_snap, data_q, hist_q)
+                          sh_frame_id, sh_last_ae_id, is_online, sh_dev_id, sh_snap, data_q)
         except Exception as e:
             logger.error(f"camera_worker error: {e}")
             advance_frame(sh_frame_id, sh_last_ae_id) 
