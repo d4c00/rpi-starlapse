@@ -13,6 +13,24 @@ from snippets.utils import (pet_watchdog, setup_logger, set_led, flash_led, blin
 
 logger = setup_logger("WORKER")
 
+def switch_worker(stop_ev, sh_cam_en):
+    logger = setup_logger("SWITCH")
+    logger.info("Switch worker started.")
+    while not stop_ev.is_set():
+        if os.path.exists(CAMERA_SWITCH_FILE):
+            try:
+                os.remove(CAMERA_SWITCH_FILE)
+                toggle_config_cam(sh_cam_en)
+                status_text = "ENABLED" if sh_cam_en.value else "DISABLED"
+                logger.info(f">>> [MANUAL] Camera state changed to: {status_text} <<<")
+                if sh_cam_en.value:
+                    blink_loop(5, 0.05, 0.05)
+                else:
+                    flash_led(0.5)
+            except Exception as e:
+                logger.error(f"Switch worker error: {e}")
+        time.sleep(1.0)
+
 MODE_MAP = {
     "lights_tmp": {"mode": "lights", "use_ae": True},
     "darks_tmp":  {"mode": "darks",  "use_ae": False},
