@@ -14,7 +14,7 @@ def handle_net_failure(is_online_val, logger, filename=None):
         is_online_val.value = False
 
 def pack_snap(id_val, t_us, g, ev, y):
-    return f"{id_val}|{int(t_us)}|{float(g):.1f}|{float(ev):.2f}|{float(y):.3f}"
+    return f"{id_val}|{int(t_us)}|{int(g)}|{float(ev):.2f}|{float(y):.3f}"
 
 def unpack_snap(snap_str):
     s = snap_str.decode() if isinstance(snap_str, bytes) else snap_str
