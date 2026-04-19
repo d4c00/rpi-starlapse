@@ -44,6 +44,7 @@ def run_core():
 
         tasks = [
             (timer_worker, (trigger_ev, stop)),
+            (switch_worker, (stop, sh_cam_en)),
             (camera_worker, (sh_frame_id, sh_last_ae_id, data_q, stop, trigger_ev, sh_snap, online, rdy, sh_dev_id, pause, sh_cam_en)),
             (ae_worker, (stop, sh_frame_id, sh_last_ae_id, sh_snap, sh_dev_id, data_q, rdy)),
             (memory_manager_worker, (data_q, online, stop, sh_dev_id, sh_frame_id, always_set_ev, sh_retry_count)),
