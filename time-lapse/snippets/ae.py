@@ -86,12 +86,12 @@ class AdaptiveExposureEngine:
         move = remaining_ev * curve_gain * strength_multiplier
 
         soft_damping = 1.0 - math.exp(-(abs(remaining_ev) / (self.MAX_HW_EV / 3.0)) ** 1.2)
-        move *= soft_damping
+        move = remaining_ev * strength_multiplier * curve_gain * soft_damping
 
         upper_bound = self.LIMIT_UP
         lower_bound = self.LIMIT_DN * 0.585 if is_downward else self.LIMIT_DN
 
-        return np.clip(move, lower_bound, upper_bound)
+        return move if abs(move) < abs(upper_bound) else upper_bound * (1 if move > 0 else -1) * (1 - math.exp(-abs(move)/abs(upper_bound)))
 
     def _allocate_energy(self, target_ev):
         total_energy = (2.0 ** target_ev) * 1e6
