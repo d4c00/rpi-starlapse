@@ -125,9 +125,8 @@ class AdaptiveExposureEngine:
         ev_step = self._compute_ev_step(luma)
 
         latest_ev = math.log2((current_us * self._phys_to_virt_gain(current_reg_gain) / 1e6) + 1e-9)
-        remaining = ideal_ev - latest_ev
 
-        delta = self._update_controller(remaining)
+        delta = self._update_controller(ev_step)
 
         target_ev = np.clip(latest_ev + delta, self.MIN_EV, self.MAX_EV)
         
