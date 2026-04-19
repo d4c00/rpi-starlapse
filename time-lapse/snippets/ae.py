@@ -47,14 +47,15 @@ class AdaptiveExposureEngine:
     def _phys_to_virt_gain(self, reg_val):
         reg_val = np.clip(reg_val, self.REG_MIN, self.REG_MAX)
         if self.REG_MAX == self.REG_MIN: return 1.0
-        db_offset = (math.log(reg_val) - math.log(self.REG_MIN)) / (math.log(self.REG_MAX) - math.log(self.REG_MIN)) * (self.GAIN_DB_MAX - self.GAIN_DB_MIN)
+        reg_ratio = (reg_val - self.REG_MIN) / (self.REG_MAX - self.REG_MIN)
+        db_offset = reg_ratio * (self.GAIN_DB_MAX - self.GAIN_DB_MIN)
         virt_gain = 10 ** (db_offset / 20.0)
         return np.clip(virt_gain, self.MIN_VIRT_GAIN, self.MAX_VIRT_GAIN)
 
     def _virt_to_phys_gain(self, virt_gain):
         virt_gain = np.clip(virt_gain, self.MIN_VIRT_GAIN, self.MAX_VIRT_GAIN)
-        db_offset = 20.0 * math.log10(virt_gain)
-        reg = self.REG_MIN * math.exp(db_offset / (self.GAIN_DB_MAX - self.GAIN_DB_MIN) * (math.log(self.REG_MAX) - math.log(self.REG_MIN)))
+        log_gain_ratio = math.log10(virt_gain) / ((self.GAIN_DB_MAX - self.GAIN_DB_MIN) / 20.0)
+        reg = self.REG_MIN + log_gain_ratio * (self.REG_MAX - self.REG_MIN)
         return float(np.clip(reg, self.REG_MIN, self.REG_MAX))
 
     def _measure_luma(self, raw_path, width, height, raw_bits):
@@ -78,19 +79,12 @@ class AdaptiveExposureEngine:
 
     def _update_controller(self, remaining_ev):
         is_downward = remaining_ev < 0
-        strength_multiplier = 0.585 if is_downward else 1.0
-
+        step_limit = self.LIMIT_UP if not is_downward else abs(self.LIMIT_DN * 0.585)
         ratio = min(abs(remaining_ev) / self.MAX_HW_EV, 1.0)
         curve_gain = ratio ** 1.5
-
         soft_damping = 1.0 - math.exp(-(abs(remaining_ev) / (self.MAX_HW_EV / 3.0)) ** 1.2)
-
-        move = remaining_ev * strength_multiplier * curve_gain * soft_damping
-
-        upper_bound = self.LIMIT_UP
-        lower_bound = self.LIMIT_DN * 0.585 if is_downward else self.LIMIT_DN
-
-        return move if abs(move) < abs(upper_bound) else upper_bound * (1 if move > 0 else -1) * (1 - math.exp(-abs(move)/abs(upper_bound)))
+        move = remaining_ev * (step_limit / (self.MAX_HW_EV * ratio + 1e-9)) * curve_gain * soft_damping
+        return move
 
     def _allocate_energy(self, target_ev):
         total_energy = (2.0 ** target_ev) * 1e6
@@ -121,17 +115,13 @@ class AdaptiveExposureEngine:
             actual_us, actual_reg = current_us, current_reg_gain
 
         actual_ev = math.log2((actual_us * self._phys_to_virt_gain(actual_reg) / 1e6) + 1e-9)
+        ev_step = self._compute_ev_step(luma) 
 
-        ev_step = self._compute_ev_step(luma)
-        ideal_ev = np.clip(actual_ev + ev_step, self.MIN_EV, self.MAX_EV)
+        delta = self._update_controller(ev_step)
 
-        latest_ev = math.log2((current_us * self._phys_to_virt_gain(current_reg_gain) / 1e6) + 1e-9)
-        remaining = ideal_ev - latest_ev
-
-        delta = self._update_controller(remaining)
-
+        latest_virt_gain = self._phys_to_virt_gain(current_reg_gain)
+        latest_ev = math.log2((current_us * latest_virt_gain / 1e6) + 1e-9)
         target_ev = np.clip(latest_ev + delta, self.MIN_EV, self.MAX_EV)
-        
         next_us, next_reg = self._allocate_energy(target_ev)
         
         if self.delay_frames > 0:
