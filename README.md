@@ -146,7 +146,7 @@ systemctl --user daemon-reload
 systemctl --user enable time-lapse
 systemctl --user restart time-lapse
 ```
-For example, device ID 01,<br>
+For example, device ID `01`,<br>
 If you want to shoot calibration frames (dark and bias):
 ```bash
 touch /dev/shm/time-lapse/01/calibration
