@@ -3,7 +3,7 @@
 
 import sys, os, time, multiprocessing, signal
 from snippets.utils import set_led, blink_loop, check_time_server, setup_logger, cleanup_shm_env, get_optimal_queue_size
-from snippets.workers import (ae_worker, camera_worker, memory_manager_worker,
+from snippets.workers import (switch_worker, ae_worker, camera_worker, memory_manager_worker,
                               background_sync_worker, sync_scheduler_worker, timer_worker)
 from snippets.config import (DEVICE_ID, SAVE_DIR, CAMERA_ENABLED)
 from snippets.sensors import sensor
