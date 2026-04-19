@@ -7,7 +7,7 @@ from snippets.config import *
 from snippets.ae import process_ae_logic
 from snippets.sensors import sensor
 from snippets.utils import (pet_watchdog, setup_logger, set_led, flash_led, blink_loop, get_shm_paths, is_valid_raw, advance_frame, cleanup_shm, 
-    upload_with_retry, log_pic, get_local_photos, disable_config_cam, dispatch_to_manager, move_to_local_storage, handle_net_failure, unpack_snap, 
+    upload_with_retry, log_pic, get_local_photos, toggle_config_cam, dispatch_to_manager, move_to_local_storage, handle_net_failure, unpack_snap, 
     pack_snap, flush_old_frames
 )
 
@@ -123,7 +123,7 @@ def camera_worker(sh_frame_id, sh_last_ae_id, data_q, stop_ev, trigger_ev, sh_sn
                 logger.info(">>> [2/2] Skipping Biases (Disabled in config)")
 
             logger.info(">>> Calibration complete. CAMERA_ENABLED in config.py has been set to False <<<")
-            disable_config_cam(sh_cam_en)
+            toggle_config_cam(sh_cam_en, target_state=False)
             continue
 
         if not sh_cam_en.value or pause_ev.is_set():
