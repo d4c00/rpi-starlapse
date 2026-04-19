@@ -79,18 +79,12 @@ class AdaptiveExposureEngine:
 
     def _update_controller(self, remaining_ev):
         is_downward = remaining_ev < 0
-        strength_multiplier = 0.585 if is_downward else 1.0
-
+        step_limit = self.LIMIT_UP if not is_downward else abs(self.LIMIT_DN * 0.585)
         ratio = min(abs(remaining_ev) / self.MAX_HW_EV, 1.0)
-
         curve_gain = ratio ** 1.5
         soft_damping = 1.0 - math.exp(-(abs(remaining_ev) / (self.MAX_HW_EV / 3.0)) ** 1.2)
-
-        step_limit = self.LIMIT_UP if not is_downward else abs(self.LIMIT_DN * 0.585)
-
         move = remaining_ev * (step_limit / (self.MAX_HW_EV * ratio + 1e-9)) * curve_gain * soft_damping
-
-        return move * strength_multiplier
+        return move
 
     def _allocate_energy(self, target_ev):
         total_energy = (2.0 ** target_ev) * 1e6
