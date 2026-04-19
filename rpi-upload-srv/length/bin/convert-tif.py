@@ -90,9 +90,7 @@ def convert_raw_to_mono_tiff():
                         print(f"  [Size Error] {filename} - Expected {cfg['width'] * cfg['height']} pixels, but got {raw_data.size}")
                         continue
                 
-                    image = raw_data.reshape((cfg['height'], cfg['width'])
-
-                    )
+                    image = raw_data.reshape((cfg['height'], cfg['width']))
 
                     image = np.clip(image, cfg['black_level'], cfg['white_level']).astype(np.uint16)
 

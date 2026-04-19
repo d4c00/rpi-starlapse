@@ -14,21 +14,18 @@ def handle_net_failure(is_online_val, logger, filename=None):
         is_online_val.value = False
 
 def pack_snap(id_val, t_us, g, ev, y):
-    return f"{id_val}|{int(t_us)}|{float(g):.1f}|{float(ev):.2f}|{float(y):.3f}"
+    return f"{id_val}|{int(t_us)}|{int(g)}|{float(ev):.2f}|{float(y):.3f}"
 
 def unpack_snap(snap_str):
-    try:
-        s = snap_str.decode() if isinstance(snap_str, bytes) else snap_str
-        parts = s.split('|')
-        return {
-            "id": int(parts[0]),
-            "t_us": int(parts[1]),
-            "g": float(parts[2]),
-            "ev": float(parts[3]),
-            "y": float(parts[4])
-        }
-    except:
-        return {"id":0, "t_us":666666, "g":34.0, "ev":0.0, "y":0.0}
+    s = snap_str.decode() if isinstance(snap_str, bytes) else snap_str
+    parts = s.split('|')
+    return {
+        "id": int(parts[0]),
+        "t_us": int(parts[1]),
+        "g": float(parts[2]),
+        "ev": float(parts[3]),
+        "y": float(parts[4])
+    }
 
 def safe_put_queue(q, item, logger=None):
     try:
@@ -143,7 +140,7 @@ def get_cpu_temp():
 
 def generate_raw_filename(prefix, dev_id, s_us, g, ev, m):
     now = datetime.now(UTC)
-    return f"{prefix}_{dev_id}_{now.strftime('%Y%m%d_%H%M%S')}_T{s_us/1000:.1f}_G{g:.1f}_E{ev:.1f}_Y{m:.3f}_CPU{get_cpu_temp()}.raw"
+    return f"{prefix}_{dev_id}_{now.strftime('%Y%m%d_%H%M%S')}_T{s_us/1000:.1f}_G{int(g)}_E{ev:.1f}_Y{m:.3f}_CPU{get_cpu_temp()}.raw"
 
 def cleanup_shm(*paths):
     for p in paths:

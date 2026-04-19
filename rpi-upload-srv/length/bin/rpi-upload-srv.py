@@ -96,7 +96,7 @@ def add_delay_for_errors(response):
 @app.route('/upload', methods=['POST'])
 def upload_photo():
     allowed_kws = "|".join(SUB_DIR_KEYWORDS.keys())
-    FILENAME_PATTERN = rf"^({allowed_kws})_(\d{{2}})_(\d{{8}})_(\d{{6}})_T[\d.]+_+G[\d.]+_+E[\d.-]+_+Y[\d.]+_+CPU\d+\.raw$"
+    FILENAME_PATTERN = rf"^({allowed_kws})_(\d{{2}})_(\d{{8}})_(\d{{6}})_T[\d.]+(_G\d+)(_E[\d.-]+)(_Y[\d.]+)(_CPU\d+)\.raw$"
 
     device_cfg, err_resp, err_code = validate_device_headers()
     if err_resp: return err_resp, err_code
