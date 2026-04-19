@@ -116,9 +116,6 @@ def toggle_config_cam(sh_cam_en, target_state=None, path="snippets/config.py"):
     except Exception as e:
         print(f"[ERROR] Failed to update config.py: {e}")
 
-def disable_config_cam(sh_cam_en):
-    toggle_config_cam(sh_cam_en, target_state=False)
-
 def setup_logger(name):
     logger = logging.getLogger(name)
     if not logger.handlers:
