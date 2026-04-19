@@ -20,12 +20,10 @@ class AdaptiveExposureEngine:
         self.GAIN_DB_MIN = gain_db_min
         self.GAIN_DB_MAX = gain_db_max
 
-        self.TOTAL_GAIN_EV = (self.GAIN_DB_MAX - self.GAIN_DB_MIN) / (20.0 * math.log10(2.0))
-
         self.MIN_VIRT_GAIN = 1.0
-        self.MAX_VIRT_GAIN = 2.0 ** self.TOTAL_GAIN_EV
+        self.MAX_VIRT_GAIN = 10 ** ((self.GAIN_DB_MAX - self.GAIN_DB_MIN) / 20.0)
 
-        self.MAX_HW_EV = self.TOTAL_GAIN_EV
+        self.MAX_HW_EV = (self.GAIN_DB_MAX - self.GAIN_DB_MIN) / (20.0 * math.log10(2.0))
 
         self.MIN_EV = math.log2((self.MIN_US * self.MIN_VIRT_GAIN / 1e6) + 1e-9)
         self.MAX_EV = math.log2((self.MAX_US * self.MAX_VIRT_GAIN / 1e6) + 1e-9)
@@ -39,16 +37,16 @@ class AdaptiveExposureEngine:
         print("\n=== Adaptive Exposure Engine Initialized ===")
         print(f"[*] Shutter Limits (us)  : Min = {self.MIN_US}, Max = {self.MAX_US}")
         print(f"[*] Physical Gain (Reg)  : Min = {self.REG_MIN}, Max = {self.REG_MAX}")
+        print(f"[*] Virtual Gain (Norm)  : Min = {self.MIN_VIRT_GAIN:.4f}, Max = {self.MAX_VIRT_GAIN:.4f}")
         print(f"[*] Dynamic MAX_HW_EV    : {self.MAX_HW_EV:.4f} EV")
         print(f"[*] Absolute EV Range    : Min = {self.MIN_EV:.4f} EV, Max = {self.MAX_EV:.4f} EV")
-        print(f"[*] Step Limit (Ratio)   : {MAX_LUMA_JUMP_RATIO*100}% (Up: +{self.LIMIT_UP:.2f} EV, Dn: {-self.LIMIT_UP:.2f} EV)")
         print("============================================\n")
 
     def _phys_to_virt_gain(self, reg_val):
         reg_val = np.clip(reg_val, self.REG_MIN, self.REG_MAX)
         if self.REG_MAX == self.REG_MIN: return 1.0
 
-        ev_offset = (reg_val - self.REG_MIN) * self.TOTAL_GAIN_EV / (self.REG_MAX - self.REG_MIN)
+        ev_offset = (reg_val - self.REG_MIN) * self.MAX_HW_EV / (self.REG_MAX - self.REG_MIN)
 
         virt_gain = 2.0 ** ev_offset
         return np.clip(virt_gain, self.MIN_VIRT_GAIN, self.MAX_VIRT_GAIN)
@@ -58,8 +56,8 @@ class AdaptiveExposureEngine:
 
         ev_offset = math.log2(virt_gain)
 
-        reg = self.REG_MIN + (ev_offset * (self.REG_MAX - self.REG_MIN) / self.TOTAL_GAIN_EV)
-        return int(round(reg))
+        reg = self.REG_MIN + ev_offset * (self.REG_MAX - self.REG_MIN) / self.MAX_HW_EV
+        return int(round(np.clip(reg, self.REG_MIN, self.REG_MAX)))
 
     def _measure_luma(self, raw_path, width, height, raw_bits):
         if not os.path.exists(raw_path): return self.target
@@ -141,8 +139,8 @@ class AdaptiveExposureEngine:
         
         if self.delay_frames > 0:
             self.history.append((next_us, next_reg))
-            
-        return int(next_us), int(next_reg), float(luma), float(ev_step)
+
+        return int(next_us), int(round(next_reg)), float(luma), float(ev_step)
 
 _engine = None
 
