@@ -26,7 +26,7 @@ def switch_worker(stop_ev, sh_cam_en):
                 if sh_cam_en.value:
                     blink_loop(8, 0.05, 0.05)
                 else:
-                    blink_loop(2, 0.2, 0.02)
+                    blink_loop(2, 0.2, 0.2)
             except Exception as e:
                 logger.error(f"Switch worker error: {e}")
         time.sleep(1.0)
