@@ -13,20 +13,25 @@ class AdaptiveExposureEngine:
     def __init__(self, reg_min, reg_max, min_us, max_us, gain_db_min, gain_db_max):
         self.target = AE_TARGET_LUMA
 
-        self.REG_MIN = reg_min
-        self.REG_MAX = reg_max
-        self.MIN_US = min_us
-        self.MAX_US = max_us
-        self.GAIN_DB_MIN = gain_db_min
-        self.GAIN_DB_MAX = gain_db_max
+        self.REG_MIN = float(reg_min)
+        self.REG_MAX = float(reg_max)
+        self.MIN_US = float(min_us)
+        self.MAX_US = float(max_us)
+        self.GAIN_DB_MIN = float(gain_db_min)
+        self.GAIN_DB_MAX = float(gain_db_max)
 
-        self.MIN_VIRT_GAIN = 1.0
-        self.MAX_VIRT_GAIN = 10 ** ((self.GAIN_DB_MAX - self.GAIN_DB_MIN) / 20.0)
+        if self.REG_MAX > self.REG_MIN:
+            self.DB_PER_REG = (self.GAIN_DB_MAX - self.GAIN_DB_MIN) / (self.REG_MAX - self.REG_MIN)
+        else:
+            self.DB_PER_REG = 0.0
+
+        self.MIN_VIRT_GAIN = 10.0 ** (self.GAIN_DB_MIN / 20.0)
+        self.MAX_VIRT_GAIN = 10.0 ** (self.GAIN_DB_MAX / 20.0)
 
         self.MAX_HW_EV = (self.GAIN_DB_MAX - self.GAIN_DB_MIN) / (20.0 * math.log10(2.0))
 
-        self.MIN_EV = math.log2((self.MIN_US * self.MIN_VIRT_GAIN / 1e6) + 1e-9)
-        self.MAX_EV = math.log2((self.MAX_US * self.MAX_VIRT_GAIN / 1e6) + 1e-9)
+        self.MIN_EV = math.log2((self.MIN_US / 1e6) * self.MIN_VIRT_GAIN + 1e-9)
+        self.MAX_EV = math.log2((self.MAX_US / 1e6) * self.MAX_VIRT_GAIN + 1e-9)
 
         self.LIMIT_DN = math.log2(1.0 - MAX_LUMA_JUMP_RATIO)
         self.LIMIT_UP = math.log2(1.0 + MAX_LUMA_JUMP_RATIO)
@@ -37,25 +42,25 @@ class AdaptiveExposureEngine:
         print("\n=== Adaptive Exposure Engine Initialized ===")
         print(f"[*] Shutter Limits (us)  : Min = {self.MIN_US}, Max = {self.MAX_US}")
         print(f"[*] Physical Gain (Reg)  : Min = {self.REG_MIN}, Max = {self.REG_MAX}")
-        print(f"[*] Virtual Gain (Norm)  : Min = {self.MIN_VIRT_GAIN:.4f}, Max = {self.MAX_VIRT_GAIN:.4f}")
+        print(f"[*] Absolute Gain (dB)   : Min = {self.GAIN_DB_MIN}dB, Max = {self.GAIN_DB_MAX}dB")
+        print(f"[*] Virtual Gain (Norm)  : Min = {self.MIN_VIRT_GAIN:.4f}x, Max = {self.MAX_VIRT_GAIN:.4f}x")
         print(f"[*] Dynamic MAX_HW_EV    : {self.MAX_HW_EV:.4f} EV")
         print(f"[*] Absolute EV Range    : Min = {self.MIN_EV:.4f} EV, Max = {self.MAX_EV:.4f} EV")
-        print(f"[*] Step Limit (Ratio)   : {MAX_LUMA_JUMP_RATIO*100}% (Up: +{self.LIMIT_UP:.2f} EV, Dn: {-self.LIMIT_UP:.2f} EV)")
-        print(f"[*] Soft Damping Range   : {self.MAX_HW_EV / 3.0:.4f} EV (1/3 of Max HW EV)")
         print("============================================\n")
 
-    def _phys_to_virt_gain(self, reg_val):
+    def _reg_to_virt_gain(self, reg_val):
         reg_val = np.clip(reg_val, self.REG_MIN, self.REG_MAX)
-        if self.REG_MAX == self.REG_MIN: return 1.0
-        ev_offset = (reg_val - self.REG_MIN) * self.MAX_HW_EV / (self.REG_MAX - self.REG_MIN)
-        virt_gain = 2.0 ** ev_offset
+        db_val = self.GAIN_DB_MIN + (reg_val - self.REG_MIN) * self.DB_PER_REG
+        virt_gain = 10.0 ** (db_val / 20.0)
         return np.clip(virt_gain, self.MIN_VIRT_GAIN, self.MAX_VIRT_GAIN)
 
-    def _virt_to_phys_gain(self, virt_gain):
+    def _virt_gain_to_reg(self, virt_gain):
         virt_gain = np.clip(virt_gain, self.MIN_VIRT_GAIN, self.MAX_VIRT_GAIN)
-        ev_offset = math.log2(virt_gain)
-        reg = self.REG_MIN + ev_offset * (self.REG_MAX - self.REG_MIN) / self.MAX_HW_EV
-        return int(round(np.clip(reg, self.REG_MIN, self.REG_MAX)))
+        db_val = 20.0 * math.log10(virt_gain)
+        if self.DB_PER_REG == 0: 
+            return self.REG_MIN
+        reg_val = self.REG_MIN + (db_val - self.GAIN_DB_MIN) / self.DB_PER_REG
+        return np.clip(reg_val, self.REG_MIN, self.REG_MAX)
 
     def _measure_luma(self, raw_path, width, height, raw_bits):
         if not os.path.exists(raw_path): return self.target
@@ -100,13 +105,15 @@ class AdaptiveExposureEngine:
         max_energy = self.MAX_US * self.MAX_VIRT_GAIN
         total_energy = np.clip(total_energy, min_energy, max_energy)
 
-        if total_energy <= self.MAX_US * self.MIN_VIRT_GAIN:
+        max_shutter_energy = self.MAX_US * self.MIN_VIRT_GAIN
+
+        if total_energy <= max_shutter_energy:
             next_us = total_energy / self.MIN_VIRT_GAIN
             next_reg = self.REG_MIN
         else:
             next_us = float(self.MAX_US)
-            virt_gain = total_energy / (next_us + 1e-9)
-            next_reg = self._virt_to_phys_gain(virt_gain)
+            target_virt_gain = total_energy / next_us
+            next_reg = self._virt_gain_to_reg(target_virt_gain)
             
         return np.clip(next_us, self.MIN_US, self.MAX_US), next_reg
 
@@ -121,23 +128,22 @@ class AdaptiveExposureEngine:
         else:
             actual_us, actual_reg = current_us, current_reg_gain
 
-        actual_ev = math.log2((actual_us * self._phys_to_virt_gain(actual_reg) / 1e6) + 1e-9)
+        actual_ev = math.log2((actual_us / 1e6) * self._reg_to_virt_gain(actual_reg) + 1e-9)
 
         ev_step = self._compute_ev_step(luma)
         ideal_ev = np.clip(actual_ev + ev_step, self.MIN_EV, self.MAX_EV)
 
-        latest_ev = math.log2((current_us * self._phys_to_virt_gain(current_reg_gain) / 1e6) + 1e-9)
+        latest_ev = math.log2((current_us / 1e6) * self._reg_to_virt_gain(current_reg_gain) + 1e-9)
         remaining = ideal_ev - latest_ev
 
         delta = self._update_controller(remaining)
-
         target_ev = np.clip(latest_ev + delta, self.MIN_EV, self.MAX_EV)
-        
+
         next_us, next_reg = self._allocate_energy(target_ev)
         
         if self.delay_frames > 0:
             self.history.append((next_us, next_reg))
-
+            
         return int(next_us), int(round(next_reg)), float(luma), float(ev_step)
 
 _engine = None
@@ -153,5 +159,5 @@ def process_ae_logic(raw_path, width, height, current_us, current_reg_gain, max_
             gain_db_min=gain_db_min, 
             gain_db_max=gain_db_max
         )
-
+        
     return _engine.process_raw_frame(raw_path, width, height, current_us, current_reg_gain, raw_bits)
