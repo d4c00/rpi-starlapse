@@ -195,7 +195,11 @@ def ae_worker(stop_ev, sh_frame_id, sh_last_ae_id, sh_snap, sh_dev_id, data_q, r
                 sh_snap.value = snap_data.encode()
 
                 cost_ms = (time.perf_counter() - t0) * 1000
-                logger.info(f"[AE-RAW] ID:{curr_id} | Mode:{mode} | Done:{cost_ms:.1f}ms | NextT:{ (new_s if use_ae else p['t_us'])/1000:.1f}ms | Y:{m_val:.3f}")
+                logger.info(
+                    f"[AE-RAW] ID:{curr_id} | Mode:{mode} | Done:{cost_ms:.1f}ms | "
+                    f"NextT:{(new_s if use_ae else p['t_us'])/1000:.1f}ms,G:{int(new_g if use_ae else p['g'])} | "
+                    f"Y:{m_val:.3f}"
+                )
 
                 sh_last_ae_id.value = curr_id
                 last_id = curr_id
