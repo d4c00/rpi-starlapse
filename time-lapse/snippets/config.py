@@ -24,6 +24,7 @@ TIME_SOURCE = "https://any.example.com/"
 
 # Capture
 CAMERA_ENABLED = True
+CAMERA_SWITCH_FILE = f"/dev/shm/time-lapse/{DEVICE_ID}/switch"
 CAPTURE_INTERVAL = 10
 AE_TARGET_LUMA = 0.33333
 SENSOR_INDEX = 0
