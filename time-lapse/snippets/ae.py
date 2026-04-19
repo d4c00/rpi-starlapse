@@ -47,15 +47,15 @@ class AdaptiveExposureEngine:
     def _phys_to_virt_gain(self, reg_val):
         reg_val = np.clip(reg_val, self.REG_MIN, self.REG_MAX)
         if self.REG_MAX == self.REG_MIN: return 1.0
-        db_offset = (reg_val - self.REG_MIN) * (self.GAIN_DB_MAX - self.GAIN_DB_MIN) / (self.REG_MAX - self.REG_MIN)
+        db_offset = (math.log(reg_val) - math.log(self.REG_MIN)) / (math.log(self.REG_MAX) - math.log(self.REG_MIN)) * (self.GAIN_DB_MAX - self.GAIN_DB_MIN)
         virt_gain = 10 ** (db_offset / 20.0)
         return np.clip(virt_gain, self.MIN_VIRT_GAIN, self.MAX_VIRT_GAIN)
 
     def _virt_to_phys_gain(self, virt_gain):
         virt_gain = np.clip(virt_gain, self.MIN_VIRT_GAIN, self.MAX_VIRT_GAIN)
         db_offset = 20.0 * math.log10(virt_gain)
-        reg = self.REG_MIN + db_offset * (self.REG_MAX - self.REG_MIN) / (self.GAIN_DB_MAX - self.GAIN_DB_MIN)
-        return int(np.clip(reg, self.REG_MIN, self.REG_MAX))
+        reg = self.REG_MIN * math.exp(db_offset / (self.GAIN_DB_MAX - self.GAIN_DB_MIN) * (math.log(self.REG_MAX) - math.log(self.REG_MIN)))
+        return float(np.clip(reg, self.REG_MIN, self.REG_MAX))
 
     def _measure_luma(self, raw_path, width, height, raw_bits):
         if not os.path.exists(raw_path): return self.target
@@ -81,17 +81,16 @@ class AdaptiveExposureEngine:
         strength_multiplier = 0.585 if is_downward else 1.0
 
         ratio = min(abs(remaining_ev) / self.MAX_HW_EV, 1.0)
-        curve_gain = ratio ** 0.8
+        curve_gain = ratio ** 1.5
 
-        move = remaining_ev * curve_gain * strength_multiplier
+        soft_damping = 1.0 - math.exp(-(abs(remaining_ev) / (self.MAX_HW_EV / 3.0)) ** 1.2)
 
-        soft_damping = 1.0 - math.exp(-(abs(remaining_ev) / (self.MAX_HW_EV / 3.0)) ** 0.8)
-        move *= soft_damping
+        move = remaining_ev * strength_multiplier * curve_gain * soft_damping
 
         upper_bound = self.LIMIT_UP
         lower_bound = self.LIMIT_DN * 0.585 if is_downward else self.LIMIT_DN
 
-        return np.clip(move, lower_bound, upper_bound)
+        return move if abs(move) < abs(upper_bound) else upper_bound * (1 if move > 0 else -1) * (1 - math.exp(-abs(move)/abs(upper_bound)))
 
     def _allocate_energy(self, target_ev):
         total_energy = (2.0 ** target_ev) * 1e6
