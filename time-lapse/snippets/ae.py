@@ -83,9 +83,8 @@ class AdaptiveExposureEngine:
         ratio = min(abs(remaining_ev) / self.MAX_HW_EV, 1.0)
         curve_gain = ratio ** 1.3
 
-        move = remaining_ev * curve_gain * strength_multiplier
-
         soft_damping = 1.0 - math.exp(-(abs(remaining_ev) / (self.MAX_HW_EV / 3.0)) ** 1.2)
+
         move = remaining_ev * strength_multiplier * curve_gain * soft_damping
 
         upper_bound = self.LIMIT_UP
