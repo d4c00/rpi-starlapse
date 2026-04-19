@@ -47,8 +47,8 @@ class AdaptiveExposureEngine:
     def _phys_to_virt_gain(self, reg_val):
         reg_val = np.clip(reg_val, self.REG_MIN, self.REG_MAX)
         if self.REG_MAX == self.REG_MIN: return 1.0
-        db_offset = (reg_val - self.REG_MIN) * (self.GAIN_DB_MAX - self.GAIN_DB_MIN) / (self.REG_MAX - self.REG_MIN)
-        virt_gain = 10 ** (db_offset / 20.0)
+        db_val = self.GAIN_DB_MIN + (reg_val - self.REG_MIN) * (self.GAIN_DB_MAX - self.GAIN_DB_MIN) / (self.REG_MAX - self.REG_MIN)
+        virt_gain = 10 ** ((db_val - self.GAIN_DB_MIN) / 20.0)
         return np.clip(virt_gain, self.MIN_VIRT_GAIN, self.MAX_VIRT_GAIN)
 
     def _virt_to_phys_gain(self, virt_gain):
@@ -153,5 +153,3 @@ def process_ae_logic(raw_path, width, height, current_us, current_reg_gain, max_
             gain_db_min=gain_db_min, 
             gain_db_max=gain_db_max
         )
-        
-    return _engine.process_raw_frame(raw_path, width, height, current_us, current_reg_gain, raw_bits)
