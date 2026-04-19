@@ -103,7 +103,7 @@ class AdaptiveExposureEngine:
             next_us = total_energy / self.MIN_VIRT_GAIN
             next_reg = self.REG_MIN
         else:
-            next_us = float(self.MAX_US)
+            next_us = min(self.MAX_US, total_energy / self._phys_to_virt_gain(current_reg_gain))
             virt_gain = total_energy / (next_us + 1e-9)
             next_reg = self._virt_to_phys_gain(virt_gain)
             
