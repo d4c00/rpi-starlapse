@@ -47,15 +47,19 @@ class AdaptiveExposureEngine:
     def _phys_to_virt_gain(self, reg_val):
         reg_val = np.clip(reg_val, self.REG_MIN, self.REG_MAX)
         if self.REG_MAX == self.REG_MIN: return 1.0
-        db_val = self.GAIN_DB_MIN + (reg_val - self.REG_MIN) * (self.GAIN_DB_MAX - self.GAIN_DB_MIN) / (self.REG_MAX - self.REG_MIN)
-        virt_gain = 10 ** ((db_val - self.GAIN_DB_MIN) / 20.0)
+
+        db_offset = (reg_val - self.REG_MIN) * (self.GAIN_DB_MAX - self.GAIN_DB_MIN) / (self.REG_MAX - self.REG_MIN)
+
+        virt_gain = 10 ** (db_offset / 20.0)
         return np.clip(virt_gain, self.MIN_VIRT_GAIN, self.MAX_VIRT_GAIN)
 
     def _virt_to_phys_gain(self, virt_gain):
         virt_gain = np.clip(virt_gain, self.MIN_VIRT_GAIN, self.MAX_VIRT_GAIN)
+
         db_offset = 20.0 * math.log10(virt_gain)
+
         reg = self.REG_MIN + db_offset * (self.REG_MAX - self.REG_MIN) / (self.GAIN_DB_MAX - self.GAIN_DB_MIN)
-        return int(np.clip(reg, self.REG_MIN, self.REG_MAX))
+        return int(round(np.clip(reg, self.REG_MIN, self.REG_MAX)))
 
     def _measure_luma(self, raw_path, width, height, raw_bits):
         if not os.path.exists(raw_path): return self.target
