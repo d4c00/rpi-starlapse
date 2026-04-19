@@ -37,7 +37,7 @@ MODE_MAP = {
     "biases_tmp": {"mode": "biases", "use_ae": False},
 }
 
-def capture_frame(cam, mode, target, r_path, sh_frame_id, sh_last_ae_id, is_online, sh_dev_id, sh_snap, data_q, hist_q, bias_params=None):
+def capture_frame(cam, mode, target, r_path, sh_frame_id, sh_last_ae_id, is_online, sh_dev_id, sh_snap, data_q, bias_params=None):
     dev_id_str = sh_dev_id.value.decode().rstrip('\x00')
 
     target_snap = bias_params if bias_params else unpack_snap(sh_snap.value)
@@ -101,7 +101,7 @@ def camera_worker(sh_frame_id, sh_last_ae_id, data_q, stop_ev, trigger_ev, sh_sn
                     continue
 
                 capture_frame(cam, "darks", f"{w_path}.darks_tmp", r_path, 
-                              sh_frame_id, sh_last_ae_id, is_online, sh_dev_id, sh_snap, data_q, hist_q)
+                              sh_frame_id, sh_last_ae_id, is_online, sh_dev_id, sh_snap, data_q)
 
             flush_old_frames(cam)
             if CAPTURE_BIAS_FRAMES:
@@ -117,7 +117,7 @@ def camera_worker(sh_frame_id, sh_last_ae_id, data_q, stop_ev, trigger_ev, sh_sn
                         continue
 
                     capture_frame(cam, "biases", f"{w_path}.biases_tmp", r_path, 
-                                  sh_frame_id, sh_last_ae_id, is_online, sh_dev_id, sh_snap, data_q, hist_q, 
+                                  sh_frame_id, sh_last_ae_id, is_online, sh_dev_id, sh_snap, data_q, 
                                   bias_params=bias_cfg)
             else:
                 logger.info(">>> [2/2] Skipping Biases (Disabled in config)")
@@ -135,7 +135,7 @@ def camera_worker(sh_frame_id, sh_last_ae_id, data_q, stop_ev, trigger_ev, sh_sn
 
         try:
             capture_frame(cam, "lights", f"{w_path}.lights_tmp", r_path, 
-                          sh_frame_id, sh_last_ae_id, is_online, sh_dev_id, sh_snap, data_q, hist_q)
+                          sh_frame_id, sh_last_ae_id, is_online, sh_dev_id, sh_snap, data_q)
         except Exception as e:
             logger.error(f"camera_worker error: {e}")
             advance_frame(sh_frame_id, sh_last_ae_id) 
