@@ -24,9 +24,9 @@ def switch_worker(stop_ev, sh_cam_en):
                 status_text = "ENABLED" if sh_cam_en.value else "DISABLED"
                 logger.info(f">>> [MANUAL] Camera state changed to: {status_text} <<<")
                 if sh_cam_en.value:
-                    blink_loop(5, 0.05, 0.05)
+                    blink_loop(8, 0.05, 0.05)
                 else:
-                    flash_led(0.5)
+                    blink_loop(2, 0.2, 0.02)
             except Exception as e:
                 logger.error(f"Switch worker error: {e}")
         time.sleep(1.0)
