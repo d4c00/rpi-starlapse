@@ -81,7 +81,7 @@ class AdaptiveExposureEngine:
         strength_multiplier = 0.585 if is_downward else 1.0
 
         ratio = min(abs(remaining_ev) / self.MAX_HW_EV, 1.0)
-        curve_gain = ratio ** 1.3
+        curve_gain = ratio ** 1.5
 
         soft_damping = 1.0 - math.exp(-(abs(remaining_ev) / (self.MAX_HW_EV / 3.0)) ** 1.2)
 
