@@ -51,27 +51,11 @@ class AdaptiveExposureEngine:
         virt_gain = 10 ** (db_offset / 20.0)
         return np.clip(virt_gain, self.MIN_VIRT_GAIN, self.MAX_VIRT_GAIN)
 
-    def process_raw_frame(self, raw_path, width, height, current_us, current_reg_gain, raw_bits):
-        luma = self._measure_luma(raw_path, width, height, raw_bits)
-        if self.delay_frames > 0:
-            if len(self.history) < self.delay_frames:
-                self.history.append((current_us, current_reg_gain))
-                return int(current_us), int(round(current_reg_gain)), float(luma), 0.0
-            actual_us, actual_reg = self.history.pop(0)
-        else:
-            actual_us, actual_reg = current_us, current_reg_gain
-        actual_ev = math.log2((actual_us * self._phys_to_virt_gain(actual_reg) / 1e6) + 1e-9)
-        err = (self.target - luma) / max(self.target, 1e-9)
-        err = np.clip(err, -1.0, 1.0)
-        desired_ev = actual_ev + err * self.MAX_HW_EV
-        latest_ev = math.log2((current_us * self._phys_to_virt_gain(current_reg_gain) / 1e6) + 1e-9)
-        step_limit = self.MAX_HW_EV * MAX_LUMA_JUMP_RATIO
-        delta_ev = np.clip(desired_ev - latest_ev, -step_limit, step_limit)
-        target_ev = np.clip(latest_ev + delta_ev, self.MIN_EV, self.MAX_EV)
-        next_us, next_reg = self._allocate_energy(target_ev)
-        if self.delay_frames > 0:
-            self.history.append((next_us, next_reg))
-        return int(next_us), int(round(next_reg)), float(luma), float(delta_ev)
+    def _virt_to_phys_gain(self, virt_gain):
+        virt_gain = np.clip(virt_gain, self.MIN_VIRT_GAIN, self.MAX_VIRT_GAIN)
+        db_offset = 20.0 * math.log10(virt_gain)
+        reg = self.REG_MIN * math.exp(db_offset / (self.GAIN_DB_MAX - self.GAIN_DB_MIN) * (math.log(self.REG_MAX) - math.log(self.REG_MIN)))
+        return float(np.clip(reg, self.REG_MIN, self.REG_MAX))
 
     def _measure_luma(self, raw_path, width, height, raw_bits):
         if not os.path.exists(raw_path): return self.target
