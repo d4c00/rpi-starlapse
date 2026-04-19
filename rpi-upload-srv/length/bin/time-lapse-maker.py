@@ -199,7 +199,7 @@ def create_timelapse():
         pbar = tqdm(selected_files, desc=f"Device {device_id}", unit="frame")
         all_times = []
 
-        regex = re.compile(r".*?_(\d{2})_(\d{8})_(\d{6})_T([\d.]+)_G([\d.]+)_E([\d.-]+)_Y([\d.]+)_CPU(\d+)\.(raw|tif|tiff)$", re.IGNORECASE)
+        regex = re.compile(r".*?_(\d{2})_(\d{8})_(\d{6})_T([\d.]+)_G(\d+)_E([\d.-]+)_Y([\d.]+)_CPU(\d+)\.(raw|tif|tiff)$", re.IGNORECASE)
 
         try:
             for filename in pbar:
