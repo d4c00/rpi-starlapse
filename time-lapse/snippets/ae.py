@@ -153,3 +153,5 @@ def process_ae_logic(raw_path, width, height, current_us, current_reg_gain, max_
             gain_db_min=gain_db_min, 
             gain_db_max=gain_db_max
         )
+
+    return _engine.process_raw_frame(raw_path, width, height, current_us, current_reg_gain, raw_bits)
