@@ -140,7 +140,7 @@ def get_cpu_temp():
 
 def generate_raw_filename(prefix, dev_id, s_us, g, ev, m):
     now = datetime.now(UTC)
-    return f"{prefix}_{dev_id}_{now.strftime('%Y%m%d_%H%M%S')}_T{s_us/1000:.1f}_G{g:.1f}_E{ev:.1f}_Y{m:.3f}_CPU{get_cpu_temp()}.raw"
+    return f"{prefix}_{dev_id}_{now.strftime('%Y%m%d_%H%M%S')}_T{s_us/1000:.1f}_G{int(g)}_E{ev:.1f}_Y{m:.3f}_CPU{get_cpu_temp()}.raw"
 
 def cleanup_shm(*paths):
     for p in paths:
