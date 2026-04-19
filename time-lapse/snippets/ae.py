@@ -90,7 +90,7 @@ class AdaptiveExposureEngine:
 
         upper_bound = self.LIMIT_UP
         lower_bound = self.LIMIT_DN * 0.585 if is_downward else self.LIMIT_DN
-        
+
         return np.clip(move, lower_bound, upper_bound)
 
     def _allocate_energy(self, target_ev):
