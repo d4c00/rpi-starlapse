@@ -31,9 +31,6 @@ class AdaptiveExposureEngine:
         self.LIMIT_DN = math.log2(1.0 - MAX_LUMA_JUMP_RATIO)
         self.LIMIT_UP = math.log2(1.0 + MAX_LUMA_JUMP_RATIO)
 
-        self.delay_frames = DELAY_FRAMES_COUNT
-        self.history = []
-
         print("\n=== Adaptive Exposure Engine Initialized ===")
         print(f"[*] Shutter Limits (us)  : Min = {self.MIN_US}, Max = {self.MAX_US}")
         print(f"[*] Physical Gain (Reg)  : Min = {self.REG_MIN}, Max = {self.REG_MAX}")
@@ -105,28 +102,13 @@ class AdaptiveExposureEngine:
 
     def process_raw_frame(self, raw_path, width, height, current_us, current_reg_gain, raw_bits):
         luma = self._measure_luma(raw_path, width, height, raw_bits)
-
-        if self.delay_frames > 0:
-            if len(self.history) < self.delay_frames:
-                self.history.append((current_us, current_reg_gain))
-                return int(current_us), float(current_reg_gain), float(luma), 0.0
-            actual_us, actual_reg = self.history.pop(0)
-        else:
-            actual_us, actual_reg = current_us, current_reg_gain
-
-        actual_ev = math.log2((actual_us * self._phys_to_virt_gain(actual_reg) / 1e6) + 1e-9)
+        current_virt_gain = self._phys_to_virt_gain(current_reg_gain)
+        current_ev = math.log2((current_us * current_virt_gain / 1e6) + 1e-9)
         ev_step = self._compute_ev_step(luma) 
-
         delta = self._update_controller(ev_step)
-
-        latest_virt_gain = self._phys_to_virt_gain(current_reg_gain)
-        latest_ev = math.log2((current_us * latest_virt_gain / 1e6) + 1e-9)
-        target_ev = np.clip(latest_ev + delta, self.MIN_EV, self.MAX_EV)
+        target_ev = np.clip(current_ev + delta, self.MIN_EV, self.MAX_EV)
         next_us, next_reg = self._allocate_energy(target_ev)
-        
-        if self.delay_frames > 0:
-            self.history.append((next_us, next_reg))
-            
+
         return int(next_us), int(round(next_reg)), float(luma), float(ev_step)
 
 _engine = None
