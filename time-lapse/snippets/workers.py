@@ -24,9 +24,7 @@ def capture_frame(cam, mode, target, r_path, sh_frame_id, sh_last_ae_id, is_onli
 
     target_snap = bias_params if bias_params else unpack_snap(sh_snap.value)
 
-    hist_q.append(target_snap)
-    p = hist_q.pop(0) 
-    s_us, g = p["t_us"], p["g"]
+    s_us, g = target_snap["t_us"], target_snap["g"]
 
     set_led(1) if is_online.value else blink_loop(2, 0.03, 0.1)
 
@@ -53,7 +51,6 @@ def capture_frame(cam, mode, target, r_path, sh_frame_id, sh_last_ae_id, is_onli
 def camera_worker(sh_frame_id, sh_last_ae_id, data_q, stop_ev, trigger_ev, sh_snap, is_online, ready_ev, sh_dev_id, pause_ev, sh_cam_en):
     dev_id_str = sh_dev_id.value.decode().rstrip('\x00')
     w_path, r_path = get_shm_paths(dev_id_str)
-    hist_q = [unpack_snap(sh_snap.value)] * 0
 
     try:
         cam = V4L2Camera()
@@ -75,7 +72,6 @@ def camera_worker(sh_frame_id, sh_last_ae_id, data_q, stop_ev, trigger_ev, sh_sn
             blink_loop(30, 0.2, 0.2) 
  
             flush_old_frames(cam)
-            hist_q = [unpack_snap(sh_snap.value)] * 0
             logger.info(f">>> [1/2] Capturing Darks (Count:{DARK_FRAME_COUNT})")
             for _ in range(DARK_FRAME_COUNT):
                 if stop_ev.is_set(): break
@@ -90,7 +86,6 @@ def camera_worker(sh_frame_id, sh_last_ae_id, data_q, stop_ev, trigger_ev, sh_sn
                               sh_frame_id, sh_last_ae_id, is_online, sh_dev_id, sh_snap, data_q, hist_q)
 
             flush_old_frames(cam)
-            hist_q = [unpack_snap(sh_snap.value)] * 0
             if CAPTURE_BIAS_FRAMES:
                 logger.info(f">>> [2/2] Capturing Biases (Count: {BIAS_FRAME_COUNT})")
                 bias_cfg = {"t_us": int(sensor.MIN_EXPOSURE * 1e6), "g": sensor.MIN_GAIN}
