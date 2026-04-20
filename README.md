@@ -319,6 +319,11 @@ My home windows have no view of the Milky Way, which is why I use this "deploy a
 
 Back home, I power the Pi back on, connect it to the internal network that can reach the upload server, and it will automatically start uploading all the captured .raw files. The Server-side will then generate the video and convert files to TIF. Finally I use Siril to stack them and try to create beautiful final photos.
 
+---
+For capturing flats and dark-flats, I start a normal session and use two layers of cotton cloth over the lens with a phone flashlight or window light to adjust the exposure to a few seconds. I keep moving the cloth and the light source (if handheld) while capturing about 32 frames, then `touch /dev/shm/time-lapse/01/calibration` to shoot the matching dark frames (with bias capture disabled).
+
+Afterward, I manually prune the lights directory of any uneven or improperly exposed frames, check the darks for light leaks, and finally rename lights to flats and darks to biases to fit the processing workflow.
+
 <br>
 
 ---
