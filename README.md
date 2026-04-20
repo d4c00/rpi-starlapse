@@ -147,13 +147,13 @@ systemctl --user enable time-lapse
 systemctl --user restart time-lapse
 ```
 For example, device ID `01`,<br>
-If you want to shoot calibration frames (dark and bias):
-```bash
-touch /dev/shm/time-lapse/01/calibration
-```
 If you want to turn the camera on or off:
 ```bash
 touch /dev/shm/time-lapse/01/switch
+```
+If you want to shoot calibration frames (dark and bias):
+```bash
+touch /dev/shm/time-lapse/01/calibration
 ```
 If `CAPTURE_BIAS_FRAMES` in `config.py` is set to `true`, it will shoot both dark and bias frames. If `false`, it will only shoot dark frames.  
 After shooting is complete, the camera will be turned off. You need to manually change `CAMERA_ENABLED` back to `True` in `config.py` and run `systemctl --user restart time-lapse` to resume normal shooting.
