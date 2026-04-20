@@ -173,6 +173,9 @@ def ae_worker(stop_ev, sh_frame_id, sh_last_ae_id, sh_snap, sh_dev_id, data_q, r
                 if W == 0: W, H = V4L2Camera.probe_resolution()
 
                 p = unpack_snap(sh_snap.value)
+                actual_t = p["t_us"]
+                actual_g = p["g"]
+                
                 p["id"] = curr_id
                 limit_us = min((CAPTURE_INTERVAL - 0.5), sensor.MAX_EXPOSURE) * 1e6
 
@@ -206,14 +209,17 @@ def ae_worker(stop_ev, sh_frame_id, sh_last_ae_id, sh_snap, sh_dev_id, data_q, r
                     if os.path.exists(target_raw):
                         os.remove(target_raw)
                 else:
-                    dispatch_to_manager(data_q, mode, dev_id_str, p, target_raw, logger)
+                    p_for_naming = p.copy()
+                    p_for_naming["t_us"] = actual_t
+                    p_for_naming["g"] = actual_g
+                    dispatch_to_manager(data_q, mode, dev_id_str, p_for_naming, target_raw, logger)
 
                 sh_snap.value = snap_data.encode()
 
                 cost_ms = (time.perf_counter() - t0) * 1000
                 logger.info(
                     f"[AE-RAW] ID:{curr_id} | Mode:{mode} | Done:{cost_ms:.1f}ms | "
-                    f"NextT:{(new_s if use_ae else p['t_us'])/1000:.1f}ms,G:{int(new_g if use_ae else p['g'])} | "
+                    f"NextT:{(new_s if use_ae else s_target)/1000:.1f}ms,G:{int(new_g if use_ae else g_target)} | "
                     f"Y:{m_val:.3f}"
                 )
 
