@@ -127,6 +127,7 @@ def camera_worker(sh_frame_id, sh_last_ae_id, data_q, stop_ev, trigger_ev, sh_sn
             logger.info(">>> Calibration complete. CAMERA_ENABLED in config.py has been set to False <<<")
             sh_snap.value = sensor.INIT_SNAP_STR.encode()
             toggle_config_cam(sh_cam_en, target_state=False)
+            flush_old_frames(cam)
             continue
 
         if not sh_cam_en.value or pause_ev.is_set():
