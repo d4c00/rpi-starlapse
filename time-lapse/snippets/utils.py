@@ -289,7 +289,7 @@ def flush_old_frames(cam):
     buf = v4l2.v4l2_buffer()
     buf.type = v4l2.V4L2_BUF_TYPE_VIDEO_CAPTURE
     buf.memory = v4l2.V4L2_MEMORY_MMAP
-    for _ in range(3):
+    for _ in range(1):
         if not select.select([cam.v_fd], [], [], 0.001)[0]:
             break
         try:
