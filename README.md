@@ -309,11 +309,11 @@ Running `rpi-upload-srv-3` will calibrate each light frame image, overlay the ph
 
 In actual shooting, I usually prepare the Sender at home: pre-configuring parameters, ensuring the camera is disabled via the switch, and then connecting it to a power bank before wrapping it in plastic wrap for waterproofing.
 
-Once at the dark-sky site, I set up the shooting angle and connect the Pi to my phone's hotspot. I then trigger the camera via: `touch /dev/shm/time-lapse/01/switch`
+Once at the dark-sky site, I set up the shooting angle, connect the Pi to my phone's hotspot, and `touch /dev/shm/time-lapse/01/switch` to turn the camera on.
 
 I wait a moment for the auto-exposure algorithm to converge near the target luma (default 0.333). To verify the framing and exposure, I SSH into my home server (the Receiver) and run `systemctl --user restart rpi-upload-srv-2` to convert the incoming RAW files into JPEGs for a quick preview. Once everything looks good, I disconnect the hotspot and leave the device for a few hours.
 
-When the session is over, I reconnect to the device. If the sky is still dark, I'll take the opportunity to capture dark frames on-site before heading home.
+When the session is over, I reconnect to the device, `touch /dev/shm/time-lapse/01/calibration`, and once I see the LED flashing to remind me, I simply block the lens with my power bank to capture dark frames on-site.
 
 My home windows have no view of the Milky Way, which is why I use this "deploy and retrieve" workflow. However, if you have a location with a clear view, stable power, and Wi-Fi, you can keep the system running 24/7. Your backend server will then continuously receive and process real-time imagery from all your active nodes.
 
