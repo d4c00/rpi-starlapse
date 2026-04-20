@@ -192,7 +192,11 @@ def ae_worker(stop_ev, sh_frame_id, sh_last_ae_id, sh_snap, sh_dev_id, data_q, r
                     "ev": new_ev if use_ae else 0.0
                 }
 
-                dispatch_to_manager(data_q, mode, dev_id_str, p, target_raw, logger)
+                if mode == "lights" and curr_id <= 1:
+                    logger.info(f"[DROP] Dropping initial light frame ID:{curr_id}")
+                    if os.path.exists(target_raw): os.remove(target_raw)
+                else:
+                    dispatch_to_manager(data_q, mode, dev_id_str, p, target_raw, logger)
 
                 if mode == "lights":
                     snap_data = pack_snap(curr_id, new_s, new_g, new_ev, m_val)
