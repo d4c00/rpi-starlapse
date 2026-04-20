@@ -1,7 +1,7 @@
 # Copyright (c) 2026 length <me@length.cc> (https://github.com/d4c00)
 # Licensed under the MIT License.
 
-import os, time, requests, queue
+import os, time, requests, queue, glob
 from snippets.camera import V4L2Camera
 from snippets.config import *
 from snippets.ae import process_ae_logic
@@ -41,19 +41,19 @@ def capture_frame(cam, mode, target, r_path, sh_frame_id, sh_last_ae_id, is_onli
     dev_id_str = sh_dev_id.value.decode().rstrip('\x00')
 
     target_snap = bias_params if bias_params else unpack_snap(sh_snap.value)
-
     s_us, g = target_snap["t_us"], target_snap["g"]
 
     set_led(1) if is_online.value else blink_loop(2, 0.03, 0.1)
 
-    success, cap_dur = cam.capture_to_path(target_snap["t_us"], target_snap["g"], target)
+    success, cap_dur = cam.capture_to_path(s_us, g, target)
 
     if success and is_valid_raw(target):
         curr_id = sh_frame_id.value + 1
         sh_frame_id.value = curr_id
 
         tag = target.split('.')[-1]
-        final_ready_path = f"{r_path}.{tag}.{curr_id}"
+
+        final_ready_path = f"{r_path}.{tag}.{curr_id}_{int(s_us)}_{int(g)}"
         os.replace(target, final_ready_path)
 
         logger.info(f"[{mode.upper()} OK] ID:{curr_id} | Read:{cap_dur:.1f}ms | Meta_T:{s_us/1000:.1f}ms")
@@ -156,72 +156,56 @@ def ae_worker(stop_ev, sh_frame_id, sh_last_ae_id, sh_snap, sh_dev_id, data_q, r
                 curr_id = sh_frame_id.value
                 t0 = time.perf_counter()
 
-                target_raw = f"{r_path}.lights_tmp.{curr_id}"
-                if not os.path.exists(target_raw):
-                    found = False
-                    for tag_trial in ["darks_tmp", "biases_tmp"]:
-                        trial = f"{r_path}.{tag_trial}.{curr_id}"
-                        if os.path.exists(trial):
-                            target_raw = trial
-                            found = True; break
-                    if not found:
-                        time.sleep(0.01); continue
+                pattern = f"{r_path}.*tmp.{curr_id}_*"
+                found_files = glob.glob(pattern)
+                
+                if not found_files:
+                    time.sleep(0.01); continue
 
-                tag = target_raw.split('.')[-2]
+                target_raw = found_files[0] 
+                filename = os.path.basename(target_raw)
+
+                parts = filename.split('.')
+                tag = parts[-2]
+                
+                meta_parts = parts[-1].split('_')
+                actual_t = float(meta_parts[1])
+                actual_g = float(meta_parts[2])
+
                 cfg = MODE_MAP.get(tag, MODE_MAP["lights_tmp"])
                 mode, use_ae = cfg["mode"], cfg["use_ae"]
 
                 if W == 0: W, H = V4L2Camera.probe_resolution()
 
-                p = unpack_snap(sh_snap.value)
-                actual_t = p["t_us"]
-                actual_g = p["g"]
-                
-                p["id"] = curr_id
-                limit_us = min((CAPTURE_INTERVAL - 0.5), sensor.MAX_EXPOSURE) * 1e6
-
                 new_s, new_g, m_val, new_ev = process_ae_logic(
-                    target_raw, W, H, p["t_us"], p["g"], 
-                    limit_us,
-                    sensor.AE_MIN_US,
-                    sensor.MAX_GAIN,
-                    sensor.MIN_GAIN,
-                    sensor.GAIN_DB_MIN,
-                    sensor.GAIN_DB_MAX,
-                    sensor.BIT
+                    target_raw, W, H, actual_t, actual_g, 
+                    min((CAPTURE_INTERVAL - 0.5), sensor.MAX_EXPOSURE) * 1e6,
+                    sensor.AE_MIN_US, sensor.MAX_GAIN, sensor.MIN_GAIN,
+                    sensor.GAIN_DB_MIN, sensor.GAIN_DB_MAX, sensor.BIT
                 )
 
-                p["y"] = m_val
-                if not use_ae:
-                    p["ev"] = 0.0
-                    if mode == "biases":
-                        s_target = int(sensor.MIN_EXPOSURE * 1e6)
-                        g_target = sensor.MIN_GAIN
-                    else:
-                        s_target, g_target = p["t_us"], p["g"]
-                    
-                    snap_data = pack_snap(curr_id, s_target, g_target, 0.0, m_val)
-                else:
-                    p["ev"] = new_ev
-                    snap_data = pack_snap(curr_id, new_s, new_g, new_ev, m_val)
+                p = {
+                    "id": curr_id, 
+                    "t_us": actual_t, 
+                    "g": actual_g, 
+                    "y": m_val, 
+                    "ev": new_ev if use_ae else 0.0
+                }
 
                 if mode == "lights" and curr_id <= 1:
                     logger.info(f"[DROP] Dropping initial light frame ID:{curr_id}")
-                    if os.path.exists(target_raw):
-                        os.remove(target_raw)
+                    if os.path.exists(target_raw): os.remove(target_raw)
                 else:
-                    p_for_naming = p.copy()
-                    p_for_naming["t_us"] = actual_t
-                    p_for_naming["g"] = actual_g
-                    dispatch_to_manager(data_q, mode, dev_id_str, p_for_naming, target_raw, logger)
+                    dispatch_to_manager(data_q, mode, dev_id_str, p, target_raw, logger)
 
                 if mode == "lights":
+                    snap_data = pack_snap(curr_id, new_s, new_g, new_ev, m_val)
                     sh_snap.value = snap_data.encode()
 
                 cost_ms = (time.perf_counter() - t0) * 1000
                 logger.info(
                     f"[AE-RAW] ID:{curr_id} | Mode:{mode} | Done:{cost_ms:.1f}ms | "
-                    f"NextT:{(new_s if use_ae else s_target)/1000:.1f}ms,G:{int(new_g if use_ae else g_target)} | "
+                    f"NextT:{(new_s if use_ae else actual_t)/1000:.1f}ms,G:{int(new_g if use_ae else actual_g)} | "
                     f"Y:{m_val:.3f}"
                 )
 
