@@ -125,6 +125,7 @@ def camera_worker(sh_frame_id, sh_last_ae_id, data_q, stop_ev, trigger_ev, sh_sn
                 logger.info(">>> [2/2] Skipping Biases (Disabled in config)")
 
             logger.info(">>> Calibration complete. CAMERA_ENABLED in config.py has been set to False <<<")
+            sh_snap.value = sensor.INIT_SNAP_STR.encode()
             toggle_config_cam(sh_cam_en, target_state=False)
             continue
 
