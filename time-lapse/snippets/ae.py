@@ -38,7 +38,7 @@ class AdaptiveExposureEngine:
         print(f"[*] Dynamic MAX_HW_EV    : {self.MAX_HW_EV:.4f} EV")
         print(f"[*] Absolute EV Range    : Min = {self.MIN_EV:.4f} EV, Max = {self.MAX_EV:.4f} EV")
         print(f"[*] Step Limit (Ratio)   : {MAX_LUMA_JUMP_RATIO*100}% (Up: +{self.LIMIT_UP:.2f} EV, Dn: {-self.LIMIT_UP:.2f} EV)")
-        print(f"[*] Soft Damping Range   : {self.MAX_HW_EV / 3.0:.4f} EV (1/3 of Max HW EV)")
+        print(f"[*] Soft Damping Range   : {self.MAX_HW_EV / 5.0:.4f} EV (1/5 of Max HW EV)")
         print("============================================\n")
 
     def _phys_to_virt_gain(self, reg_val):
@@ -79,7 +79,7 @@ class AdaptiveExposureEngine:
         step_limit = self.LIMIT_UP if not is_downward else abs(self.LIMIT_DN * 0.585)
         ratio = min(abs(remaining_ev) / self.MAX_HW_EV, 1.0)
         curve_gain = ratio ** 0.8
-        soft_damping = 1.0 - math.exp(-(abs(remaining_ev) / (self.MAX_HW_EV / 3.0)) ** 1.2)
+        soft_damping = 1.0 - math.exp(-(abs(remaining_ev) / (self.MAX_HW_EV / 5.0)) ** 1.2)
         move = remaining_ev * (step_limit / (self.MAX_HW_EV * ratio + 1e-9)) * curve_gain * soft_damping
         return move
 
