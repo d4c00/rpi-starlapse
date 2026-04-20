@@ -285,19 +285,13 @@ def get_optimal_queue_size() -> int:
     return num_frames
 
 def flush_old_frames(cam):
-    flushed = 0
-    buf = v4l2.v4l2_buffer()
-    buf.type = v4l2.V4L2_BUF_TYPE_VIDEO_CAPTURE
-    buf.memory = v4l2.V4L2_MEMORY_MMAP
-    for _ in range(1):
-        if not select.select([cam.v_fd], [], [], 0.001)[0]:
-            break
-        try:
+    try:
+        if select.select([cam.v_fd], [], [], 0.001)[0]:
+            buf = v4l2.v4l2_buffer(type=v4l2.V4L2_BUF_TYPE_VIDEO_CAPTURE, memory=v4l2.V4L2_MEMORY_MMAP)
             fcntl.ioctl(cam.v_fd, v4l2.VIDIOC_DQBUF, buf)
             fcntl.ioctl(cam.v_fd, v4l2.VIDIOC_QBUF, buf)
-            flushed += 1
-        except:
-            break
-    if flushed > 0:
-        print(f"[FLUSH] Discarded {flushed} old frame(s)")
-    return flushed
+            print("[FLUSH] Discarded 1 old frame")
+            return 1
+    except:
+        pass
+    return 0
