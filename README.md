@@ -1,4 +1,4 @@
-### Raspberry Pi starry sky time-lapse photography<br>featuring automated long-exposure that eliminates the need for manual settings.
+## Raspberry Pi starry sky time-lapse photography<br>Automated long-exposure<br>Multi-node capture and automated backend sync
 <div align="center">
   <img src="https://github.com/user-attachments/assets/768b157d-196d-4502-bacf-9d13b6f02a91" width="25%" />
   <img src="https://github.com/user-attachments/assets/0ea92a9c-518a-48d5-9285-62515a5b2186" width="25%" />
