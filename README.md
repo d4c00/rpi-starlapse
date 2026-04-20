@@ -275,9 +275,9 @@ server {
 
 Although there is no dedicated flat-field shooting option, the logic is exactly the same as bright-field shooting, so you don’t need special code to shoot flats either.  
 For example, you can set `CAPTURE_BIAS_FRAMES` to `true`, shoot your flat fields first, then start shooting calibration frames. This way you get both flat/dark frames and bias frames. Flats are usually shot together with bias frames and used as a bundle.
-<br>
-<br>
-<br>
+
+---
+
 For a single sender, the receiver will create a directory named after the device number, such as "01". In the example I'm using, the path `/mnt/ssd_data/podman/rpi-upload-srv/uploads/01` can support four folders, like this:
 
 ```
@@ -304,23 +304,21 @@ If the exposure time for your flat frames is very short, you usually only need f
 If the exposure time for your flat frames is very long, you may need dark flats. In that case, you can put the captured dark flats into the `biases` folder and use them as bias frames.
 
 Running `rpi-upload-srv-3` will calibrate each light frame image, overlay the photo information in the top-left corner, and then stitch everything together into a final video.
-<br>
-<br>
-<br>
-In actual shooting, to save on mobile data costs, I usually disconnect from the receiver server when outdoors. After powering on, I connect to my phone hotspot just long enough for time synchronization, confirm that the camera is shooting normally and saving files without errors, then leave the device for a few hours.
 
-When shooting is finished, I go back near the device, turn on the hotspot again so the Pi can connect, SSH in and run.
-```bash
-touch /dev/shm/time-lapse/01/calibration
-```
-While the LED is flashing quickly, I cover the lens with the lens cap on-site. After a short wait, it will automatically start shooting dark frames. Except for flat-field shooting, I usually disable bias-frame shooting.
+---
 
-After dark frames are done, the camera will automatically turn off and the camera switch in `config.py` will also be turned off. Then I run `sudo poweroff` to shut down and head home.
+In actual shooting, I usually prepare the Sender at home: pre-configuring parameters, ensuring the camera is disabled via the switch, and then connecting it to a power bank before wrapping it in plastic wrap for waterproofing.
+
+Once at the dark-sky site, I set up the shooting angle and connect the Pi to my phone's hotspot. I then trigger the camera via: `touch /dev/shm/time-lapse/01/switch`
+
+I wait a moment for the auto-exposure algorithm to converge near the target luma (default 0.333). To verify the framing and exposure, I SSH into my home server (the Receiver) and run `systemctl --user restart rpi-upload-srv-2` to convert the incoming RAW files into JPEGs for a quick preview. Once everything looks good, I disconnect the hotspot and leave the device for a few hours.
+
+When the session is over, I reconnect to the device. If the sky is still dark, I'll take the opportunity to capture dark frames on-site before heading home.
+
+My home windows have no view of the Milky Way, which is why I use this "deploy and retrieve" workflow. However, if you have a location with a clear view, stable power, and Wi-Fi, you can keep the system running 24/7. Your backend server will then continuously receive and process real-time imagery from all your active nodes.
 
 Back home, I power the Pi back on, connect it to the internal network that can reach the upload server, and it will automatically start uploading all the captured .raw files. The Server-side will then generate the video and convert files to TIF. Finally I use Siril to stack them and try to create beautiful final photos.
 
-By the way, there was also a time when I went to collect [it] after shooting, only to find that as soon as I started shooting the starry sky, it was covered by thick clouds. Then I directly **took** several hundred frames of ten-plus-second long-exposure clouds **from the shot ones** as flats and put them into the flats folder.
-At the same time, I triggered the calibration frame shooting; after covering the lens cap to shoot darks, I put the shot darks into the biases folder.
 <br>
 
 ---
