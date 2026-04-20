@@ -95,6 +95,7 @@ def camera_worker(sh_frame_id, sh_last_ae_id, data_q, stop_ev, trigger_ev, sh_sn
                 if stop_ev.is_set(): break
                 if not trigger_ev.wait(timeout=CAPTURE_INTERVAL + 5.0): break
                 trigger_ev.clear()
+                if not sh_cam_en.value: continue
 
                 if sh_frame_id.value > sh_last_ae_id.value:
                     logger.warning(f"[SKIP-CAL] AE lagging during darks: Frame({sh_frame_id.value}) > LastAE({sh_last_ae_id.value})")
@@ -111,6 +112,7 @@ def camera_worker(sh_frame_id, sh_last_ae_id, data_q, stop_ev, trigger_ev, sh_sn
                     if stop_ev.is_set(): break
                     now = time.time()
                     time.sleep(BIAS_INTERVAL - (now % BIAS_INTERVAL))
+                    if not sh_cam_en.value: continue
 
                     if sh_frame_id.value > sh_last_ae_id.value:
                         logger.warning(f"[SKIP-CAL] AE lagging during biases: Frame({sh_frame_id.value}) > LastAE({sh_last_ae_id.value})")
