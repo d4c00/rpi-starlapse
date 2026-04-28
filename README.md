@@ -1,0 +1,49 @@
+## Raspberry Pi Starry Sky Time-Lapse Photography<br>Automated Long-Exposure<br>Multi-Node Capture and Automated Backend Upload
+<div align="center">
+  <img src="./docs/img/2026_04_08_1.jpg" width="25%" />
+  <img src="./docs/img/2026_04_08_2.jpg" width="25%" />
+  <img src="./docs/img/2026_04_08_3.jpg" width="25%" />
+</div>
+
+###### but it might not be limited to just the Raspberry Pi, and it might not even be limited to starry skies.
+
+### Examples:
+<div align="center">
+  <img src="./docs/img/2026_04_12.jpg" width="37.85%" />
+  <img src="./docs/img/2026_04_26.jpg" width="50%" />
+</div>
+<br>
+
+> **Solved Map:** [Astrometry](https://nova.astrometry.net/user_images/15130649) <br>
+> **Video:** [YouTube](https://youtu.be/AzBsP6IBXvY) <br>
+
+## COST: $54.37
+###### The reason for choosing this combination is to capture clear infrared Milky Way images in light-polluted cities at a low cost.<br>Unit costs for the core components are as follows:
+    Raspberry Pi Zero 2W: $18.98
+    IMX662 Module: $24.50
+    800nm Long-pass Filter + 8mm f/1.2 M12 Lens: $10.89
+    Total: $54.37 (excluding SD card, power bank, cables, acrylic enclosure, and aluminum heatsinks).
+###### Below is my approximate architecture:
+    Sender (Pi) (Supports multiple devices via IDs: 01, 02...)
+     ├── capture (v4l2)
+     ├── buffer (/dev/shm)
+     └── upload (HTTPS)
+     
+    Receiver (Server)
+     ├── upload handler
+     ├── RAW processing
+     ├── calibration
+     └── timelapse rendering
+
+# [ Getting Started ]
+
+### [Installation](./docs/installation.md)<br> <sup>How to set up the software and hardware from scratch.</sup>
+
+### [Technical Details](./docs/technical.md)<br> <sup>How it works: sensors, logic, and why I chose these parts.</sup>
+
+### [Workflow](./docs/workflow.md)<br> <sup>How to use it in the field and process your photos.</sup>
+
+### [FAQ](./docs/faq.md)<br> <sup>Quick fixes for common hardware and connection issues.</sup>
+<br>
+
+###### Copyright (c) 2026 length <me@length.cc> (https://github.com/d4c00)<br>Licensed under the MIT License.<br>Font (RedHatMono-Regular.ttf): Designed by MCKL. Licensed under SIL Open Font License 1.1.
