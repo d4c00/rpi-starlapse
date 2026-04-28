@@ -5,7 +5,7 @@ import sys, os, time, multiprocessing, signal
 from snippets.utils import set_led, led_play, check_time_server, setup_logger, cleanup_shm_env, get_optimal_queue_size
 from snippets.workers import (switch_worker, ae_worker, camera_worker, memory_manager_worker,
                               background_sync_worker, sync_scheduler_worker, timer_worker)
-from snippets.config import (DEVICE_ID, SAVE_DIR, CAMERA_ENABLED)
+from snippets.config import (DEVICE_ID, SAVE_DIR, CAMERA_ENABLED, TIME_CHECK)
 from snippets.sensors import sensor
 
 logger = setup_logger("MAIN")
@@ -89,6 +89,6 @@ def run_core():
 if __name__ == "__main__":
     sys.stdout.reconfigure(line_buffering=True)
     print(f"[WAIT] check_time_server...", flush=True)
-    while not check_time_server():
+    while TIME_CHECK and not check_time_server():
         led_play([(1, 0.015), (0, 0.2), (1, 0.015), (0, 0.2), (1, 0.6), (0, 0.4)], block=True)   
     run_core()

@@ -1,4 +1,6 @@
 # 1. Client-side
+Although it might work with any Linux device that can connect to a camera, I assume `Raspberry Pi OS` as the default environment.
+<br>
 
 The current IMX662 configuration file is `time-lapse/snippets/sensors/imx662.py`.  
 **It based on the v4l2 driver from: https://github.com/raspberrypi/linux/pull/7315** 
@@ -44,19 +46,22 @@ cd ~/time-lapse
 cp time-lapse.service ~/.config/systemd/user/
 ```
 
-Edit settings in this file:
+If you do not want to use a receiver, you can skip setting up config.py.<br>You only need to manually copy the .raw photos from ~/time-lapse/photo after capturing.
+<br>
+
+Edit settings in this file, including capture intervals, upload server, and more:
 ```bash
 nano ~/time-lapse/snippets/config.py
 ```
-For first-time use, you must edit at least these 3 options in `snippets/config.py`:
+If you want to use real-time uploading, you must edit at least these 2 options in `snippets/config.py`:
 
     DEVICE_TOKEN =
     UPLOAD_SRV_BASE =
-    TIME_SOURCE =
 
-**Please do not use the default `DEVICE_TOKEN`. You must modify it.** <br>
+**Please do not use the default `DEVICE_TOKEN`. You must modify it.** <br>Change `UPLOAD_SRV_BASE` to your upload server address.
 
-Change `UPLOAD_SRV_BASE` to your upload server address.  `TIME_SOURCE` can be set to any website that can be reached; it is only used to check whether the internet is connected (because adding an RTC module to the Raspberry Pi Zero 2W is very inconvenient). This is to confirm that NTP time synchronization has completed before naming the files.
+If you do not have an RTC module but have a stable network connection, you can set `TIME_CHECK = True` and set `TIME_SOURCE` to any accessible website (e.g., https://google.com).<br>
+This ensures the software only begins the capture process once the network is connected and time is synchronized.
 <br>
 
 Reload systemd, enable at boot, and start the program:
@@ -126,7 +131,8 @@ You need to start it once to copy the configuration files to the specified direc
 ```bash
 systemctl --user restart rpi-upload-srv-2
 ```
-**Please do not use the default `device_token`. You must modify it.**  (If your sensor is not the IMX662, you must simultaneously change the resolution, bit depth, and verification size in the three `.ini` files within `rpi-upload-srv/conf/*`, rather than just modifying the `device_token`.")
+**Please do not use the default `device_token` You must modify it.**<br>
+(If your sensor is not the IMX662, you must simultaneously change the resolution, bit depth, and verification size in the three `.ini` files within `rpi-upload-srv/conf/*`, rather than just modifying the `device_token`.")
 ```bash
 sudo nano /mnt/ssd_data/podman/rpi-upload-srv/conf/rpi-upload-srv.ini
 ```

@@ -1,4 +1,4 @@
-## Raspberry Pi Starry Sky Time-Lapse Photography<br>Automated Long-Exposure<br>Multi-Node Capture and Automated Backend Upload
+## Raspberry Pi Starry Sky Time-Lapse Photography<br>Automated Long-Exposure<br>Multi-Node Capture and Automated Backend Upload<br>Automatically make time-lapse videos using Star-Aligned Sliding Stacking
 <div align="center">
   <img src="./docs/img/2026_04_08_1.jpg" width="25%" />
   <img src="./docs/img/2026_04_08_2.jpg" width="25%" />
@@ -15,7 +15,11 @@
 <br>
 
 > **Solved Map:** [Astrometry](https://nova.astrometry.net/user_images/15130649) <br>
-> **Video:** [YouTube](https://youtu.be/AzBsP6IBXvY) <br>
+<br>
+
+Receiver (Server) Mode 3 Star-Aligned Sliding Stacking video sample:
+> **Click here to see the video:** [YouTube](https://youtu.be/AzBsP6IBXvY) <br>
+<br>
 
 ## COST: $54.37
 ###### The reason for choosing this combination is to capture clear infrared Milky Way images in light-polluted cities at a low cost.<br>Unit costs for the core components are as follows:
