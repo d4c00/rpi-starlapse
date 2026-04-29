@@ -1,6 +1,6 @@
 ## Explanation
 <div align="center">
-  <img src="./img/2026_04_01.jpg" width="75%" />
+  <img src="https://assets.length.cc/media/2026_04_01.jpg" width="75%" />
 </div>
 IMX662 Module and Raspberry Pi Zero 2W Integration
 
@@ -11,7 +11,7 @@ I chose the IMX662 because STARVIS 2 offers high QE (Quantum Efficiency) in the 
 
 Bortle Class 8 city, 9.5s exposure, 90 gain. Captured the Milky Way core using 756 light frames, calibrated with darks, flats, and dark flats.<br>
 <div align="center">
-  <img src="./img/2026_04_26.jpg" width="100%" />
+  <img src="https://assets.length.cc/media/2026_04_26.jpg" width="100%" />
 </div>
 For example, this one was shot with an 11% distortion lens without a tracker; after stacking with Siril's auto-alignment, you can see coma-like effects at the edges.<br>
 If you don't have a star tracker but want to stack photos, choose a lens with minimal distortion if possible.<br>
@@ -20,7 +20,7 @@ By pairing it with an 800nm long-pass filter, the color sensor can function like
 <br>
 
 
-<img src="./img/2026_04_12.jpg" width="30%" /> Although it will affect heat dissipation, I made a simple waterproof cover using plastic wrap and rubber bands.<br>
+<img src="https://assets.length.cc/media/2026_04_12.jpg" width="30%" /> Although it will affect heat dissipation, I made a simple waterproof cover using plastic wrap and rubber bands.<br>
 
 Currently, it is only considered to be treated as a **monochrome** sensor. First, debayering under an 800nm long-pass filter is both troublesome and may reduce sharpness.<br>
 The disadvantage is that color sensors will still have a faint grid-like feel (traces of the Bayer array), unless you are using a true monochrome sensor.

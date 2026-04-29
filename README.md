@@ -1,25 +1,28 @@
-## Raspberry Pi Starry Sky Time-Lapse Photography<br>Automated Long-Exposure<br>Multi-Node Capture and Automated Backend Upload<br>Automatically make time-lapse videos using Star-Aligned Sliding Stacking
+## Raspberry Pi Starry Sky Time-Lapse Photography
+* **Automated Long-Exposure**
+* **Multi-Node Capture and Automated Backend Upload**
+* **Automatically make time-lapse videos using Star-Aligned Sliding Stacking**
+
 <div align="center">
-  <img src="./docs/img/2026_04_08_1.jpg" width="25%" />
-  <img src="./docs/img/2026_04_08_2.jpg" width="25%" />
-  <img src="./docs/img/2026_04_08_3.jpg" width="25%" />
+  <img src="https://assets.length.cc/media/2026_04_08_1.jpg" width="25%" />
+  <img src="https://assets.length.cc/media/2026_04_08_2.jpg" width="25%" />
+  <img src="https://assets.length.cc/media/2026_04_08_3.jpg" width="25%" />
 </div>
 
 ###### but it might not be limited to just the Raspberry Pi, and it might not even be limited to starry skies.
 
-### Examples:
+Stacking 756 frames in Siril：<br>
 <div align="center">
-  <img src="./docs/img/2026_04_12.jpg" width="37.85%" />
-  <img src="./docs/img/2026_04_26.jpg" width="50%" />
+  <img src="https://assets.length.cc/media/2026_04_26.jpg" width="100%" />
 </div>
-<br>
 
-> **Solved Map:** [Astrometry](https://nova.astrometry.net/user_images/15130649) <br>
-<br>
+Receiver (Server) Mode 3 Star-Aligned Sliding Stacking video sample (Single frame from video, 65 frames per stack):<br>
+<div align="center">
+  <img src="https://assets.length.cc/media/20260425_174519~20260425_211319.jpg" width="100%" />
+</div>
 
-Receiver (Server) Mode 3 Star-Aligned Sliding Stacking video sample:
-> **Click here to see the video:** [YouTube](https://youtu.be/AzBsP6IBXvY) <br>
-<br>
+**Watch on YouTube:** [20260425_174519~20260425_211319.mp4](https://youtu.be/qlByTpvr8eY)
+> **Solved Map:** [Astrometry](https://nova.astrometry.net/user_images/15159169) <br>
 
 ## COST: $54.37
 ###### The reason for choosing this combination is to capture clear infrared Milky Way images in light-polluted cities at a low cost.<br>Unit costs for the core components are as follows:
@@ -49,5 +52,7 @@ Receiver (Server) Mode 3 Star-Aligned Sliding Stacking video sample:
 
 ### [FAQ](./docs/faq.md)<br> <sup>Quick fixes for common hardware and connection issues.</sup>
 <br>
+
+###### Last Updated: 2026-05-01
 
 ###### Copyright (c) 2026 length <me@length.cc> (https://github.com/d4c00)<br>Licensed under the MIT License.<br>Font (RedHatMono-Regular.ttf): Designed by MCKL. Licensed under SIL Open Font License 1.1.

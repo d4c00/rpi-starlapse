@@ -33,7 +33,7 @@ sudo loginctl enable-linger "$USER"
 Download and extract the code:
 ```bash
 cd ~
-mkdir -p time-lapse && curl -sL https://github.com/d4c00/rpi-starlapse/tarball/main | tar -xz -C time-lapse --strip-components=2 --wildcards "*/time-lapse/"
+mkdir -p time-lapse && curl -sL https://code.length.cc/rpi-starlapse.tar.gz | tar -xz -C time-lapse --strip-components=2 --wildcards "*/time-lapse/"
 ```
 I use systemd to manage the software's running state and have configured the watchdog timer in the `.service` file using `WatchdogSec`.<br>
 If `CAPTURE_INTERVAL` in `snippets/config.py` is over `600`, you need to set `WatchdogSec=` in `time-lapse.service` to a value greater than `600`.
@@ -105,8 +105,8 @@ For example, `/mnt/ssd_data/podman/rpi-upload-srv` is the directory where I plan
 
 ```bash
 cd ~
-mkdir -p rpi-upload-srv && curl -sL https://api.github.com/repos/d4c00/rpi-starlapse/tarball/main | tar -xz -C rpi-upload-srv --strip-components=2 "*/rpi-upload-srv"
-curl -L -o rpi-upload-srv/length/RedHatMono-Regular.ttf https://github.com/d4c00/rpi-starlapse/raw/main/rpi-upload-srv/length/RedHatMono-Regular.ttf
+mkdir -p rpi-upload-srv && curl -sL https://code.length.cc/rpi-starlapse.tar.gz | tar -xz -C rpi-upload-srv --strip-components=2 "*/rpi-upload-srv"
+curl -L -o rpi-upload-srv/length/RedHatMono-Regular.ttf https://assets.length.cc/fonts/RedHatMono-Regular.ttf
 cd rpi-upload-srv
 ```
 Remember to change the Volume= mapping in the three `.container` files inside `rpi-upload-srv/quadlet/*` to your actual path.
@@ -118,7 +118,7 @@ systemctl --user daemon-reload
 ```bash
 bash build.sh
 ```
-Enter version number: `260427`
+Enter version number: `260429`
 
 I have enabled SELinux, so I need to:
 ```bash

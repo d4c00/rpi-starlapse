@@ -233,8 +233,20 @@ def denoise(img, strength, size):
     return (img * (1 - strength)) + (smoothed * strength)
 
 def render_frame(data, cfg):
-    img = (data - cfg['black_level']) / (cfg['white_level'] - cfg['black_level'])
-    return np.clip(img, 0, 1)
+    denominator = max(1, cfg['white_level'] - cfg['black_level'])
+    img = (data - cfg['black_level']) / denominator
+    img = np.clip(img, 0, 1)
+
+    b_val = cfg.get('BRIGHTNESS', 0)
+    if b_val == 0:
+        return img
+
+    m = 0.5 * (1.0 - b_val * 0.8) 
+    m = np.clip(m, 0.01, 0.99)
+
+    img_stretched = ((m - 1) * img) / ((2 * m - 1) * img - m + 1e-8)
+    
+    return np.clip(img_stretched, 0, 1)
 
 def rotation(img, degrees):
     if degrees != 0:
