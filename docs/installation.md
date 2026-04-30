@@ -73,7 +73,11 @@ systemctl --user restart time-lapse
 For example, device ID `01`,<br>
 After the software starts, the camera is off by default, If you want to turn the camera on or off:
 ```bash
-touch /dev/shm/time-lapse/01/switch
+touch /dev/shm/time-lapse/01/cam_switch
+```
+If you want to toggle Auto-Exposure on/off:
+```bash
+touch /dev/shm/time-lapse/01/ae_switch
 ```
 If you want to shoot calibration frames (dark and bias):
 ```bash

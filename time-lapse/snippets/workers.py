@@ -7,28 +7,40 @@ from snippets.config import *
 from snippets.ae import process_ae_logic
 from snippets.sensors import sensor
 from snippets.utils import (pet_watchdog, setup_logger, set_led, led_play, get_shm_paths, is_valid_raw, advance_frame, cleanup_shm, 
-    upload_with_retry, log_pic, get_local_photos, toggle_config_cam, dispatch_to_manager, move_to_local_storage, handle_net_failure, unpack_snap, 
+    upload_with_retry, log_pic, get_local_photos, toggle_bool_config, dispatch_to_manager, move_to_local_storage, handle_net_failure, unpack_snap, 
     pack_snap, flush_old_frames
 )
 
 logger = setup_logger("WORKER")
 
-def switch_worker(stop_ev, sh_cam_en):
+def switch_worker(stop_ev, sh_cam_en, sh_ae_en):
     logger = setup_logger("SWITCH")
     logger.info("Switch worker started.")
     while not stop_ev.is_set():
         if os.path.exists(CAMERA_SWITCH_FILE):
             try:
                 os.remove(CAMERA_SWITCH_FILE)
-                toggle_config_cam(sh_cam_en)
+                toggle_bool_config(sh_cam_en, "CAMERA_ENABLED")
                 status_text = "ENABLED" if sh_cam_en.value else "DISABLED"
                 logger.info(f">>> [MANUAL] Camera state changed to: {status_text} <<<")
                 if sh_cam_en.value:
                     led_play([(1, 0.05), (0, 0.05)], loop=8, block=False)
                 else:
-                    led_play([(1, 0.2), (0, 0.2)], loop=2, block=False)
+                    led_play([(1, 0.2), (0, 0.2)], loop=3, block=False)
             except Exception as e:
                 logger.error(f"Switch worker error: {e}")
+
+        if os.path.exists(AE_SWITCH_FILE):
+            try:
+                os.remove(AE_SWITCH_FILE)
+                toggle_bool_config(sh_ae_en, "AE_ENABLED")
+                logger.info(f">>> [MANUAL] AE state changed to: {'ON' if sh_ae_en.value else 'OFF'} <<<")
+                if sh_ae_en.value:
+                    led_play([(1, 0.02), (0, 0.02)], loop=3, block=False)
+                else:
+                    led_play([(1, 0.1), (0, 0.1)], loop=2, block=False)
+            except Exception as e:
+                logger.error(f"AE Switch worker error: {e}")
         time.sleep(1.0)
 
 MODE_MAP = {
@@ -137,7 +149,7 @@ def camera_worker(sh_frame_id, sh_last_ae_id, data_q, stop_ev, trigger_ev, sh_sn
 
             logger.info(">>> Calibration complete. CAMERA_ENABLED in config.py has been set to False <<<")
             sh_snap.value = sensor.INIT_SNAP_STR.encode()
-            toggle_config_cam(sh_cam_en, target_state=False)
+            toggle_bool_config(sh_cam_en, "CAMERA_ENABLED", target_state=False)
             flush_old_frames(cam)
             continue
 
@@ -152,7 +164,7 @@ def camera_worker(sh_frame_id, sh_last_ae_id, data_q, stop_ev, trigger_ev, sh_sn
             logger.error(f"camera_worker error: {e}")
             advance_frame(sh_frame_id, sh_last_ae_id)
 
-def ae_worker(stop_ev, sh_frame_id, sh_last_ae_id, sh_snap, sh_dev_id, data_q, ready_ev):
+def ae_worker(stop_ev, sh_frame_id, sh_last_ae_id, sh_snap, sh_dev_id, data_q, ready_ev, sh_ae_en):
     last_id = 0
     dev_id_str = sh_dev_id.value.decode().rstrip('\x00')
     _, r_path = get_shm_paths(dev_id_str)
@@ -207,13 +219,19 @@ def ae_worker(stop_ev, sh_frame_id, sh_last_ae_id, sh_snap, sh_dev_id, data_q, r
                     dispatch_to_manager(data_q, mode, dev_id_str, p, target_raw, logger)
 
                 if mode == "lights":
-                    snap_data = pack_snap(curr_id, new_s, new_g, new_ev, m_val)
+                    if not sh_ae_en.value:
+                        final_s = FIXED_EXPOSURE_SEC * 1e6
+                        final_g = FIXED_GAIN
+                    else:
+                        final_s, final_g = new_s, new_g
+                    
+                    snap_data = pack_snap(curr_id, final_s, final_g, new_ev, m_val)
                     sh_snap.value = snap_data.encode()
 
                 cost_ms = (time.perf_counter() - t0) * 1000
                 logger.info(
                     f"[AE-RAW] ID:{curr_id} | Mode:{mode} | Done:{cost_ms:.1f}ms | "
-                    f"NextT:{(new_s if use_ae else actual_t)/1000:.1f}ms,G:{int(new_g if use_ae else actual_g)}"
+                    f"NextT:{(final_s if mode=='lights' else actual_t)/1000:.1f}ms,G:{int(final_g if mode=='lights' else actual_g)}"
                 )
 
                 sh_last_ae_id.value = curr_id

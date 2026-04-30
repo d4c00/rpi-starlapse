@@ -5,7 +5,7 @@ import sys, os, time, multiprocessing, signal
 from snippets.utils import set_led, led_play, check_time_server, setup_logger, cleanup_shm_env, get_optimal_queue_size
 from snippets.workers import (switch_worker, ae_worker, camera_worker, memory_manager_worker,
                               background_sync_worker, sync_scheduler_worker, timer_worker)
-from snippets.config import (DEVICE_ID, SAVE_DIR, CAMERA_ENABLED, TIME_CHECK)
+from snippets.config import (DEVICE_ID, SAVE_DIR, CAMERA_ENABLED, AE_ENABLED, TIME_CHECK)
 from snippets.sensors import sensor
 
 logger = setup_logger("MAIN")
@@ -25,6 +25,7 @@ def run_core():
     sh_frame_id = multiprocessing.Value('L', 0)
     sh_last_ae_id = multiprocessing.Value('L', 0)
     sh_cam_en = multiprocessing.Value('b', CAMERA_ENABLED)
+    sh_ae_en = multiprocessing.Value('b', AE_ENABLED)
     sh_retry_count = multiprocessing.Value('i', 0)
     
     always_set_ev = multiprocessing.Event()
@@ -43,9 +44,9 @@ def run_core():
         signal.signal(signal.SIGINT, handle_exit)
 
         tasks = [
-            (switch_worker, (stop, sh_cam_en)),
+            (switch_worker, (stop, sh_cam_en, sh_ae_en)),
             (camera_worker, (sh_frame_id, sh_last_ae_id, data_q, stop, trigger_ev, sh_snap, online, rdy, sh_dev_id, pause, sh_cam_en)),
-            (ae_worker, (stop, sh_frame_id, sh_last_ae_id, sh_snap, sh_dev_id, data_q, rdy)),
+            (ae_worker, (stop, sh_frame_id, sh_last_ae_id, sh_snap, sh_dev_id, data_q, rdy, sh_ae_en)),
             (memory_manager_worker, (data_q, online, stop, sh_dev_id, sh_frame_id, always_set_ev, sh_retry_count)),
             (background_sync_worker, (online, sync, pause, stop, sh_cam_en, sh_retry_count)),
             (sync_scheduler_worker, (sync, stop, online, sh_cam_en, sh_retry_count)),

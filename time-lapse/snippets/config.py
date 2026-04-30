@@ -25,10 +25,16 @@ TIME_SOURCE = "https://any.example.com/"
 
 # Capture
 CAMERA_ENABLED = False
-CAMERA_SWITCH_FILE = f"/dev/shm/time-lapse/{DEVICE_ID}/switch"
+CAMERA_SWITCH_FILE = f"/dev/shm/time-lapse/{DEVICE_ID}/cam_switch"
 CAPTURE_INTERVAL = 10
 AE_TARGET_LUMA = 0.33333
 SENSOR_INDEX = 0
+
+# AE
+AE_SWITCH_FILE = f"/dev/shm/time-lapse/{DEVICE_ID}/ae_switch"
+AE_ENABLED = True
+FIXED_EXPOSURE_SEC = 9.5
+FIXED_GAIN = 90
 
 # Calibration Trigger
 DARK_TRIGGER_FILE = f"/dev/shm/time-lapse/{DEVICE_ID}/calibration"

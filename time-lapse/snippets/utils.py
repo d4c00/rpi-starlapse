@@ -94,23 +94,18 @@ def move_to_local_storage(it, logger=None):
         if logger: logger.error(f"Storage move failed: {e}")
         return False
 
-def toggle_config_cam(sh_cam_en, target_state=None, path="snippets/config.py"):
-    new_state = not sh_cam_en.value if target_state is None else target_state
-    sh_cam_en.value = new_state
-    state_str = "True" if new_state else "False"
-    old_state_str = "False" if new_state else "True"
+def atomic_replace_in_file(path, old_text, new_text):
     try:
         if not os.path.exists(path):
-            return
+            return False
         dir_name = os.path.dirname(path)
         with open(path, "r+") as f:
             try:
                 fcntl.flock(f.fileno(), fcntl.LOCK_EX)
                 content = f.read()
-                target_line = f"CAMERA_ENABLED = {old_state_str}"
-                new_line = f"CAMERA_ENABLED = {state_str}"
-                if target_line in content:
-                    new_content = content.replace(target_line, new_line)
+                
+                if old_text in content:
+                    new_content = content.replace(old_text, new_text)
 
                     fd, temp_path = tempfile.mkstemp(dir=dir_name, text=True)
                     try:
@@ -120,17 +115,31 @@ def toggle_config_cam(sh_cam_en, target_state=None, path="snippets/config.py"):
                             os.fsync(tmp.fileno())
 
                         os.replace(temp_path, path)
-                        print(f"[CONFIG] CAMERA_ENABLED updated to {state_str} (Atomic & Locked)")
+                        return True
                     except Exception:
                         if os.path.exists(temp_path):
                             os.remove(temp_path)
                         raise
-                else:
-                    pass
+                return False
             finally:
                 fcntl.flock(f.fileno(), fcntl.LOCK_UN)
     except Exception as e:
-        print(f"[ERROR] Failed to update config.py securely: {e}")
+        print(f"[ERROR] Atomic file update failed: {e}")
+        return False
+
+def toggle_bool_config(sh_val, config_key, target_state=None, path="snippets/config.py"):
+    new_state = not sh_val.value if target_state is None else target_state
+    sh_val.value = new_state
+
+    state_str = "True" if new_state else "False"
+    old_state_str = "False" if new_state else "True"
+    
+    old_line = f"{config_key} = {old_state_str}"
+    new_line = f"{config_key} = {state_str}"
+
+    success = atomic_replace_in_file(path, old_line, new_line)
+    if success:
+        print(f"[CONFIG] {config_key} updated to {state_str}")
 
 def setup_logger(name):
     logger = logging.getLogger(name)
