@@ -13,7 +13,7 @@ from utils import (
     INPUT_ROOT_DIR, OUTPUT_ROOT_DIR,
     get_files, get_metadata, load_raw_content,
     master_dark, master_bias, master_flat,
-    perform_stacking, render_frame, rotation,
+    stacking, brightness, rotation,
     info_overlay, ffmpeg_process, video,
     contrast, gamma, dehaze, denoise
 )
@@ -105,7 +105,7 @@ def run_task():
             for i, filepath in enumerate(selected_files): 
                 filename = os.path.basename(filepath)
 
-                stacked_data = perform_stacking(
+                stacked_data = stacking(
                     i, selected_files, input_dir, frame_cache, 
                     cfg['STACK_SIZE'], m_dark, m_bias, m_flat,
                     cfg['WIDTH'], cfg['HEIGHT'], cfg['MAX_VALUE']
@@ -113,13 +113,13 @@ def run_task():
                 if stacked_data is None: continue
 
                 render_cfg = {'black_level': cfg['BLACK_LEVEL'], 'white_level': cfg['WHITE_LEVEL']}
-                img = render_frame(stacked_data, render_cfg)
+                img = brightness(stacked_data, render_cfg)
 
-                if cfg['BRIGHTNESS'] != 0: img += cfg['BRIGHTNESS']
-                if cfg['DEHAZE'] > 0: img = dehaze(img, cfg['DEHAZE'])
-                if cfg['GAMMA'] != 1.0: img = gamma(img, cfg['GAMMA'])
-                if cfg['DENOISE_STRENGTH'] > 0: img = denoise(img, cfg['DENOISE_STRENGTH'], cfg['DENOISE_SIZE'])
-                if cfg['CONTRAST'] > 1.0: img = contrast(img, cfg['CONTRAST'])
+                img += cfg['BRIGHTNESS']
+                img = denoise(img, cfg['DENOISE_STRENGTH'], cfg['DENOISE_SIZE'])
+                img = dehaze(img, cfg['DEHAZE'])
+                img = contrast(img, cfg['CONTRAST'])
+                img = gamma(img, cfg['GAMMA'])
 
                 img_8bit = (np.clip(img, 0, 1) * 255).astype(np.uint8)
                 img_pil = Image.fromarray(img_8bit)

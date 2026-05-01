@@ -92,7 +92,7 @@ def clean_isolated_pixels(img, threshold=800, size=3):
     img[combined_mask] = smooth[combined_mask]
     return img
 
-def perform_stacking(i, selected_files, input_dir, frame_cache, stack_size, m_dark, m_bias, m_flat, width, height, max_value):
+def stacking(i, selected_files, input_dir, frame_cache, stack_size, m_dark, m_bias, m_flat, width, height, max_value):
     total_frames = len(selected_files)
     needed_indices = range(max(0, i - stack_size), min(total_frames, i + stack_size + 1))
 
@@ -112,12 +112,15 @@ def perform_stacking(i, selected_files, input_dir, frame_cache, stack_size, m_da
         return None
 
     if stack_size > 0:
-        aligned_images = [target_img]
+        aligned_images = []
         for idx in needed_indices:
-            if idx == i: continue
             img_to_align = frame_cache[idx]
             if img_to_align is None: continue
             
+            if idx == i:
+                aligned_images.append(target_img)
+                continue
+                
             try:
                 aligned, footprint = aa.register(img_to_align, target_img)
                 aligned_images.append(aligned)
@@ -127,18 +130,25 @@ def perform_stacking(i, selected_files, input_dir, frame_cache, stack_size, m_da
         if len(aligned_images) < 2:
             return target_img
 
-        stack_array = np.array(aligned_images)
-        avg = np.mean(stack_array, axis=0)
-        std = np.std(stack_array, axis=0)
+        stack_array = np.array(aligned_images, dtype=np.float32)
+        
+        med = np.median(stack_array, axis=0)
 
-        sigma = 2.5 
-        lower_bound = avg - sigma * std
-        upper_bound = avg + sigma * std
+        std = np.std(stack_array, axis=0) 
+        
+        sigma = 1.5
+        lower_bound = med - sigma * std
+        upper_bound = med + sigma * std
 
         mask = (stack_array < lower_bound) | (stack_array > upper_bound)
         stack_array[mask] = np.nan
 
         stacked_data = np.nanmean(stack_array, axis=0)
+
+        nan_mask = np.isnan(stacked_data)
+        if np.any(nan_mask):
+            stacked_data[nan_mask] = med[nan_mask]
+            
     else:
         stacked_data = target_img
 
@@ -158,8 +168,14 @@ def master_bias(device_id, input_root, width, height, max_value):
 
 def master_flat(device_id, input_root, width, height, max_value, m_bias=None):
     m_flat = get_master_frame(device_id, "flats", input_root, width, height, max_value, bias=m_bias)
-    if m_flat is not None: 
-        return clean_isolated_pixels(m_flat, threshold=400)
+    
+    if m_flat is not None:
+        np.maximum(m_flat, 1e-6, out=m_flat)
+
+        m_flat = clean_isolated_pixels(m_flat, threshold=400)
+        m_flat = gaussian_filter(m_flat, sigma=0.5)
+
+        return m_flat
     return None
 
 def get_master_frame(device_id, folder_name, input_root, width, height, max_value, bias=None):
@@ -184,55 +200,86 @@ def get_master_frame(device_id, folder_name, input_root, width, height, max_valu
 
 def calibration(data, m_dark, m_bias, m_flat, max_value):
     if m_dark is not None:
-        data -= m_dark
+        data = data - m_dark
+
+    data = np.maximum(data, 1e-5) 
 
     if m_flat is not None:
-        flat_mean = np.mean(m_flat)
-        if flat_mean > 0:
-            flat_norm = m_flat / flat_mean
-            data /= np.clip(flat_norm, 0.05, None)
+        flat_median = np.median(m_flat)
+        if flat_median > 0:
+            flat_norm = np.clip(m_flat / flat_median, 0.2, 5.0)
+            data = data / flat_norm
 
     data = clean_isolated_pixels(data, threshold=800)
+    
     return np.clip(data, 0, max_value)
 
 def contrast(img, contrast_factor):
     if contrast_factor <= 1.0:
         return img
 
-    img_8u = (np.clip(img, 0, 1) * 255).astype(np.uint8)
-    clahe = cv2.createCLAHE(clipLimit=contrast_factor, tileGridSize=(8,8))
-    cl = clahe.apply(img_8u)
-    img_float = cl.astype(np.float32) / 255.0
+    img_f32 = img.astype(np.float32)
 
-    detail_strength = (contrast_factor - 1.0) * 0.5
-    base = gaussian_filter(img_float, sigma=2)
-    detail = img_float - base
+    median = np.median(img_f32)
+    pivot = np.clip(median + 0.02, 0.05, 0.5)
+
+    k = contrast_factor
+
+    out = 1.0 / (1.0 + np.exp(-k * (img_f32 - pivot)))
+
+    min_val = 1.0 / (1.0 + np.exp(-k * (0.0 - pivot)))
+    max_val = 1.0 / (1.0 + np.exp(-k * (1.0 - pivot)))
     
-    return np.clip(img_float + detail * detail_strength, 0, 1)
-
-def gamma(img, gamma_value):
-    if gamma_value == 1.0:
-        return img
-    img_clipped = np.clip(img, 1e-6, 1.0)
-    return np.power(img_clipped, 1.0 / gamma_value)
+    out = (out - min_val) / (max_val - min_val)
+    
+    return np.clip(out, 0, 1)
 
 def dehaze(img, strength):
     if strength <= 0:
         return img
 
-    dark_ch = minimum_filter(img, size=15)
-    atmosphere = gaussian_filter(dark_ch, sigma=30)
+    img_f32 = img.astype(np.float32)
+    h, w = img_f32.shape
 
-    out = (img - strength * atmosphere) / (1 - strength * atmosphere + 1e-6)
+    scale = 16
+    small = cv2.resize(img_f32, (w // scale, h // scale), interpolation=cv2.INTER_AREA)
+
+    bg = cv2.GaussianBlur(small, (0, 0), sigmaX=15)
+
+    bg_full = cv2.resize(bg, (w, h), interpolation=cv2.INTER_CUBIC)
+
+    out = img_f32 - bg_full * strength
+
     return np.clip(out, 0, 1)
+
+def gamma(img, gamma_value):
+    if gamma_value == 1.0:
+        return img
+        
+    img_clipped = np.clip(img, 1e-6, 1.0)
+    
+    stretch_factor = 50.0
+    asinh_img = np.arcsinh(img_clipped * stretch_factor) / np.arcsinh(stretch_factor)
+
+    return np.power(asinh_img, 1.0 / gamma_value)
 
 def denoise(img, strength, size):
     if strength <= 0:
         return img
-    smoothed = median_filter(img, size=size)
-    return (img * (1 - strength)) + (smoothed * strength)
 
-def render_frame(data, cfg):
+    smoothed = median_filter(img, size=size)
+    
+    details = img - smoothed
+    
+    star_mask = cv2.GaussianBlur(np.clip(details * 5, 0, 1), (3, 3), 0)
+
+    background_denoised = (img * (1 - strength)) + (smoothed * strength)
+    
+    output = img * star_mask + background_denoised * (1 - star_mask)
+    
+    return np.clip(output, 0, 1)
+
+def brightness(data, cfg):
     denominator = max(1, cfg['white_level'] - cfg['black_level'])
     img = (data - cfg['black_level']) / denominator
     img = np.clip(img, 0, 1)

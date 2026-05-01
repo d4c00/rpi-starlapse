@@ -13,7 +13,7 @@ from utils import (
     INPUT_ROOT_DIR, OUTPUT_ROOT_DIR,
     get_files, get_metadata, load_raw_content,
     master_dark, master_bias, master_flat,
-    perform_stacking, render_frame, render_tif, render_jpg,
+    stacking, brightness, render_tif, render_jpg,
     rotation, info_overlay,
     dehaze, denoise, gamma, contrast
 )
@@ -78,12 +78,13 @@ def process_output_logic(data, mode, out_base, filename, cfg, regex=None, meta=N
         
         if is_stack:
             render_cfg = {'black_level': cfg['BLACK_LEVEL'], 'white_level': cfg['WHITE_LEVEL']}
-            img_tif = render_frame(data, render_cfg)
+            img_tif = brightness(data, render_cfg)
+
             img_tif += cfg['STACK_BRIGHTNESS']
-            img_tif = dehaze(img_tif, cfg['STACK_DEHAZE'])
-            img_tif = gamma(img_tif, cfg['STACK_GAMMA'])
             img_tif = denoise(img_tif, cfg['DENOISE_STRENGTH'], cfg['DENOISE_SIZE'])
+            img_tif = dehaze(img_tif, cfg['STACK_DEHAZE'])
             img_tif = contrast(img_tif, cfg['STACK_CONTRAST'])
+            img_tif = gamma(img_tif, cfg['STACK_GAMMA'])
             render_tif(img_tif, tif_path, cfg['SIG_BITS'], cfg['BLACK_LEVEL'], cfg['WHITE_LEVEL'])
         else:
             render_tif(data, tif_path, cfg['SIG_BITS'], cfg['BLACK_LEVEL'], cfg['WHITE_LEVEL'])
@@ -94,14 +95,14 @@ def process_output_logic(data, mode, out_base, filename, cfg, regex=None, meta=N
         out_path = os.path.join(jpg_dir, jpg_name)
 
         render_cfg = {'black_level': cfg['BLACK_LEVEL'], 'white_level': cfg['WHITE_LEVEL']}
-        img_jpg = render_frame(data, render_cfg)
+        img_jpg = brightness(data, render_cfg)
 
         if is_stack:
             img_jpg += cfg['STACK_BRIGHTNESS']
-            img_jpg = dehaze(img_jpg, cfg['STACK_DEHAZE'])
-            img_jpg = gamma(img_jpg, cfg['STACK_GAMMA'])
             img_jpg = denoise(img_jpg, cfg['DENOISE_STRENGTH'], cfg['DENOISE_SIZE'])
+            img_jpg = dehaze(img_jpg, cfg['STACK_DEHAZE'])
             img_jpg = contrast(img_jpg, cfg['STACK_CONTRAST'])
+            img_jpg = gamma(img_jpg, cfg['STACK_GAMMA'])
         else:
             img_jpg += cfg['PURE_BRIGHTNESS']
             img_jpg = gamma(img_jpg, cfg['PURE_GAMMA'])
@@ -182,7 +183,7 @@ def run_main():
                 for i, f_path in enumerate(files):
                     fname = os.path.basename(f_path)
 
-                    stacked_data = perform_stacking(
+                    stacked_data = stacking(
                         i, files, light_in, frame_cache, 
                         cfg['STACK_SIZE'], m_dark, m_bias, m_flat,
                         cfg['WIDTH'], cfg['HEIGHT'], cfg['MAX_VALUE']

@@ -122,7 +122,7 @@ systemctl --user daemon-reload
 ```bash
 bash build.sh
 ```
-Enter version number: `260429`
+Enter version number: `260502`
 
 I have enabled SELinux, so I need to:
 ```bash

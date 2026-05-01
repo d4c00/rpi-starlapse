@@ -49,11 +49,11 @@ case "$TARGET_MODE" in
         ;;
     "2")
         echo ">>> [Mode 2] Starting convert-tif.py ..."
-        python3 /home/length/bin/convert-tif.py
+        python3 -u /home/length/bin/convert-tif.py
         ;;
     "3")
         echo ">>> [Mode 3] Starting time-lapse-maker.py ..."
-        python3 /home/length/bin/time-lapse-maker.py
+        python3 -u /home/length/bin/time-lapse-maker.py
         ;;
     *)
         echo "Error: Unknown MODE '$TARGET_MODE'. Use 1 or 2 or 3."
