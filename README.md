@@ -1,4 +1,14 @@
+### The development has moved to Codeberg / 开发已迁移至 Codeberg:<br>https://codeberg.org/length/rpi-starlapse
+<br>
+
 ## Raspberry Pi Starry Sky Time-Lapse Photography
+
+<div align="center">
+  <h3>
+    <a href="/README.md">English</a> &nbsp; | &nbsp; <a href="/docs/zh-cn/README.md">简体中文</a>
+  </h3>
+</div>
+
 * **Automated Long-Exposure**
 * **Multi-Node Capture and Automated Backend Upload**
 * **Automatically make time-lapse videos using Star-Aligned Sliding Stacking**
@@ -44,13 +54,13 @@ Receiver (Server) Mode 3 Star-Aligned Sliding Stacking video sample (Single fram
 
 # [ Getting Started ]
 
-### [Installation](./docs/installation.md)<br> <sup>How to set up the software and hardware from scratch.</sup>
+### [Installation](docs/en/installation.md)<br> <sup>How to set up the software and hardware from scratch.</sup>
 
-### [Technical Details](./docs/technical.md)<br> <sup>How it works: sensors, logic, and why I chose these parts.</sup>
+### [Technical Details](docs/en/technical.md)<br> <sup>How it works: sensors, logic, and why I chose these parts.</sup>
 
-### [Workflow](./docs/workflow.md)<br> <sup>How to use it in the field and process your photos.</sup>
+### [Workflow](docs/en/workflow.md)<br> <sup>How to use it in the field and process your photos.</sup>
 
-### [FAQ](./docs/faq.md)<br> <sup>Quick fixes for common hardware and connection issues.</sup>
+### [FAQ](docs/en/faq.md)<br> <sup>Quick fixes for common hardware and connection issues.</sup>
 <br>
 
 ###### Last Updated: 2026-05-04
