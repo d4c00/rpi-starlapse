@@ -15,14 +15,16 @@ logger = setup_logger("WORKER")
 
 def switch_worker(stop_ev, sh_cam_en, sh_ae_en):
     logger = setup_logger("SWITCH")
-    logger.info("Switch worker started.")
+    cam_status = "ON" if sh_cam_en.value else "OFF"
+    ae_status = "ON" if sh_ae_en.value else "OFF"
+    logger.info(f"[STATE] Camera: {cam_status}, AE: {ae_status}")
+
     while not stop_ev.is_set():
         if os.path.exists(CAMERA_SWITCH_FILE):
             try:
                 os.remove(CAMERA_SWITCH_FILE)
                 toggle_bool_config(sh_cam_en, "CAMERA_ENABLED")
-                status_text = "ENABLED" if sh_cam_en.value else "DISABLED"
-                logger.info(f">>> [MANUAL] Camera state changed to: {status_text} <<<")
+                logger.info(f">>> [MANUAL] Camera state changed to: {'ON' if sh_cam_en.value else 'OFF'} <<<")
                 if sh_cam_en.value:
                     led_play([(1, 0.05), (0, 0.05)], loop=8, block=False)
                 else:
